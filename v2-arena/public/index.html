@@ -98,8 +98,8 @@
     .room-list .room-count { color: #94a3b8; font-size: 13px; }
     .room-list .room-count.full { color: #f87171; }
 
-    .new-room { display: flex; gap: 8px; }
-    .new-room input { flex: 1; }
+    .create-row { display: flex; justify-content: center; }
+    #createRoomBtn { width: 100%; padding: 12px; font-size: 16px; }
 
     button {
       background: #4ade80;
@@ -230,11 +230,10 @@
     <div class="panel">
       <h2>Rooms</h2>
       <ul class="room-list" id="roomList">
-        <li class="empty">No rooms yet — create one below</li>
+        <li class="empty">No rooms yet — tap Create to start one</li>
       </ul>
-      <div class="new-room">
-        <input id="newRoomInput" type="text" maxlength="20" placeholder="Room name (e.g. campfire)" autocomplete="off">
-        <button id="createRoomBtn">+ Create</button>
+      <div class="create-row">
+        <button id="createRoomBtn">+ Create new room</button>
       </div>
     </div>
   </div>

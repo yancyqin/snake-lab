@@ -24,7 +24,6 @@ function startLobby() {
   const nameInput   = document.getElementById('nameInput');
   const colorPicker = document.getElementById('colorPicker');
   const roomList    = document.getElementById('roomList');
-  const newRoomInput= document.getElementById('newRoomInput');
   const createBtn   = document.getElementById('createRoomBtn');
 
   nameInput.value = savedName;
@@ -64,7 +63,7 @@ function startLobby() {
     if (list.length === 0) {
       const li = document.createElement('li');
       li.className = 'empty';
-      li.textContent = 'No rooms yet — create one below';
+      li.textContent = 'No rooms yet — tap Create to start one';
       roomList.appendChild(li);
       return;
     }
@@ -86,11 +85,7 @@ function startLobby() {
   const refreshTimer = setInterval(refreshRooms, 3000);
 
   createBtn.addEventListener('click', () => {
-    const name = sanitizeRoomName(newRoomInput.value) || randomRoomName();
-    joinRoom(name);
-  });
-  newRoomInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') createBtn.click();
+    joinRoom(randomRoomName());
   });
 
   function joinRoom(roomName) {
@@ -101,9 +96,6 @@ function startLobby() {
   }
 }
 
-function sanitizeRoomName(s) {
-  return (s || '').replace(/[^\p{L}\p{N}_\-]/gu, '').slice(0, 20);
-}
 function randomRoomName() {
   const adj = ['fast', 'snappy', 'happy', 'fuzzy', 'sneaky', 'bouncy', 'shiny', 'cosmic'];
   const n = ['cobra', 'viper', 'mamba', 'python', 'asp', 'boa', 'adder', 'racer'];
