@@ -19,8 +19,128 @@
       touch-action: manipulation;
     }
     h1 { margin: 0 0 4px; font-size: 22px; }
-    .info { color: #94a3b8; margin-bottom: 8px; font-size: 13px; text-align: center; }
-    .info code { background: #1a1a2e; padding: 2px 6px; border-radius: 3px; color: #f1f5f9; }
+    h2 { margin: 16px 0 8px; font-size: 16px; color: #94a3b8; letter-spacing: 0.05em; text-transform: uppercase; }
+
+    .screen { width: 100%; display: flex; flex-direction: column; align-items: center; }
+    .hidden { display: none !important; }
+
+    /* ---- Lobby ---- */
+    #lobby {
+      max-width: 560px;
+      padding: 12px;
+    }
+    .tagline {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .panel {
+      background: #1a1a2e;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 16px 20px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: #94a3b8;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    input[type="text"] {
+      background: #0f0f1a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #f1f5f9;
+      padding: 10px 12px;
+      font-size: 16px;
+      width: 100%;
+      font-family: inherit;
+    }
+    input[type="text"]:focus { outline: none; border-color: #4ade80; }
+
+    .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+    .color-swatch {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.1s, transform 0.1s;
+    }
+    .color-swatch:hover { transform: scale(1.1); }
+    .color-swatch.selected { border-color: #ffffff; }
+
+    .room-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .room-list li {
+      background: #0f0f1a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .room-list li.empty { color: #64748b; text-align: center; font-size: 13px; }
+    .room-list .room-name { font-weight: 600; }
+    .room-list .room-count { color: #94a3b8; font-size: 13px; }
+    .room-list .room-count.full { color: #f87171; }
+
+    .new-room { display: flex; gap: 8px; }
+    .new-room input { flex: 1; }
+
+    button {
+      background: #4ade80;
+      color: #1a1a2e;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 40px;
+      font-family: inherit;
+    }
+    button:hover, button:active { background: #22c55e; }
+    button:disabled, button.disabled {
+      background: #334155; color: #64748b; cursor: not-allowed;
+    }
+    button.secondary {
+      background: #1e293b;
+      color: #f1f5f9;
+    }
+    button.secondary:hover { background: #334155; }
+
+    /* ---- Game ---- */
+    #gameScreen { padding-bottom: 24px; }
+    .game-header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .game-header .info {
+      color: #94a3b8;
+      font-size: 13px;
+    }
+    .game-header code {
+      background: #1a1a2e; padding: 2px 6px; border-radius: 3px; color: #f1f5f9;
+    }
+    .game-header button { padding: 6px 12px; font-size: 12px; min-height: 32px; }
 
     #scoreboard {
       display: flex;
@@ -61,7 +181,7 @@
       display: block;
       touch-action: none;
       max-width: 100%;
-      max-height: calc(100vh - 220px);
+      max-height: calc(100vh - 260px);
       height: auto;
       width: auto;
       image-rendering: pixelated;
@@ -89,20 +209,56 @@
   </style>
 </head>
 <body>
-  <h1>🐍 Snake Arena</h1>
-  <div class="info">Room <code id="roomName">lobby</code> · Swipe / arrow keys / WASD · Share this URL to join the same room</div>
 
-  <div id="scoreboard"></div>
+  <!-- ============ LOBBY ============ -->
+  <div id="lobby" class="screen">
+    <h1>🐍 Snake Arena</h1>
+    <div class="tagline">Multiplayer snake — 8 per room, with rocks, predators, and a smart bot for solo play.</div>
 
-  <div class="play-area">
-    <canvas id="game"></canvas>
-    <div class="side">
-      <canvas id="minimap"></canvas>
-      <div class="label">MINIMAP</div>
+    <div class="panel">
+      <h2>Your snake</h2>
+      <div class="field">
+        <label for="nameInput">Name</label>
+        <input id="nameInput" type="text" maxlength="12" placeholder="Yancy" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Color</label>
+        <div class="color-picker" id="colorPicker"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Rooms</h2>
+      <ul class="room-list" id="roomList">
+        <li class="empty">No rooms yet — create one below</li>
+      </ul>
+      <div class="new-room">
+        <input id="newRoomInput" type="text" maxlength="20" placeholder="Room name (e.g. campfire)" autocomplete="off">
+        <button id="createRoomBtn">+ Create</button>
+      </div>
     </div>
   </div>
 
-  <div id="status"></div>
+  <!-- ============ GAME ============ -->
+  <div id="gameScreen" class="screen hidden">
+    <div class="game-header">
+      <h1 style="margin:0; font-size:18px;">🐍 Snake Arena</h1>
+      <div class="info">Room <code id="roomName">lobby</code></div>
+      <button id="leaveBtn" class="secondary">Leave</button>
+    </div>
+
+    <div id="scoreboard"></div>
+
+    <div class="play-area">
+      <canvas id="game"></canvas>
+      <div class="side">
+        <canvas id="minimap"></canvas>
+        <div class="label">MINIMAP</div>
+      </div>
+    </div>
+
+    <div id="status"></div>
+  </div>
 
   <script type="module" src="./main.js"></script>
 </body>

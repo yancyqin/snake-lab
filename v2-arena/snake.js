@@ -1,7 +1,6 @@
 import { WORLD_COLS, WORLD_ROWS, INITIAL_SNAKE_LENGTH } from './public/constants.js';
 
 // The body is built BEHIND the head — opposite to the starting direction.
-// e.g. starting RIGHT, body extends to the LEFT.
 const BEHIND = {
   RIGHT: { dx: -1, dy: 0 },
   LEFT:  { dx:  1, dy: 0 },
@@ -10,7 +9,7 @@ const BEHIND = {
 };
 
 export class Snake {
-  constructor(id, startX, startY, direction = 'RIGHT', length = INITIAL_SNAKE_LENGTH) {
+  constructor(id, startX, startY, direction = 'RIGHT', length = INITIAL_SNAKE_LENGTH, options = {}) {
     this.id = id;
     this.body = [];
     const off = BEHIND[direction];
@@ -20,7 +19,8 @@ export class Snake {
     this.direction = direction;
     this.pendingDirection = direction;
     this.alive = true;
-    this.isBot = false;
+    this.isBot = options.isBot || false;
+    this.isPredator = options.isPredator || false;
     this.name = '';
     this.color = '#4ade80';
   }
@@ -70,7 +70,12 @@ export class Snake {
     return false;
   }
 
-  // Sent to clients each tick.
+  // Generalized hit for static cells (obstacles).
+  hitCells(cells) {
+    const h = this.head();
+    return cells.some(c => c.x === h.x && c.y === h.y);
+  }
+
   serialize() {
     return {
       id: this.id,
@@ -80,6 +85,7 @@ export class Snake {
       direction: this.direction,
       alive: this.alive,
       isBot: this.isBot,
+      isPredator: this.isPredator,
     };
   }
 }

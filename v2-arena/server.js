@@ -17,14 +17,24 @@ const MIME = {
   '.svg':  'image/svg+xml',
 };
 
-// --- Static file serving ---
-const server = http.createServer((req, res) => {
-  let urlPath = req.url.split('?')[0];
-  if (urlPath === '/') urlPath = '/index.html';
+const rooms = new Map();   // roomName → Game
 
-  // Strip leading slash, prevent path traversal
-  const safePath = path.normalize(urlPath).replace(/^(\.\.[/\\])+/, '');
-  const filePath = path.join(__dirname, 'public', safePath);
+// ---- HTTP: static files + /api/rooms ----
+const server = http.createServer((req, res) => {
+  const urlPath = req.url.split('?')[0];
+
+  // Room list API for the lobby
+  if (urlPath === '/api/rooms') {
+    const summary = [...rooms.values()].map(r => r.summary());
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(summary));
+    return;
+  }
+
+  // Static files
+  let p = urlPath === '/' ? '/index.html' : urlPath;
+  const safe = path.normalize(p).replace(/^(\.\.[/\\])+/, '');
+  const filePath = path.join(__dirname, 'public', safe);
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
@@ -38,13 +48,14 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// --- WebSocket: one Game per room name ---
+// ---- WebSocket: one Game per room ----
 const wss = new WebSocketServer({ server });
-const rooms = new Map();
 
 wss.on('connection', (ws, req) => {
   const params = new URL(req.url, 'http://localhost').searchParams;
   const roomName = (params.get('room') || 'lobby').slice(0, 32);
+  const name = params.get('name');
+  const color = params.get('color');
 
   let room = rooms.get(roomName);
   if (!room) {
@@ -53,13 +64,19 @@ wss.on('connection', (ws, req) => {
     room.start();
   }
 
-  const player = room.addPlayer(ws);
+  const player = room.addPlayer(ws, name, color);
+  if (!player) {
+    // Room is full
+    try { ws.send(JSON.stringify({ type: 'rejected', reason: 'full' })); } catch (_) {}
+    ws.close(4001, 'Room is full');
+    return;
+  }
 
   ws.on('message', (data) => {
     try {
       const msg = JSON.parse(data);
       room.handleMessage(player, msg);
-    } catch (e) {
+    } catch (_) {
       // ignore bad json
     }
   });

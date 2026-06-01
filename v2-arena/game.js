@@ -1,9 +1,12 @@
 import { Snake } from './snake.js';
-import { botMove, computeSmartness } from './bot.js';
+import { botMove, computeSmartness, predatorMove } from './bot.js';
 import {
   WORLD_COLS, WORLD_ROWS, VIEW_COLS, VIEW_ROWS,
   TICK_MS, FOOD_COUNT, POINTS_PER_FOOD,
-  PLAYER_COLORS, BOT_COLOR, RESTART_DELAY_MS,
+  PLAYER_COLORS, BOT_COLOR, PREDATOR_COLOR,
+  MAX_PLAYERS, RESTART_DELAY_MS,
+  OBSTACLE_COUNT, PREDATOR_BASE_COUNT, PREDATOR_PER_N_PLAYERS,
+  PREDATOR_LENGTH, PREDATOR_MOVE_EVERY,
 } from './public/constants.js';
 
 const SPAWN_POSITIONS = [
@@ -17,6 +20,11 @@ const SPAWN_POSITIONS = [
   { x: 45, y: 45, dir: 'UP'    },
 ];
 
+const PREDATOR_SPAWNS = [
+  { x: 30, y: 30, dir: 'RIGHT' },
+  { x: 5,  y: 5,  dir: 'DOWN'  },
+];
+
 let nextPlayerId = 1;
 const log = (room, ...args) => console.log(`[room ${room}]`, ...args);
 
@@ -25,7 +33,9 @@ export class Game {
     this.name = name;
     this.players = new Map();   // id → { id, ws, name, color, snake, score }
     this.bot = null;            // { snake, score, smartness }
+    this.predators = [];        // array of Snake (isPredator: true)
     this.foods = [];
+    this.obstacles = [];
     this.tick = 0;
     this.timer = null;
     this.restarting = false;
@@ -34,7 +44,9 @@ export class Game {
   }
 
   start() {
+    this.generateObstacles();
     this.spawnFoods();
+    this.spawnPredators();
     this.timer = setInterval(() => this.update(), TICK_MS);
     log(this.name, 'started');
   }
@@ -48,15 +60,32 @@ export class Game {
     return this.players.size === 0;
   }
 
-  addPlayer(ws) {
+  isFull() {
+    return this.players.size >= MAX_PLAYERS;
+  }
+
+  // Public summary for the lobby /api/rooms endpoint
+  summary() {
+    return {
+      name: this.name,
+      players: this.players.size,
+      max: MAX_PLAYERS,
+    };
+  }
+
+  // ---- Membership ----
+
+  addPlayer(ws, requestedName, requestedColor) {
+    if (this.isFull()) return null;
+
     const id = `p${nextPlayerId++}`;
-    const color = PLAYER_COLORS.find(c => !this.usedColors.has(c)) || PLAYER_COLORS[0];
+    const color = this.pickColor(requestedColor);
     this.usedColors.add(color);
 
     const player = {
       id,
       ws,
-      name: `Snake ${this.players.size + 1}`,
+      name: this.sanitizeName(requestedName) || `Snake ${this.players.size + 1}`,
       color,
       snake: null,
       score: 0,
@@ -71,9 +100,10 @@ export class Game {
       world: { cols: WORLD_COLS, rows: WORLD_ROWS },
       view:  { cols: VIEW_COLS,  rows: VIEW_ROWS },
       tickMs: TICK_MS,
+      obstacles: this.obstacles,
     });
 
-    log(this.name, `+${id} ${color} (${this.players.size} players)`);
+    log(this.name, `+${id} ${player.name} ${color} (${this.players.size}/${MAX_PLAYERS})`);
     return player;
   }
 
@@ -83,13 +113,25 @@ export class Game {
     this.usedColors.delete(p.color);
     this.players.delete(id);
     this.updateBotMembership();
-    log(this.name, `-${id} (${this.players.size} players)`);
+    log(this.name, `-${id} (${this.players.size}/${MAX_PLAYERS})`);
+  }
+
+  sanitizeName(name) {
+    if (typeof name !== 'string') return '';
+    // Keep letters, digits, basic punctuation. Strip control chars. Cap length.
+    return name.replace(/[^\p{L}\p{N}\s_.\-]/gu, '').trim().slice(0, 12);
+  }
+
+  pickColor(requested) {
+    // Prefer the requested color if not already taken; otherwise pick the first free one.
+    if (requested && PLAYER_COLORS.includes(requested) && !this.usedColors.has(requested)) {
+      return requested;
+    }
+    return PLAYER_COLORS.find(c => !this.usedColors.has(c)) || PLAYER_COLORS[0];
   }
 
   updateBotMembership() {
-    // Solo human → add bot
-    // 2+ humans → drop bot at next restart (don't yank mid-round)
-    // 0 humans → no bot
+    // Bot only when there's exactly 1 human (lonely solo player)
     if (this.players.size === 1 && !this.bot) {
       this.spawnBot();
       log(this.name, 'bot joined');
@@ -102,11 +144,22 @@ export class Game {
 
   spawnBot() {
     const spawn = this.pickSpawn();
-    const snake = new Snake('bot', spawn.x, spawn.y, spawn.dir);
+    const snake = new Snake('bot', spawn.x, spawn.y, spawn.dir, undefined, { isBot: true });
     snake.name = 'Bot';
     snake.color = BOT_COLOR;
-    snake.isBot = true;
     this.bot = { snake, score: 0, smartness: 1.0 };
+  }
+
+  spawnPredators() {
+    this.predators = [];
+    const count = PREDATOR_BASE_COUNT + Math.floor(this.players.size / PREDATOR_PER_N_PLAYERS);
+    for (let i = 0; i < count && i < PREDATOR_SPAWNS.length; i++) {
+      const s = PREDATOR_SPAWNS[i];
+      const pred = new Snake(`predator${i}`, s.x, s.y, s.dir, PREDATOR_LENGTH, { isPredator: true });
+      pred.name = 'Predator';
+      pred.color = PREDATOR_COLOR;
+      this.predators.push(pred);
+    }
   }
 
   buildSnake(player) {
@@ -128,10 +181,28 @@ export class Game {
     return SPAWN_POSITIONS[0];
   }
 
+  // ---- World content ----
+
+  generateObstacles() {
+    this.obstacles = [];
+    // Don't put obstacles within 4 cells of any spawn point
+    const tooClose = (x, y) => SPAWN_POSITIONS.some(s => Math.abs(s.x - x) <= 4 && Math.abs(s.y - y) <= 4);
+    let tries = 0;
+    while (this.obstacles.length < OBSTACLE_COUNT && tries < 500) {
+      tries++;
+      const x = Math.floor(Math.random() * WORLD_COLS);
+      const y = Math.floor(Math.random() * WORLD_ROWS);
+      if (tooClose(x, y)) continue;
+      if (this.obstacles.some(o => o.x === x && o.y === y)) continue;
+      this.obstacles.push({ x, y });
+    }
+  }
+
   allSnakes() {
     const snakes = [];
     for (const p of this.players.values()) snakes.push(p.snake);
     if (this.bot) snakes.push(this.bot.snake);
+    for (const p of this.predators) snakes.push(p);
     return snakes;
   }
 
@@ -141,59 +212,77 @@ export class Game {
   }
 
   makeFood() {
-    while (true) {
+    let tries = 0;
+    while (tries++ < 200) {
       const x = Math.floor(Math.random() * WORLD_COLS);
       const y = Math.floor(Math.random() * WORLD_ROWS);
       if (this.foods.some(f => f.x === x && f.y === y)) continue;
+      if (this.obstacles.some(o => o.x === x && o.y === y)) continue;
       if (this.allSnakes().some(s => s.body.some(c => c.x === x && c.y === y))) continue;
       return { x, y };
     }
+    return { x: 0, y: 0 }; // pathological fallback
   }
+
+  // ---- Messaging ----
 
   handleMessage(player, msg) {
     if (msg.type === 'direction' && player.snake && player.snake.alive) {
       if (typeof msg.dir === 'string') player.snake.setDirection(msg.dir);
-    } else if (msg.type === 'name' && typeof msg.name === 'string') {
-      const clean = msg.name.slice(0, 20);
-      player.name = clean;
-      if (player.snake) player.snake.name = clean;
     }
   }
+
+  // ---- Tick ----
 
   update() {
     if (this.restarting) return;
     this.tick++;
 
-    // 1. Bot picks a direction
+    // Bot picks direction (every tick)
     if (this.bot && this.bot.snake.alive) {
-      const dir = botMove(this.bot.snake, this.allSnakes(), this.foods);
+      const dir = botMove(this.bot.snake, this.allSnakes(), this.foods, this.obstacles);
       this.bot.snake.setDirection(dir);
       this.bot.smartness = computeSmartness(this.bot.snake.body.length);
     }
 
-    // 2. All alive snakes step
-    const alive = this.allSnakes().filter(s => s.alive);
-    for (const s of alive) {
+    // Predators pick direction (every PREDATOR_MOVE_EVERY ticks)
+    const predatorTurn = this.tick % PREDATOR_MOVE_EVERY === 0;
+    if (predatorTurn) {
+      for (const p of this.predators) {
+        if (!p.alive) continue;
+        const dir = predatorMove(p, this.allSnakes());
+        p.setDirection(dir);
+      }
+    }
+
+    // Determine who actually moves this tick (snakes always; predators on their turn)
+    const moving = this.allSnakes().filter(s => s.alive && (!s.isPredator || predatorTurn));
+
+    // Peek next head, check for food
+    for (const s of moving) {
       const nh = s.nextHead();
-      const foodIdx = this.foods.findIndex(f => f.x === nh.x && f.y === nh.y);
+      const foodIdx = (s.isPredator) ? -1 : this.foods.findIndex(f => f.x === nh.x && f.y === nh.y);
       s._willEat = foodIdx !== -1;
       s._foodIdx = foodIdx;
     }
-    for (const s of alive) {
+
+    // Step
+    for (const s of moving) {
       s.step(s._willEat);
     }
 
-    // 3. Collisions — wall, self, others
-    for (const s of alive) {
-      if (s.hitWall() || s.hitSelf() || s.hitOther(alive)) {
+    // Collisions — predators don't die; everyone else can
+    for (const s of moving) {
+      if (s.isPredator) continue;
+      if (s.hitWall() || s.hitSelf() || s.hitOther(this.allSnakes()) || s.hitCells(this.obstacles)) {
         s.alive = false;
       }
     }
 
-    // 4. Award food only to snakes still alive after collision
+    // Award food to alive non-predators
     const eatenIdxs = new Set();
-    for (const s of alive) {
-      if (!s.alive) continue;
+    for (const s of moving) {
+      if (!s.alive || s.isPredator) continue;
       if (s._willEat) {
         eatenIdxs.add(s._foodIdx);
         const p = [...this.players.values()].find(p => p.snake === s);
@@ -201,33 +290,32 @@ export class Game {
         else if (this.bot && this.bot.snake === s) this.bot.score += POINTS_PER_FOOD;
       }
     }
-    // Respawn eaten foods (remove high-index first to keep indexes stable)
     for (const idx of [...eatenIdxs].sort((a, b) => b - a)) {
       this.foods.splice(idx, 1);
     }
     while (this.foods.length < FOOD_COUNT) this.foods.push(this.makeFood());
 
-    // 5. End-of-round check
-    const totalSnakes = this.players.size + (this.bot ? 1 : 0);
-    const aliveSnakes = this.allSnakes().filter(s => s.alive);
+    // End-of-round
+    const competitors = this.players.size + (this.bot ? 1 : 0);
+    const aliveCompetitors = [...this.players.values()].filter(p => p.snake.alive).length
+                           + (this.bot && this.bot.snake.alive ? 1 : 0);
     let roundOver = false;
-    if (totalSnakes >= 2) {
-      // Last snake standing (or all dead)
-      if (aliveSnakes.length <= 1) roundOver = true;
+    if (competitors >= 2) {
+      if (aliveCompetitors <= 1) roundOver = true;
     } else {
-      // Solo (just bot — shouldn't really happen, or just one human)
-      if (aliveSnakes.length === 0) roundOver = true;
+      if (aliveCompetitors === 0) roundOver = true;
     }
     if (roundOver) this.endRound();
 
-    // 6. Broadcast
     this.broadcastState();
   }
 
   endRound() {
     this.restarting = true;
-    const alive = this.allSnakes().filter(s => s.alive);
-    const winner = alive.length === 1 ? alive[0].name : null;
+    const aliveHumans = [...this.players.values()].filter(p => p.snake.alive);
+    const aliveBot = this.bot && this.bot.snake.alive ? [this.bot.snake] : [];
+    const winners = [...aliveHumans.map(p => p.snake), ...aliveBot];
+    const winner = winners.length === 1 ? winners[0].name : null;
     log(this.name, `round over (winner: ${winner ?? 'none'})`);
     this.broadcast({ type: 'roundOver', winner });
     setTimeout(() => this.restart(), RESTART_DELAY_MS);
@@ -243,20 +331,20 @@ export class Game {
       this.buildSnake(p);
       p.score = 0;
     }
-    // Re-evaluate bot in case humans dropped to 1 between rounds
     if (this.players.size === 1 && !this.bot) {
       this.spawnBot();
       log(this.name, 'bot joined');
     }
     if (this.bot) {
       const spawn = this.pickSpawn();
-      this.bot.snake = new Snake('bot', spawn.x, spawn.y, spawn.dir);
+      this.bot.snake = new Snake('bot', spawn.x, spawn.y, spawn.dir, undefined, { isBot: true });
       this.bot.snake.name = 'Bot';
       this.bot.snake.color = BOT_COLOR;
-      this.bot.snake.isBot = true;
       this.bot.score = 0;
     }
+    this.spawnPredators();
     this.spawnFoods();
+    // Note: obstacles persist across rounds (the world's terrain stays)
     this.tick = 0;
     this.restarting = false;
     log(this.name, 'restarted');
@@ -282,6 +370,7 @@ export class Game {
       snakes: this.allSnakes().map(s => s.serialize()),
       foods: this.foods,
       scores,
+      // obstacles sent once on welcome — but include here too in case client reconnected
     });
   }
 
