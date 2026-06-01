@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Snake — v1 Classic</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #0f0f1a;
+      color: #f1f5f9;
+      font-family: -apple-system, system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      margin: 0;
+      min-height: 100vh;
+      touch-action: manipulation;
+    }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    .info { color: #94a3b8; margin-bottom: 8px; font-size: 14px; text-align: center; }
+    .score { font-size: 22px; margin: 6px 0; font-weight: 600; }
+
+    .play-area {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;             /* minimap wraps below canvas when there's no room */
+      justify-content: center;
+      gap: 14px;
+      align-items: flex-start;
+      max-width: 100%;
+    }
+    @media (max-width: 720px) {
+      h1 { font-size: 18px; }
+      .info { font-size: 12px; }
+      .play-area { gap: 8px; }
+    }
+
+    canvas#game {
+      border: 2px solid #334155;
+      border-radius: 4px;
+      background: #1a1a2e;
+      display: block;
+      touch-action: none;
+      max-width: 100%;
+      max-height: calc(100vh - 160px);
+      height: auto;
+      width: auto;
+      image-rendering: pixelated;   /* keeps cells crisp when CSS scales the canvas */
+    }
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+    }
+    canvas#minimap {
+      border: 1px solid #334155;
+      border-radius: 4px;
+      background: #0f0f1a;
+      display: block;
+    }
+    .side .label { font-size: 11px; color: #64748b; letter-spacing: 0.05em; }
+
+    .game-over {
+      display: none;
+      margin-top: 14px;
+      padding: 14px 24px;
+      background: #7f1d1d;
+      border-radius: 8px;
+      text-align: center;
+    }
+    button {
+      background: #4ade80;
+      color: #1a1a2e;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 8px;
+      min-height: 44px;   /* Apple HIG min tap target */
+      min-width: 44px;
+    }
+    button:hover, button:active { background: #22c55e; }
+  </style>
+</head>
+<body>
+  <h1>🐍 Snake — Classic</h1>
+  <div class="info">Swipe, arrow keys, or WASD to move. Find the red food. Don't hit a wall or yourself.</div>
+  <div class="score" id="score">Score: 0</div>
+
+  <div class="play-area">
+    <canvas id="game"></canvas>
+    <div class="side">
+      <canvas id="minimap"></canvas>
+      <div class="label">MINIMAP</div>
+    </div>
+  </div>
+
+  <div class="game-over" id="gameOver">
+    <div>Game Over!</div>
+    <button id="restart">Play Again</button>
+  </div>
+
+  <script type="module">
+    import { Game } from './js/Game.js';
+
+    const canvas = document.getElementById('game');
+    const minimap = document.getElementById('minimap');
+    const scoreEl = document.getElementById('score');
+    const gameOverEl = document.getElementById('gameOver');
+
+    const game = new Game(canvas, minimap, scoreEl, gameOverEl);
+
+    document.getElementById('restart').addEventListener('click', () => game.reset());
+
+    // Expose for the DevTools lesson — try `game.snake.body` in the console.
+    window.game = game;
+  </script>
+</body>
+</html>
