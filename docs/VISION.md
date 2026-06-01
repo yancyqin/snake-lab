@@ -56,7 +56,7 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 1. **v1-classic** — get the snake fundamentals solid
 2. **v2-arena** — add server, multi-snake, rooms
 3. **v3-coder** — swap keyboard input for bot function, add teacher controls (server logic reused from v2)
-4. **LESSONS.md** — written last, distilled from the working code
+4. **[camp/LESSONS.md](camp/LESSONS.md)** — written last, distilled from the working code
 
 ## Status
 
@@ -64,15 +64,16 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 - [x] v1-classic — playable, verified in browser (movement, eating, growth, wall/self collision, game-over, restart, big world w/ camera + minimap, touch controls, responsive)
 - [x] v2-arena — playable locally; up to 8 humans per room, solo gets a bot that's smart until length 10 then degrades. `Dockerfile` + `fly.toml` ready for deploy.
 - [ ] v3-coder (regular + teacher)
-- [~] LESSONS.md — 3-day camp curriculum drafted: L1/L2 (v1) and L3/L4 (v2) fully written; L5/L6 (v3) outlined, to be filled in once v3-coder ships
+- [~] [camp/LESSONS.md](camp/LESSONS.md) — 3-day camp curriculum drafted: L1/L2 (v1) and L3/L4 (v2) fully written; L5/L6 (v3) outlined, to be filled in once v3-coder ships
+- [x] [camp/PREP.md](camp/PREP.md) — instructor pre-camp checklist
 - [ ] COMMON_MISTAKES.md
 - [x] v1 deployed to GitHub Pages — https://yancyqin.github.io/snake-lab/
-- [ ] v2-arena deployed to fly.io (user runs `flyctl deploy`)
-- [ ] v3-coder client to GitHub Pages, v3 server to fly.io
+- [x] v2-arena deployed to Render — https://snake-lab-arena.onrender.com
+- [ ] v3-coder client to GitHub Pages, v3 server to Render (same render.yaml)
 
 ## Camp format
 
-Camp lessons are **play + lecture**, not workbook. Kids don't do free-form tuning — every code interaction is instructor-led. See [LESSONS.md](LESSONS.md) for the curriculum so far.
+Camp lessons are **play + lecture**, not workbook. Kids don't do free-form tuning — every code interaction is instructor-led. See [camp/LESSONS.md](camp/LESSONS.md) for the curriculum so far, [camp/PREP.md](camp/PREP.md) for the instructor checklist.
 
 ## Open issues to revisit
 

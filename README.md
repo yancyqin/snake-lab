@@ -4,7 +4,7 @@
 
 A three-version snake game built as a vibe-coding learning journey. The goal: kids learn modern web development by building a real game from scratch with AI assistance, then extending it to multiplayer and programmable bots.
 
-This project follows the same pattern as [`lucasgame`](../lucasgame/) (tower defense). The plan and design decisions live in [VISION.md](VISION.md) — read that before making structural changes.
+This project follows the same pattern as [`lucasgame`](../lucasgame/) (tower defense). The plan and design decisions live in [docs/VISION.md](docs/VISION.md) — read that before making structural changes.
 
 ## The three versions
 
@@ -18,11 +18,14 @@ Each version is its own folder and runs standalone.
 
 ## Status
 
-Currently building **v1-classic**. See [VISION.md](VISION.md) for the full roadmap.
+**v1-classic** and **v2-arena** are done. **v3-coder** is next. See [docs/VISION.md](docs/VISION.md) for the full roadmap.
 
-## Lessons
+## Docs
 
-A 5-ish-lesson curriculum (`LESSONS.md`) will be written **after** the games stabilize — the code comes first, lessons are distilled from it.
+- [docs/VISION.md](docs/VISION.md) — project plan, locked design decisions, build status
+- [docs/IDEAS.md](docs/IDEAS.md) — future tune-ups parked here
+- [docs/camp/LESSONS.md](docs/camp/LESSONS.md) — full 3-day camp curriculum
+- [docs/camp/PREP.md](docs/camp/PREP.md) — instructor pre-camp checklist
 
 ## Built by
 

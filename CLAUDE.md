@@ -1,6 +1,6 @@
 # CLAUDE.md — AI Assistant Guide
 
-This file is read by Claude Code when working in `snake-lab`. **Read [VISION.md](VISION.md) first** — it has the long-term plan and locked design decisions.
+This file is read by Claude Code when working in `snake-lab`. **Read [docs/VISION.md](docs/VISION.md) first** — it has the long-term plan and locked design decisions. Other cross-cutting docs live in [docs/](docs/).
 
 ## Project context
 
