@@ -1,0 +1,22 @@
+# fly.io config for v2-arena.
+# First-time setup: cd v2-arena && flyctl launch  (accept the existing fly.toml)
+# Subsequent deploys: flyctl deploy
+
+app = "snake-lab-arena"
+primary_region = "sjc"          # San Jose — change to your closest region
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Free-tier friendly: spin down when idle, spin up on next connection
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

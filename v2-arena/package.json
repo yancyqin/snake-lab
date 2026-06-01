@@ -1,0 +1,16 @@
+{
+  "name": "snake-lab-arena",
+  "version": "1.0.0",
+  "description": "Multiplayer snake — up to 8 humans per room, with a smart-then-dumb bot for solo play",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

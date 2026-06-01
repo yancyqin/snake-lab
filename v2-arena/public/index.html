@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Snake Arena — v2</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #0f0f1a;
+      color: #f1f5f9;
+      font-family: -apple-system, system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      margin: 0;
+      min-height: 100vh;
+      touch-action: manipulation;
+    }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    .info { color: #94a3b8; margin-bottom: 8px; font-size: 13px; text-align: center; }
+    .info code { background: #1a1a2e; padding: 2px 6px; border-radius: 3px; color: #f1f5f9; }
+
+    #scoreboard {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+      max-width: 100%;
+      justify-content: center;
+    }
+    .scoreItem {
+      background: #1a1a2e;
+      border-left: 4px solid #4ade80;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .scoreItem.me { box-shadow: 0 0 0 2px #f1f5f9; }
+    .scoreItem.dead { opacity: 0.4; }
+    .scoreItem strong { color: #4ade80; }
+    .scoreItem .label { color: #64748b; font-size: 10px; letter-spacing: 0.05em; }
+
+    .play-area {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      align-items: flex-start;
+      max-width: 100%;
+    }
+    canvas#game {
+      border: 2px solid #334155;
+      border-radius: 4px;
+      background: #1a1a2e;
+      display: block;
+      touch-action: none;
+      max-width: 100%;
+      max-height: calc(100vh - 220px);
+      height: auto;
+      width: auto;
+      image-rendering: pixelated;
+    }
+    .side { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+    canvas#minimap {
+      border: 1px solid #334155;
+      border-radius: 4px;
+      background: #0f0f1a;
+      display: block;
+    }
+    .side .label { font-size: 11px; color: #64748b; letter-spacing: 0.05em; }
+
+    #status {
+      margin-top: 10px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      min-height: 20px;
+      text-align: center;
+    }
+    #status.win  { background: #14532d; color: #4ade80; }
+    #status.lose { background: #7f1d1d; color: #fca5a5; }
+    #status.info { background: #1e293b; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>🐍 Snake Arena</h1>
+  <div class="info">Room <code id="roomName">lobby</code> · Swipe / arrow keys / WASD · Share this URL to join the same room</div>
+
+  <div id="scoreboard"></div>
+
+  <div class="play-area">
+    <canvas id="game"></canvas>
+    <div class="side">
+      <canvas id="minimap"></canvas>
+      <div class="label">MINIMAP</div>
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

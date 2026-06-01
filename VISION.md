@@ -62,11 +62,13 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 
 - [x] Vision agreed
 - [x] v1-classic — playable, verified in browser (movement, eating, growth, wall/self collision, game-over, restart, big world w/ camera + minimap, touch controls, responsive)
-- [ ] v2-arena
+- [x] v2-arena — playable locally; up to 8 humans per room, solo gets a bot that's smart until length 10 then degrades. `Dockerfile` + `fly.toml` ready for deploy.
 - [ ] v3-coder (regular + teacher)
-- [~] LESSONS.md — L1 + L2 drafted for v1-classic (play+lecture format); L3-L5 pending v2/v3 build
+- [~] LESSONS.md — L1 + L2 drafted for v1-classic (play+lecture format); L3-L5 pending v3 build
 - [ ] COMMON_MISTAKES.md
-- [ ] Deploy v1 + v3-coder client to GitHub Pages (v2 + v3 server stay local)
+- [x] v1 deployed to GitHub Pages — https://yancyqin.github.io/snake-lab/
+- [ ] v2-arena deployed to fly.io (user runs `flyctl deploy`)
+- [ ] v3-coder client to GitHub Pages, v3 server to fly.io
 
 ## Camp format
 
