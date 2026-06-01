@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Snake Lab 🐍</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #0f0f1a;
+      color: #f1f5f9;
+      font-family: -apple-system, system-ui, sans-serif;
+      margin: 0;
+      padding: 24px 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      text-align: center;
+      max-width: 640px;
+      margin-bottom: 32px;
+    }
+    h1 {
+      font-size: 40px;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .tagline {
+      color: #94a3b8;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 960px;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .card.live:hover {
+      border-color: #4ade80;
+      transform: translateY(-2px);
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card .desc {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.5;
+      flex-grow: 1;
+    }
+    .status {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .status.live { background: #14532d; color: #4ade80; }
+    .status.local { background: #422006; color: #fbbf24; }
+    .status.soon { background: #1e293b; color: #94a3b8; }
+    .play {
+      display: inline-block;
+      background: #4ade80;
+      color: #1a1a2e;
+      text-decoration: none;
+      text-align: center;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 15px;
+      margin-top: 4px;
+    }
+    .play:hover { background: #22c55e; }
+    .play.disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+    footer {
+      color: #64748b;
+      font-size: 13px;
+      text-align: center;
+      max-width: 640px;
+      line-height: 1.7;
+    }
+    footer a { color: #94a3b8; text-decoration: none; }
+    footer a:hover { color: #f1f5f9; }
+    .links { margin-top: 8px; }
+    .links a { margin: 0 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🐍 Snake Lab</h1>
+    <p class="tagline">A three-version snake game built as a vibe-coding learning journey for kids. Each version teaches more about programming — from a single-player classic to programmable bots.</p>
+  </header>
+
+  <div class="cards">
+    <div class="card live">
+      <h2>v1 — Classic <span class="status live">Play</span></h2>
+      <p class="desc">Single-player snake. A big world (60×60), camera follows your snake, minimap shows where the food is. Touch, swipe, or keyboard.</p>
+      <a class="play" href="./v1-classic/">▶ Play v1</a>
+    </div>
+
+    <div class="card">
+      <h2>v2 — Arena <span class="status local">Local only</span></h2>
+      <p class="desc">Multiplayer snake — up to 8 humans in a room over WebSocket. Needs a Node.js server, so it won't run on GitHub Pages. Clone the repo to play.</p>
+      <a class="play disabled" href="https://github.com/yancyqin/snake-lab#v2-arena">See on GitHub</a>
+    </div>
+
+    <div class="card">
+      <h2>v3 — Coder <span class="status soon">Coming</span></h2>
+      <p class="desc">Write a JavaScript function that controls a snake. Battle other kids' bots in an arena. Includes a teacher mode for pacing in class.</p>
+      <a class="play disabled">Coming soon</a>
+    </div>
+  </div>
+
+  <footer>
+    Built by a kid + dad + AI, in the spirit of <a href="https://yancyqin.github.io/lucasgame/">Lucas Game</a>.
+    <div class="links">
+      <a href="https://github.com/yancyqin/snake-lab">GitHub</a> ·
+      <a href="https://github.com/yancyqin/snake-lab/blob/main/VISION.md">Vision</a> ·
+      <a href="https://github.com/yancyqin/snake-lab/blob/main/LESSONS.md">Lessons</a>
+    </div>
+  </footer>
+</body>
+</html>

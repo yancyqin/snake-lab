@@ -1,5 +1,7 @@
 # snake-lab 🐍
 
+**[Play online →](https://yancyqin.github.io/snake-lab/)**
+
 A three-version snake game built as a vibe-coding learning journey. The goal: kids learn modern web development by building a real game from scratch with AI assistance, then extending it to multiplayer and programmable bots.
 
 This project follows the same pattern as [`lucasgame`](../lucasgame/) (tower defense). The plan and design decisions live in [VISION.md](VISION.md) — read that before making structural changes.
