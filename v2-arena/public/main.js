@@ -16,7 +16,12 @@ function startLobby() {
   document.getElementById('lobby').classList.remove('hidden');
   document.getElementById('gameScreen').classList.add('hidden');
 
-  const savedName  = sessionStorage.getItem('snakeName')  || '';
+  // Random funny default name if there's no saved one yet — kid can edit
+  let savedName = sessionStorage.getItem('snakeName');
+  if (!savedName) {
+    savedName = randomFunnyName();
+    sessionStorage.setItem('snakeName', savedName);
+  }
   const savedColor = sessionStorage.getItem('snakeColor') || PLAYER_COLORS[0];
 
   const nameInput   = document.getElementById('nameInput');
@@ -97,6 +102,17 @@ function randomRoomName() {
   return `${pick(adj)}-${pick(n)}`;
 }
 
+function randomFunnyName() {
+  const names = [
+    'Slinky', 'Wiggles', 'Hisstopher', 'Coily', 'Snek',
+    'Noodle', 'Squiggle', 'Zigzag', 'Pickle', 'Wormy',
+    'Sushi', 'Curly', 'Loopy', 'Pretzel', 'Mochi',
+    'Pebbles', 'Tofu', 'Wasabi', 'Slither', 'Boopy',
+    'Sir Hiss', 'Cap. Snek', 'Lord Bendy', 'Dr. Wiggle',
+  ];
+  return names[Math.floor(Math.random() * names.length)];
+}
+
 // ============ GAME ============
 
 function startGame(room) {
@@ -160,6 +176,11 @@ function startGame(room) {
       updateScoreboard(msg.scores, msg.snakes);
     } else if (msg.type === 'roundOver') {
       showRoundOver(msg.winner);
+    } else if (msg.type === 'restartCountdown') {
+      const secs = Math.round((msg.delay || 5000) / 1000);
+      const who = msg.joiner || 'A new player';
+      setStatus(`${who} joined! New round in ${secs}s...`, 'info');
+      setTimeout(() => setStatus('', ''), msg.delay);
     }
   };
 
@@ -201,9 +222,9 @@ function startGame(room) {
       el.className = 'scoreItem' + (id === myId ? ' me' : '') + (alive ? '' : ' dead');
       el.style.borderLeftColor = s.color;
       const smart = s.isBot && s.smartness !== undefined
-        ? ` <span class="label">${Math.round(s.smartness * 100)}% smart</span>`
+        ? `<span class="label">${Math.round(s.smartness * 100)}%</span>`
         : '';
-      el.innerHTML = `<span>${escapeHtml(s.name)}</span><strong>${s.score}</strong>${smart}`;
+      el.innerHTML = `<span class="name-cell">${escapeHtml(s.name)}</span>${smart}<strong>${s.score}</strong>`;
       scoreEl.appendChild(el);
     }
   }

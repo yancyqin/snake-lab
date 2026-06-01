@@ -87,6 +87,16 @@ export class Game {
     });
 
     log(this.name, `+${id} ${player.name} ${color} (${this.players.size}/${MAX_PLAYERS})`);
+
+    // 2+ humans now — restart the round in 5s for fairness (and to drop the bot)
+    if (this.players.size >= 2 && !this.restarting) {
+      this.restarting = true;
+      const delay = 5000;
+      this.broadcast({ type: 'restartCountdown', joiner: player.name, delay });
+      setTimeout(() => this.restart(), delay);
+      log(this.name, `restart in ${delay}ms (new player joined)`);
+    }
+
     return player;
   }
 

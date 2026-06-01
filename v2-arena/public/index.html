@@ -142,37 +142,14 @@
     }
     .game-header button { padding: 6px 12px; font-size: 12px; min-height: 32px; }
 
-    #scoreboard {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 8px;
-      max-width: 100%;
-      justify-content: center;
-    }
-    .scoreItem {
-      background: #1a1a2e;
-      border-left: 4px solid #4ade80;
-      padding: 6px 10px;
-      border-radius: 4px;
-      font-size: 13px;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .scoreItem.me { box-shadow: 0 0 0 2px #f1f5f9; }
-    .scoreItem.dead { opacity: 0.4; }
-    .scoreItem strong { color: #4ade80; }
-    .scoreItem .label { color: #64748b; font-size: 10px; letter-spacing: 0.05em; }
-
     .play-area {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
-      justify-content: center;
-      gap: 14px;
+      gap: 16px;
       align-items: flex-start;
       max-width: 100%;
+      justify-content: center;
     }
     canvas#game {
       border: 2px solid #334155;
@@ -181,19 +158,60 @@
       display: block;
       touch-action: none;
       max-width: 100%;
-      max-height: calc(100vh - 260px);
+      max-height: calc(100vh - 200px);
       height: auto;
       width: auto;
       image-rendering: pixelated;
     }
-    .side { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 200px;
+      max-width: 240px;
+    }
+
+    #scoreboard {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .scoreItem {
+      background: #1a1a2e;
+      border-left: 4px solid #4ade80;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .scoreItem.me { box-shadow: 0 0 0 2px #f1f5f9; }
+    .scoreItem.dead { opacity: 0.4; }
+    .scoreItem .name-cell { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .scoreItem strong { color: #4ade80; }
+    .scoreItem .label { color: #64748b; font-size: 10px; letter-spacing: 0.05em; }
+
+    .minimap-block { display: flex; flex-direction: column; gap: 6px; align-items: center; }
     canvas#minimap {
       border: 1px solid #334155;
       border-radius: 4px;
       background: #0f0f1a;
       display: block;
+      max-width: 100%;
+      height: auto;
     }
-    .side .label { font-size: 11px; color: #64748b; letter-spacing: 0.05em; }
+    .minimap-block .label { font-size: 11px; color: #64748b; letter-spacing: 0.05em; }
+
+    /* Below ~1000px (tablet portrait, phone) the canvas+sidebar can't sit side by side.
+       Stack the canvas, then put the sidebar below as a horizontal row. */
+    @media (max-width: 1000px) {
+      .play-area { flex-direction: column; align-items: center; }
+      .sidebar { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-start; max-width: 100%; min-width: 0; gap: 12px; }
+      #scoreboard { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    }
 
     #status {
       margin-top: 10px;
@@ -213,7 +231,7 @@
   <!-- ============ LOBBY ============ -->
   <div id="lobby" class="screen">
     <h1>🐍 Snake Arena</h1>
-    <div class="tagline">Multiplayer snake — 8 per room, with rocks, predators, and a smart bot for solo play.</div>
+    <div class="tagline">Multiplayer snake — up to 8 per room. Solo play gets a smart bot that gets dumber as it grows.</div>
 
     <div class="panel">
       <h2>Your snake</h2>
@@ -246,13 +264,14 @@
       <button id="leaveBtn" class="secondary">Leave</button>
     </div>
 
-    <div id="scoreboard"></div>
-
     <div class="play-area">
       <canvas id="game"></canvas>
-      <div class="side">
-        <canvas id="minimap"></canvas>
-        <div class="label">MINIMAP</div>
+      <div class="sidebar">
+        <div id="scoreboard"></div>
+        <div class="minimap-block">
+          <canvas id="minimap"></canvas>
+          <div class="label">MINIMAP</div>
+        </div>
       </div>
     </div>
 
