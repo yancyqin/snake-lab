@@ -11,7 +11,7 @@ This file is read by Claude Code when working in `snake-lab`. **Read [VISION.md]
 ```bash
 # v1-classic (single player, static)
 cd v1-classic
-python3 -m http.server 8080
+python3 server.py 8080         # adds Cache-Control: no-store so iPads don't hold stale JS
 # open http://localhost:8080
 
 # v2-arena, v3-coder — see their own folders (Node + ws)
@@ -25,6 +25,7 @@ Inside each version:
 ```
 v1-classic/
   index.html       — page, canvas, score, controls
+  server.py        — local dev server with no-cache headers (so refreshes pick up new JS)
   js/
     constants.js   — CELL_SIZE, COLS, ROWS, TICK_MS, COLORS
     Snake.js       — Snake class

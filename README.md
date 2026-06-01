@@ -10,7 +10,7 @@ This project follows the same pattern as [`lucasgame`](../lucasgame/) (tower def
 
 | | What | Stack | How to run |
 |---|---|---|---|
-| **v1-classic** | Single-player snake | Static HTML + vanilla JS | `cd v1-classic && python3 -m http.server 8080` |
+| **v1-classic** | Single-player snake | Static HTML + vanilla JS | `cd v1-classic && python3 server.py 8080` |
 | **v2-arena** | Multiplayer snake (humans) | Node.js + `ws` | (instructions in `v2-arena/`) |
 | **v3-coder** | Programmable bots — paste JS code, bots compete | Node.js + `ws` | (instructions in `v3-coder/`) |
 
