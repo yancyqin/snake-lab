@@ -2,8 +2,8 @@
 
 A 3-day camp curriculum built around the three Snake games in this repo. Format: **play + lecture**. Kids play the running game on their iPads; the instructor uses the game as a live demo to teach concepts. Kids don't do free-form tuning — every code interaction is instructor-led.
 
-> **For the full project plan, read [../VISION.md](../VISION.md).**
-> **For the AI assistant guide, read [../../CLAUDE.md](../../CLAUDE.md).**
+> **For the full project plan, read [../README.md](../README.md).**
+> **For the AI assistant guide, read [../CLAUDE.md](../CLAUDE.md).**
 > **For the pre-camp instructor checklist, read [PREP.md](PREP.md).**
 
 ## Camp agenda (3 days, 6 sessions)

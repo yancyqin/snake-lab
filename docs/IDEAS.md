@@ -2,7 +2,7 @@
 
 A place to park ideas we tried, decided against, or might revisit. Not committed plans — these are the "we could…" list.
 
-> For pre-camp instructor checklist see [camp/PREP.md](camp/PREP.md) — that's actionable. This file is for "could be fun someday."
+> For pre-camp instructor checklist see [PREP.md](PREP.md) — that's actionable. This file is for "could be fun someday."
 
 ## Tried, removed (might come back as opt-in)
 

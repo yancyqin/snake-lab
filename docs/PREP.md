@@ -2,7 +2,7 @@
 
 Pre-camp checklist for the instructor. Surfaced from the L1–L6 lesson plans. Run through this the week before, again the night before, again on the morning of Day 1.
 
-For the actual lesson content see [LESSONS.md](LESSONS.md). For the broader project plan see [../VISION.md](../VISION.md).
+For the actual lesson content see [LESSONS.md](LESSONS.md). For the broader project plan see [../README.md](../README.md).
 
 ## A week before
 
