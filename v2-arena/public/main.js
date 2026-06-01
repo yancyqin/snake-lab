@@ -1,10 +1,9 @@
-import { PLAYER_COLORS } from './constants.js';
+import { PLAYER_COLORS, POINTS_PER_FOOD } from './constants.js';
 import { Renderer } from './render.js';
 
 const params = new URLSearchParams(location.search);
 const roomFromUrl = params.get('room');
 
-// ---- Pick screen based on URL ----
 if (roomFromUrl) {
   startGame(roomFromUrl);
 } else {
@@ -17,7 +16,6 @@ function startLobby() {
   document.getElementById('lobby').classList.remove('hidden');
   document.getElementById('gameScreen').classList.add('hidden');
 
-  // Restore name + color from sessionStorage if present
   const savedName  = sessionStorage.getItem('snakeName')  || '';
   const savedColor = sessionStorage.getItem('snakeColor') || PLAYER_COLORS[0];
 
@@ -31,7 +29,6 @@ function startLobby() {
     sessionStorage.setItem('snakeName', nameInput.value);
   });
 
-  // Build color swatches
   let selectedColor = savedColor;
   function renderSwatches() {
     colorPicker.innerHTML = '';
@@ -50,7 +47,6 @@ function startLobby() {
   }
   renderSwatches();
 
-  // Fetch rooms + re-fetch every 3s
   async function refreshRooms() {
     try {
       const res = await fetch('/api/rooms');
@@ -74,7 +70,7 @@ function startLobby() {
         <span class="room-name">${escapeHtml(r.name)}</span>
         <span style="display:flex; gap:10px; align-items:center;">
           <span class="room-count${full ? ' full' : ''}">${r.players}/${r.max}</span>
-          <button ${full ? 'class="disabled" disabled' : ''} data-room="${escapeAttr(r.name)}">${full ? 'Full' : 'Join'}</button>
+          <button ${full ? 'class="disabled" disabled' : ''} data-room="${escapeHtml(r.name)}">${full ? 'Full' : 'Join'}</button>
         </span>`;
       const btn = li.querySelector('button');
       if (!full) btn.addEventListener('click', () => joinRoom(r.name));
@@ -84,9 +80,7 @@ function startLobby() {
   refreshRooms();
   const refreshTimer = setInterval(refreshRooms, 3000);
 
-  createBtn.addEventListener('click', () => {
-    joinRoom(randomRoomName());
-  });
+  createBtn.addEventListener('click', () => joinRoom(randomRoomName()));
 
   function joinRoom(roomName) {
     clearInterval(refreshTimer);
@@ -129,8 +123,9 @@ function startGame(room) {
   const renderer = new Renderer(canvas, minimap);
 
   let myId = null;
-  let lastState = null;
-  let obstacles = [];   // sent once on welcome
+  let lastState = null;     // most recent state from server
+  let prevSnakes = null;    // last tick's snakes — for detecting eats
+  const popups = [];        // active +10 popups: { cellX, cellY, text, color, startTime }
 
   const ws = new WebSocket(wsUrl);
   ws.onopen = () => setStatus('Connecting...', 'info');
@@ -139,15 +134,29 @@ function startGame(room) {
     const msg = JSON.parse(e.data);
     if (msg.type === 'welcome') {
       myId = msg.playerId;
-      obstacles = msg.obstacles || [];
       setStatus('', '');
     } else if (msg.type === 'rejected') {
-      const reason = msg.reason === 'full' ? 'This room is full (8/8). Pick another.' : 'Could not join.';
-      alert(reason);
+      alert(msg.reason === 'full' ? 'This room is full (8/8). Pick another.' : 'Could not join.');
       location.href = '/';
     } else if (msg.type === 'state') {
+      // Detect eats: snake whose body grew since last tick
+      if (prevSnakes) {
+        const prevById = new Map(prevSnakes.map(s => [s.id, s]));
+        for (const ns of msg.snakes) {
+          const ps = prevById.get(ns.id);
+          if (ps && ns.body.length > ps.body.length && ns.alive) {
+            popups.push({
+              cellX: ns.body[0].x,
+              cellY: ns.body[0].y,
+              text: `+${POINTS_PER_FOOD}`,
+              color: ns.color,
+              startTime: performance.now(),
+            });
+          }
+        }
+      }
       lastState = msg;
-      renderer.draw(msg, myId, obstacles);
+      prevSnakes = msg.snakes.map(s => ({ id: s.id, body: s.body.slice(), alive: s.alive }));
       updateScoreboard(msg.scores, msg.snakes);
     } else if (msg.type === 'roundOver') {
       showRoundOver(msg.winner);
@@ -199,6 +208,16 @@ function startGame(room) {
     }
   }
 
+  // RAF loop — keeps food pulsing and popups animating between state arrivals
+  function loop() {
+    const now = performance.now();
+    // Drop popups older than their lifetime
+    while (popups.length && now - popups[0].startTime > 900) popups.shift();
+    if (lastState) renderer.draw(lastState, myId, popups, now);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
   // Input
   function sendDirection(dir) {
     if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'direction', dir }));
@@ -231,20 +250,16 @@ function startGame(room) {
     else                              sendDirection(dy > 0 ? 'DOWN' : 'UP');
   }, { passive: false });
 
-  // Leave button
   document.getElementById('leaveBtn').addEventListener('click', () => {
     ws.close();
     location.href = '/';
   });
 
-  // Expose for DevTools
   window.snakeArena = { ws, get state() { return lastState; }, get myId() { return myId; } };
 }
 
-// ---- helpers ----
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
 }
-function escapeAttr(s) { return escapeHtml(s); }

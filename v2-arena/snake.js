@@ -20,7 +20,6 @@ export class Snake {
     this.pendingDirection = direction;
     this.alive = true;
     this.isBot = options.isBot || false;
-    this.isPredator = options.isPredator || false;
     this.name = '';
     this.color = '#4ade80';
   }
@@ -70,12 +69,6 @@ export class Snake {
     return false;
   }
 
-  // Generalized hit for static cells (obstacles).
-  hitCells(cells) {
-    const h = this.head();
-    return cells.some(c => c.x === h.x && c.y === h.y);
-  }
-
   serialize() {
     return {
       id: this.id,
@@ -85,7 +78,6 @@ export class Snake {
       direction: this.direction,
       alive: this.alive,
       isBot: this.isBot,
-      isPredator: this.isPredator,
     };
   }
 }

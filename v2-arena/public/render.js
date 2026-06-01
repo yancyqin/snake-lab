@@ -2,6 +2,24 @@ import {
   CELL_SIZE, WORLD_COLS, WORLD_ROWS, VIEW_COLS, VIEW_ROWS, COLORS,
 } from './constants.js';
 
+// --- tiny color helpers (so we don't add a dependency) ---
+function hexToRgb(hex) {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+}
+function darken(hex, amount) {
+  const [r, g, b] = hexToRgb(hex);
+  const f = 1 - amount;
+  return `rgb(${Math.round(r * f)}, ${Math.round(g * f)}, ${Math.round(b * f)})`;
+}
+function withAlpha(hex, a) {
+  const [r, g, b] = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
 export class Renderer {
   constructor(canvas, minimap) {
     this.canvas = canvas;
@@ -12,27 +30,39 @@ export class Renderer {
     canvas.height = VIEW_ROWS * CELL_SIZE;
     minimap.width = WORLD_COLS * 3;
     minimap.height = WORLD_ROWS * 3;
+
+    // Cached background gradient (regenerated if canvas resizes — but it doesn't)
+    this._bgGrad = null;
   }
 
-  draw(state, myId, obstacles = []) {
+  // `popups` is an array of { cellX, cellY, text, color, startTime } (ms)
+  // `now` is performance.now()
+  draw(state, myId, popups, now) {
     const mySnake = state.snakes.find(s => s.id === myId);
     const focus = mySnake ? mySnake.body[0] : { x: WORLD_COLS / 2, y: WORLD_ROWS / 2 };
     const camX = Math.max(0, Math.min(WORLD_COLS - VIEW_COLS, focus.x - Math.floor(VIEW_COLS / 2)));
     const camY = Math.max(0, Math.min(WORLD_ROWS - VIEW_ROWS, focus.y - Math.floor(VIEW_ROWS / 2)));
 
-    this._drawWorld(state, obstacles, camX, camY, myId);
-    this._drawMinimap(state, obstacles, camX, camY);
+    this._drawWorld(state, camX, camY, myId, popups, now);
+    this._drawMinimap(state, camX, camY);
   }
 
-  _drawWorld(state, obstacles, camX, camY, myId) {
+  _drawWorld(state, camX, camY, myId, popups, now) {
     const ctx = this.ctx;
     const W = VIEW_COLS * CELL_SIZE;
     const H = VIEW_ROWS * CELL_SIZE;
 
-    ctx.fillStyle = COLORS.background;
+    // Background — radial gradient (warmer in center, darker at edges)
+    if (!this._bgGrad) {
+      const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H));
+      g.addColorStop(0, COLORS.bgNear);
+      g.addColorStop(1, COLORS.bgFar);
+      this._bgGrad = g;
+    }
+    ctx.fillStyle = this._bgGrad;
     ctx.fillRect(0, 0, W, H);
 
-    // Grid
+    // Subtle grid — much less prominent than v2.1
     ctx.strokeStyle = COLORS.grid;
     ctx.lineWidth = 1;
     for (let i = 0; i <= VIEW_COLS; i++) {
@@ -44,7 +74,7 @@ export class Renderer {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     }
 
-    // World edges (highlighted when camera is against them)
+    // World edges
     ctx.strokeStyle = COLORS.worldEdge;
     ctx.lineWidth = 4;
     if (camX === 0)                       { ctx.beginPath(); ctx.moveTo(2, 0);     ctx.lineTo(2, H);     ctx.stroke(); }
@@ -52,115 +82,220 @@ export class Renderer {
     if (camY === 0)                       { ctx.beginPath(); ctx.moveTo(0, 2);     ctx.lineTo(W, 2);     ctx.stroke(); }
     if (camY === WORLD_ROWS - VIEW_ROWS)  { ctx.beginPath(); ctx.moveTo(0, H - 2); ctx.lineTo(W, H - 2); ctx.stroke(); }
 
-    // Obstacles (rocks)
-    for (const o of obstacles) {
-      if (!this._inView(o.x, o.y, camX, camY)) continue;
-      const sx = (o.x - camX) * CELL_SIZE;
-      const sy = (o.y - camY) * CELL_SIZE;
-      this._drawRock(sx, sy);
-    }
-
-    // Food
-    ctx.fillStyle = COLORS.food;
+    // Food — pulsing circles with a soft glow halo
+    const t = now / 1000;
     for (const f of state.foods) {
       if (!this._inView(f.x, f.y, camX, camY)) continue;
-      const sx = (f.x - camX) * CELL_SIZE;
-      const sy = (f.y - camY) * CELL_SIZE;
-      ctx.fillRect(sx + 4, sy + 4, CELL_SIZE - 8, CELL_SIZE - 8);
+      const cx = (f.x - camX) * CELL_SIZE + CELL_SIZE / 2;
+      const cy = (f.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+      // Per-food phase offset so they don't all pulse in lockstep
+      const phase = t * 2.5 + (f.x * 0.7 + f.y * 0.5);
+      const pulse = 0.85 + 0.15 * Math.sin(phase);
+      const baseR = CELL_SIZE * 0.32;
+      const r = baseR * pulse;
+
+      // Glow halo
+      ctx.fillStyle = COLORS.foodGlow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 2.0, 0, Math.PI * 2);
+      ctx.fill();
+      // Solid core
+      ctx.fillStyle = COLORS.food;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    // Snakes — draw dead first so alive ones are on top
+    // Snakes — dead first so alive ones cover them
     const ordered = [...state.snakes].sort((a, b) => (a.alive === b.alive ? 0 : a.alive ? 1 : -1));
     for (const s of ordered) {
       this._drawSnake(s, camX, camY, s.id === myId);
     }
     ctx.globalAlpha = 1.0;
-  }
 
-  _drawRock(sx, sy) {
-    const ctx = this.ctx;
-    ctx.fillStyle = COLORS.obstacle;
-    ctx.fillRect(sx + 2, sy + 2, CELL_SIZE - 4, CELL_SIZE - 4);
-    ctx.strokeStyle = COLORS.obstacleBorder;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(sx + 3, sy + 3, CELL_SIZE - 6, CELL_SIZE - 6);
-    // Inner highlight for a tiny bit of depth
-    ctx.fillStyle = '#64748b';
-    ctx.fillRect(sx + 6, sy + 6, 4, 4);
+    // Score popups (drawn on top of everything)
+    this._drawPopups(popups, camX, camY, now);
   }
 
   _drawSnake(s, camX, camY, isMe) {
     const ctx = this.ctx;
-    ctx.globalAlpha = s.alive ? 1.0 : 0.3;
-    const labelName = (s.name || '').toUpperCase();
+    const alive = s.alive;
+    ctx.globalAlpha = alive ? 1.0 : 0.35;
 
-    for (let i = 0; i < s.body.length; i++) {
-      const cell = s.body[i];
-      if (!this._inView(cell.x, cell.y, camX, camY)) continue;
-      const sx = (cell.x - camX) * CELL_SIZE;
-      const sy = (cell.y - camY) * CELL_SIZE;
+    // --- Body as continuous rounded path ---
+    if (s.body.length >= 2) {
+      // Outer stroke (dark outline)
+      ctx.strokeStyle = COLORS.bodyOutline;
+      ctx.lineWidth = CELL_SIZE * 0.92;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      this._tracePath(s.body, camX, camY);
+      ctx.stroke();
 
-      if (i === 0) {
-        this._drawHead(sx, sy, s, isMe);
-      } else {
-        // Body cell
+      // Inner stroke (snake color)
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = CELL_SIZE * 0.78;
+      this._tracePath(s.body, camX, camY);
+      ctx.stroke();
+    } else {
+      // Single-cell snake — draw a dot
+      const c = s.body[0];
+      if (this._inView(c.x, c.y, camX, camY)) {
+        const cx = (c.x - camX) * CELL_SIZE + CELL_SIZE / 2;
+        const cy = (c.y - camY) * CELL_SIZE + CELL_SIZE / 2;
         ctx.fillStyle = s.color;
-        ctx.fillRect(sx + 1, sy + 1, CELL_SIZE - 2, CELL_SIZE - 2);
-
-        // Predator body has a darker stripe for menace
-        if (s.isPredator) {
-          ctx.fillStyle = '#7f1d1d';
-          ctx.fillRect(sx + 4, sy + 4, CELL_SIZE - 8, CELL_SIZE - 8);
-        }
-
-        // Name character — repeat across the body. Skip for unnamed (bots, predators).
-        if (labelName && !s.isPredator && !s.isBot) {
-          const char = labelName[(i - 1) % labelName.length];
-          ctx.fillStyle = COLORS.bodyText;
-          ctx.font = `bold ${Math.floor(CELL_SIZE * 0.55)}px -apple-system, system-ui, monospace`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(char, sx + CELL_SIZE / 2, sy + CELL_SIZE / 2 + 1);
-        }
+        ctx.beginPath();
+        ctx.arc(cx, cy, CELL_SIZE * 0.42, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
+
+    // --- Name letters along the body (not on the head) ---
+    const labelName = (s.name || '').toUpperCase();
+    if (labelName && !s.isBot && s.body.length > 1) {
+      ctx.fillStyle = COLORS.bodyText;
+      ctx.font = `bold ${Math.floor(CELL_SIZE * 0.5)}px -apple-system, system-ui, monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 1; i < s.body.length; i++) {
+        const cell = s.body[i];
+        if (!this._inView(cell.x, cell.y, camX, camY)) continue;
+        const cx = (cell.x - camX) * CELL_SIZE + CELL_SIZE / 2;
+        const cy = (cell.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+        const char = labelName[(i - 1) % labelName.length];
+        ctx.fillText(char, cx, cy + 1);
+      }
+    }
+
+    // --- Head on top ---
+    const head = s.body[0];
+    if (this._inView(head.x, head.y, camX, camY)) {
+      this._drawHead(head, s, camX, camY, isMe);
+    }
   }
 
-  _drawHead(sx, sy, snake, isMe) {
+  _tracePath(body, camX, camY) {
     const ctx = this.ctx;
-    ctx.fillStyle = snake.color;
-    ctx.fillRect(sx + 1, sy + 1, CELL_SIZE - 2, CELL_SIZE - 2);
-
-    // White outline on MY snake's head so I can spot it instantly
-    if (isMe) {
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(sx + 1.5, sy + 1.5, CELL_SIZE - 3, CELL_SIZE - 3);
+    ctx.beginPath();
+    for (let i = 0; i < body.length; i++) {
+      const c = body[i];
+      const x = (c.x - camX) * CELL_SIZE + CELL_SIZE / 2;
+      const y = (c.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+      if (i === 0) ctx.moveTo(x, y);
+      else         ctx.lineTo(x, y);
     }
-
-    // Predator: darker inset + red eye whites (angry)
-    if (snake.isPredator) {
-      ctx.fillStyle = '#7f1d1d';
-      ctx.fillRect(sx + 4, sy + 4, CELL_SIZE - 8, CELL_SIZE - 8);
-    }
-
-    // Eyes — parametric so they scale with CELL_SIZE
-    const E    = Math.max(3, Math.floor(CELL_SIZE / 6));
-    const back = Math.floor(CELL_SIZE * 0.15);
-    const fwd  = CELL_SIZE - E - back;
-    const near = Math.floor(CELL_SIZE * 0.22);
-    const far  = CELL_SIZE - near - E;
-    const eyes = {
-      RIGHT: [[sx + fwd,  sy + near], [sx + fwd,  sy + far]],
-      LEFT:  [[sx + back, sy + near], [sx + back, sy + far]],
-      UP:    [[sx + near, sy + back], [sx + far,  sy + back]],
-      DOWN:  [[sx + near, sy + fwd],  [sx + far,  sy + fwd]],
-    }[snake.direction];
-    ctx.fillStyle = snake.isPredator ? COLORS.predatorEye : COLORS.snakeEye;
-    eyes.forEach(([ex, ey]) => ctx.fillRect(ex, ey, E, E));
   }
 
-  _drawMinimap(state, obstacles, camX, camY) {
+  _drawHead(head, snake, camX, camY, isMe) {
+    const ctx = this.ctx;
+    const cx = (head.x - camX) * CELL_SIZE + CELL_SIZE / 2;
+    const cy = (head.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+    const r = CELL_SIZE * 0.48;
+
+    // Outer outline
+    ctx.fillStyle = darken(snake.color, 0.35);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Main fill
+    ctx.fillStyle = snake.color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // My-snake aura — soft glow ring around head
+    if (isMe && snake.alive) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Eyes — switch to X eyes if dead
+    if (!snake.alive) {
+      this._drawDeadEyes(cx, cy, snake.direction, r);
+    } else {
+      this._drawLiveEyes(cx, cy, snake.direction, r);
+    }
+  }
+
+  _drawLiveEyes(cx, cy, dir, r) {
+    const ctx = this.ctx;
+    const E = Math.max(3, Math.floor(CELL_SIZE / 7));   // eye size
+    const fwd = r * 0.45;                                // distance from center toward facing edge
+    const side = r * 0.45;                               // perpendicular spread
+
+    // Compute eye positions based on direction
+    let e1, e2;
+    if (dir === 'RIGHT') { e1 = [cx + fwd, cy - side]; e2 = [cx + fwd, cy + side]; }
+    if (dir === 'LEFT')  { e1 = [cx - fwd, cy - side]; e2 = [cx - fwd, cy + side]; }
+    if (dir === 'UP')    { e1 = [cx - side, cy - fwd]; e2 = [cx + side, cy - fwd]; }
+    if (dir === 'DOWN')  { e1 = [cx - side, cy + fwd]; e2 = [cx + side, cy + fwd]; }
+
+    // White sclera
+    ctx.fillStyle = '#fef2f2';
+    ctx.beginPath(); ctx.arc(e1[0], e1[1], E, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(e2[0], e2[1], E, 0, Math.PI * 2); ctx.fill();
+    // Dark pupil (offset slightly forward)
+    const pupilOff = E * 0.35;
+    const off = {
+      RIGHT: [pupilOff, 0], LEFT: [-pupilOff, 0], UP: [0, -pupilOff], DOWN: [0, pupilOff],
+    }[dir];
+    ctx.fillStyle = COLORS.snakeEye;
+    ctx.beginPath(); ctx.arc(e1[0] + off[0], e1[1] + off[1], E * 0.55, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(e2[0] + off[0], e2[1] + off[1], E * 0.55, 0, Math.PI * 2); ctx.fill();
+  }
+
+  _drawDeadEyes(cx, cy, dir, r) {
+    const ctx = this.ctx;
+    const fwd = r * 0.45;
+    const side = r * 0.45;
+    const E = Math.max(3, Math.floor(CELL_SIZE / 7));
+
+    let e1, e2;
+    if (dir === 'RIGHT') { e1 = [cx + fwd, cy - side]; e2 = [cx + fwd, cy + side]; }
+    if (dir === 'LEFT')  { e1 = [cx - fwd, cy - side]; e2 = [cx - fwd, cy + side]; }
+    if (dir === 'UP')    { e1 = [cx - side, cy - fwd]; e2 = [cx + side, cy - fwd]; }
+    if (dir === 'DOWN')  { e1 = [cx - side, cy + fwd]; e2 = [cx + side, cy + fwd]; }
+
+    ctx.strokeStyle = COLORS.snakeEye;
+    ctx.lineWidth = 2;
+    const drawX = ([x, y]) => {
+      ctx.beginPath();
+      ctx.moveTo(x - E, y - E); ctx.lineTo(x + E, y + E);
+      ctx.moveTo(x + E, y - E); ctx.lineTo(x - E, y + E);
+      ctx.stroke();
+    };
+    drawX(e1); drawX(e2);
+  }
+
+  _drawPopups(popups, camX, camY, now) {
+    if (!popups || popups.length === 0) return;
+    const ctx = this.ctx;
+    const LIFETIME = 900;  // ms
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const p of popups) {
+      const age = now - p.startTime;
+      if (age > LIFETIME) continue;
+      if (!this._inView(p.cellX, p.cellY, camX, camY)) continue;
+      const progress = age / LIFETIME;
+      const alpha = Math.max(0, 1 - progress);
+      const drift = progress * 36;     // pixels upward over the lifetime
+      const sx = (p.cellX - camX) * CELL_SIZE + CELL_SIZE / 2;
+      const sy = (p.cellY - camY) * CELL_SIZE + CELL_SIZE / 2 - drift;
+      ctx.font = `bold 18px -apple-system, system-ui, sans-serif`;
+      // Shadow then text for legibility on bright body cells
+      ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.6})`;
+      ctx.fillText(p.text, sx + 1, sy + 1);
+      ctx.fillStyle = withAlpha(p.color || '#ffffff', alpha);
+      ctx.fillText(p.text, sx, sy);
+    }
+  }
+
+  _drawMinimap(state, camX, camY) {
     const ctx = this.miniCtx;
     const w = this.minimap.width;
     const h = this.minimap.height;
@@ -170,19 +305,11 @@ export class Renderer {
     ctx.fillStyle = COLORS.minimapBg;
     ctx.fillRect(0, 0, w, h);
 
-    // Obstacles
-    ctx.fillStyle = COLORS.minimapObstacle;
-    for (const o of obstacles) {
-      ctx.fillRect(o.x * sx, o.y * sy, Math.max(sx, 2), Math.max(sy, 2));
-    }
-
-    // Food
     ctx.fillStyle = COLORS.minimapFood;
     for (const f of state.foods) {
       ctx.fillRect(f.x * sx, f.y * sy, Math.max(sx, 2), Math.max(sy, 2));
     }
 
-    // Snakes
     for (const s of state.snakes) {
       ctx.fillStyle = s.color;
       ctx.globalAlpha = s.alive ? 1 : 0.3;
@@ -192,7 +319,6 @@ export class Renderer {
     }
     ctx.globalAlpha = 1;
 
-    // Viewport box
     ctx.strokeStyle = COLORS.minimapView;
     ctx.lineWidth = 1;
     ctx.strokeRect(camX * sx + 0.5, camY * sy + 0.5, VIEW_COLS * sx, VIEW_ROWS * sy);
