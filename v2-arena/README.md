@@ -24,20 +24,29 @@ http://localhost:8080/?room=campfire
 ```
 No room specified → default room `lobby`.
 
-## Deploy to fly.io
+## Deploying
+
+### For camp (no deploy needed)
+Run `node server.js` on the instructor's Mac. Kids connect to `http://<mac-ip>:8080` on the camp WiFi. Find your IP in System Settings → Network → Wi-Fi → Details.
+
+### Between camp days / from home — Render.com (free)
+
+The repo has a `render.yaml` at the root. On render.com → **New +** → **Blueprint** → connect this repo. Render reads the blueprint, builds the Dockerfile in `v2-arena/`, gives you a URL like `https://snake-lab-arena.onrender.com`.
+
+- Auto-deploys on every push to `main`
+- Sleeps after 15 min idle (free tier) — first hit after sleep is ~30s
+- Subsequent connections within the session are fast
+- WebSockets just work
+
+### Alternative: fly.io (paid, ~pennies/month with auto-stop)
+
+The repo also has `fly.toml` + `Dockerfile` ready for fly.io if you prefer their faster cold start (~3s). Requires a credit card and a one-time $5 trial credit. With our `auto_stop_machines = "stop"` config, actual usage is well under $1/month.
 
 ```bash
 cd v2-arena
-flyctl launch       # one-time. Accept the existing fly.toml.
-flyctl deploy       # subsequent deploys
+flyctl launch --copy-config
+flyctl deploy
 ```
-
-The `fly.toml` is configured to:
-- Use the SJC region (change `primary_region` if you're elsewhere)
-- Auto-stop machines when idle (free-tier friendly)
-- Auto-start on incoming connection
-
-Once deployed, the URL is `https://snake-lab-arena.fly.dev` (or whatever name fly assigns).
 
 ## Architecture
 

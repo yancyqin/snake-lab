@@ -1,0 +1,32 @@
+# Render.com blueprint.
+#
+# On render.com → New + → Blueprint → connect this repo → it reads this file.
+# When you eventually ship v3-coder, add a second service block below.
+
+services:
+  - type: web
+    name: snake-lab-arena
+    runtime: docker
+    plan: free                # auto-sleeps after 15 min idle, 750h/month
+    region: oregon            # closest free US-West region
+    rootDir: v2-arena         # build from v2-arena/Dockerfile
+    healthCheckPath: /
+    autoDeploy: true          # redeploy on every push to main
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # PORT is injected automatically by Render — our server.js already
+      # reads process.env.PORT (defaults to 8080 locally).
+
+  # ---------- v3-coder (placeholder for when we ship it) ----------
+  # - type: web
+  #   name: snake-lab-coder
+  #   runtime: docker
+  #   plan: free
+  #   region: oregon
+  #   rootDir: v3-coder
+  #   healthCheckPath: /
+  #   autoDeploy: true
+  #   envVars:
+  #     - key: NODE_ENV
+  #       value: production
