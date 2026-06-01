@@ -1,35 +1,43 @@
 # Snake Lab — Camp Lessons
 
-A camp curriculum built around the three Snake games in this repo. Format: **play + lecture**. Kids play the running game on their iPads; the instructor uses the game as a live demo to teach concepts. Kids don't do free-form tuning — every code interaction is instructor-led.
+A 3-day camp curriculum built around the three Snake games in this repo. Format: **play + lecture**. Kids play the running game on their iPads; the instructor uses the game as a live demo to teach concepts. Kids don't do free-form tuning — every code interaction is instructor-led.
 
 > **For the full project plan, read [VISION.md](VISION.md).**
 > **For the AI assistant guide, read [CLAUDE.md](CLAUDE.md).**
 
-## Course overview
+## Camp agenda (3 days, 6 sessions)
 
-| # | Version | Title | Time | Big idea |
-|---|---------|-------|------|----------|
-| 1 | v1-classic | The Snake is an Array | 45–60 min | Game state is just data. The screen is a picture of that data. |
-| 2 | v1-classic | Code is a Map | 45–60 min | We split code into files. Each file has one job. |
-| 3 | v2-arena | *TBD — written after v2 is built* | — | — |
-| 4 | v3-coder | *TBD — written after v3 is built* | — | — |
-| 5 | v3-coder | *TBD — tournament/capstone* | — | — |
+| Day | Session | Topic | Time | Lessons |
+|-----|---------|-------|------|---------|
+| **1 — Hello Snake** | AM | Intros, play v1, learn how the snake works | ~2.5 h | **L1, L2** |
+| | PM | Try v2 — multiplayer chaos | ~1.5 h | (free play) |
+| **2 — Snake Arena** | AM | How the server works, the bot's brain | ~2.5 h | **L3, L4** |
+| | PM | Try v3 — watch sample bots play | ~1.5 h | (free play) |
+| **3 — Code Your Snake** | AM | Write your own bot | ~2.5 h | **L5** |
+| | PM | Tournament, reflection, parents demo | ~1.5 h | **L6** |
 
 ## Instructor setup (do once before camp)
 
-1. Each kid has a device that can run `v1-classic` (iPad, Chromebook, or laptop).
-2. Serve the game on the local network so all kids can hit the same URL:
+1. Each kid has an iPad (or Chromebook / laptop) on the camp WiFi.
+2. **Day 1** — serve v1 locally:
    ```bash
    cd snake-lab/v1-classic
-   python3 -m http.server 8080 --bind 0.0.0.0
+   python3 server.py 8080
    ```
    Tell kids: open `http://<instructor-mac-ip>:8080`.
-3. Instructor needs a Mac with the code open in an editor + a projector or screen-share.
-4. For the DevTools demo (Lesson 1), instructor uses Safari/Chrome on the projector. Optionally: enable Safari Web Inspector on the iPads (Settings → Safari → Advanced → Web Inspector) and attach over USB so kids can poke at their own game.
+3. **Day 2+3** — serve v2 (and later v3) locally too:
+   ```bash
+   cd snake-lab/v2-arena
+   node server.js
+   ```
+   Kids open `http://<instructor-mac-ip>:8080` (different port if v1 still running).
+4. After-camp play is available at **https://snake-lab-arena.onrender.com** (v2) — first hit takes ~30s while Render wakes the machine.
+5. Have a projector or screen share so the instructor can walk through code live.
+6. Have the code open in an editor on the projected screen — `Snake.js`, `Game.js`, `server.js`, etc.
 
 ---
 
-## Lesson 1 — The Snake is an Array (45–60 min)
+## Lesson 1 — The Snake is an Array (45–60 min · v1-classic)
 
 > **Big idea:** Everything you see — the snake, the food, the score — is just numbers in memory. The game loop reads those numbers 8 times a second and paints them on the screen. If you change the numbers, the picture changes.
 
@@ -157,7 +165,7 @@ isDead() {
 
 ---
 
-## Lesson 2 — Code is a Map (45–60 min)
+## Lesson 2 — Code is a Map (45–60 min · v1-classic)
 
 > **Big idea:** Real code is split into files. Each file does ONE thing. Then we connect them. Today we follow a swipe all the way from the iPad screen to the snake actually turning.
 
@@ -295,12 +303,279 @@ Lead them to `Snake.js`, the `hitWall()` function — and beyond that, the `step
 
 ---
 
-## Lessons 3, 4, 5 — TBD
+## Day 1 PM — Try v2 (free play, ~60–90 min)
 
-To be written after `v2-arena` and `v3-coder` are built. Same play+lecture format. Expected topics:
-- **L3 (v2-arena):** Two computers talking to each other — what's a WebSocket?
-- **L4 (v3-coder):** A program that plays the game for you — writing `nextMove(state)`.
-- **L5 (v3-coder, capstone):** Tournament. Each kid's bot competes. Teacher-hosted, paused between rounds to discuss strategy.
+No new lesson. The point is **exposure** — kids see multiplayer snake before we explain it.
+
+**Suggested flow:**
+1. Instructor projects v2 lobby. Picks a funny default name. Picks a color.
+2. Hits **+ Create new room** → lands in `cosmic-viper` or whatever.
+3. Asks: "OK, who wants to join my room?" Kids open the same URL, see the room in the list, click Join.
+4. **Chaos.** 6-8 snakes in one room. Round restarts whenever a new kid joins.
+5. After 20-30 min, instructor calls out: "Notice anything weird? When I die, you can still see me. When you eat food, I see your length grow. How does my iPad know what's happening on yours?"
+6. Don't answer. Park the question for Day 2 morning.
+
+The **mystery is the lesson** — kids leave Day 1 wondering "how do our games stay in sync?" Tomorrow's L3 answers it.
+
+---
+
+## Lesson 3 — Two Computers Talk (60 min · v2-arena)
+
+> **Big idea:** When you played v2 yesterday, your iPad and every other iPad were all talking to **one computer in the middle** — the server. The server holds the truth about the game. Everyone connects to it.
+
+### What kids will learn
+- **Client vs server** — your iPad is the client; my laptop is the server.
+- **What a WebSocket is** — a phone line that stays open between client and server.
+- **The new files in v2-arena/** — server-side files don't run on your iPad, they run on my laptop.
+
+### Part 1 — Play (5 min) + the dangling question
+Quick warm-up. Remind them of yesterday's mystery: how do iPads stay in sync?
+
+### Part 2 — Lecture: "Two kinds of computers" (15 min)
+
+Draw on the whiteboard:
+```
+   [iPad 1]            [iPad 2]            [iPad 3]
+       \                  |                  /
+        \                 |                 /
+         \                |                /
+          \               |               /
+           --------> [ MAC ] <--------
+                 (Mr. Yancy's laptop)
+                  THE SERVER
+```
+
+> "Your iPad is a **client**. There can be many clients. My laptop running `node server.js` is the **server**. There's only one. Every client connects to the same server. The server is the **truth**. If the server says your snake is dead, your snake is dead — even if your iPad still shows it alive for a second."
+
+**Show the projector's terminal where `node server.js` is running.** Kids see it logging:
+```
+[room cosmic-viper] +p1 Curly #4ade80 (1/8)
+[room cosmic-viper] bot joined
+[room cosmic-viper] +p2 Wiggles #fbbf24 (2/8)
+[room cosmic-viper] restart in 5000ms (new player joined)
+```
+
+> "When you opened v2, that `+p1 Curly` line is YOU joining the server. Each line is something happening. Every kid here is in this log."
+
+### Part 3 — Lecture: "What's in v2-arena/?" (15 min)
+
+Project the folder tree:
+```
+v2-arena/
+  server.js          ← runs on MY LAPTOP only — kids never see this run
+  game.js            ← runs on the server
+  snake.js           ← runs on the server (server is the boss of all snakes)
+  bot.js             ← runs on the server (the bot's brain)
+  public/            ← THIS is what your iPad downloads
+    index.html
+    main.js          ← runs on YOUR IPAD
+    render.js        ← runs on YOUR IPAD (draws the snake)
+    constants.js     ← shared between server and client
+```
+
+> "v1 had `js/` — that was all client-side. v2 has TWO sets of code. The stuff outside `public/` runs on my laptop. The stuff inside `public/` runs on your iPad. They talk to each other."
+
+### Part 4 — Lecture: "What's a WebSocket?" (15 min)
+
+> "Normally when you visit a website, your iPad sends a question, the server sends an answer, then they hang up. Like sending a text. But for snake, we need them to talk **all the time**. So we use a **WebSocket** — it's like a phone call that stays open."
+
+Open the DevTools Network tab on the projector → WS filter → show the persistent connection with messages flowing both ways.
+
+> "Every time you swipe, your iPad sends a tiny message: `{type: 'direction', dir: 'UP'}`. Every 130ms, the server sends the whole game state to every iPad: `{type: 'state', snakes: [...], foods: [...]}`. That's how everyone stays in sync."
+
+**Concrete demo on the projector:**
+```js
+// On a kid's iPad, in DevTools console:
+window.snakeArena.ws            // → WebSocket {readyState: 1, ...}
+window.snakeArena.state.snakes  // → [{id: 'p1', body: [...], ...}, ...]
+```
+
+> "Here's the open phone line. Here's the last message the server sent us. The server sends one of these every 130ms, all day long."
+
+### Part 5 — Wrap-up question (5 min)
+
+> *"What happens if Mr. Yancy closes his laptop?"*
+
+Lead them to: **all the games stop**. The server is the truth — no server, no game. (This is also why we need to deploy v2 to render.com if we want to play after camp.)
+
+### Instructor notes
+- Don't use the word "protocol." Use "phone call."
+- The terminal log is **the** demo — kids LOVE seeing their join show up as a log line. Make it big and readable.
+- If a kid asks "what's a port?" — sidebar: "a port is like an apartment number on the same street address. Different programs on the same computer can each have their own port." Then move on.
+
+---
+
+## Lesson 4 — The Bot's Brain (45 min · v2-arena)
+
+> **Big idea:** The bot you play against is just code. It looks at the same game state you see, decides where to go, and sends a move. We can read its brain.
+
+### What kids will learn
+- The bot is **not magic** — it's a function that runs on the server every tick.
+- **Smartness can be a number** — 1.0 means perfect play, 0.0 means random.
+- The "bot gets dumber as it grows" rule is **one line of code** they can read.
+
+### Part 1 — Play (5 min)
+Solo room. Watch the bot. Notice it says "100% smart" in the scoreboard when it's short. After a couple of foods, watch the smartness number.
+
+### Part 2 — Lecture: "Where does the bot decide?" (15 min)
+
+Project `v2-arena/bot.js`. Walk through `botMove`:
+
+```js
+export function botMove(bot, allSnakes, foods) {
+  const smartness = computeSmartness(bot.body.length);
+  if (Math.random() < smartness) {
+    return smartMove(bot, allSnakes, foods);
+  } else {
+    return safeRandomMove(bot, allSnakes);
+  }
+}
+```
+
+**Translate:**
+> "Every tick, the bot rolls a dice. If it rolls below `smartness`, it picks the smart move — the direction that gets closest to food without dying. Otherwise it picks any direction that doesn't kill it. At 100% smart, it ALWAYS picks the smart move. At 0% smart, it ALWAYS rolls random."
+
+Then `computeSmartness`:
+```js
+export function computeSmartness(length) {
+  if (length <= BOT_SMART_UNTIL) return 1.0;
+  return Math.max(0, 1 - (length - BOT_SMART_UNTIL) / BOT_DUMB_RAMP);
+}
+```
+
+> "Until the bot is length 10, it's 100% smart. After length 10, it gets dumber by 5% per cell. By length 30, it's totally random."
+
+Draw this on the whiteboard as a graph: x = length, y = smartness. Flat line at 1.0 until x=10, then linear drop to 0 at x=30.
+
+### Part 3 — Lecture: "What does 'smart' even mean?" (15 min)
+
+Project `smartMove`:
+```js
+function smartMove(bot, allSnakes, foods) {
+  const head = bot.body[0];
+  const food = nearestFood(head, foods);
+  const candidates = validDirs(bot.direction).map(dir => {
+    const nh = nextHeadIn(dir, head);
+    return {
+      dir,
+      deadly: isDeadly(nh, allSnakes),
+      distToFood: Math.abs(nh.x - food.x) + Math.abs(nh.y - food.y),
+    };
+  });
+  const safe = candidates.filter(c => !c.deadly);
+  if (safe.length === 0) return candidates[0]?.dir || bot.direction;
+  safe.sort((a, b) => a.distToFood - b.distToFood);
+  return safe[0].dir;
+}
+```
+
+**Walk through, line by line:**
+1. Find the nearest food.
+2. For each direction we could go (excluding 180° reverse): figure out where the head would land, whether that's deadly, and how far from food.
+3. Drop the deadly ones.
+4. Pick the safe move that gets us closest to food.
+
+> "That's it. That's the whole 'smart' brain. Find food, don't die. Just like how YOU play. The only difference is the bot is doing this math 8 times per second."
+
+### Part 4 — Hands-on: Tune the bot (10 min)
+
+Instructor opens `constants.js`:
+```js
+export const BOT_SMART_UNTIL = 10;
+export const BOT_DUMB_RAMP = 20;
+```
+
+Change `BOT_SMART_UNTIL = 2`. Restart server. Bot is now dumb almost immediately.
+
+Change `BOT_SMART_UNTIL = 50`. Bot stays smart even when really long. Now it's nearly unbeatable.
+
+> "Two numbers control how mean the bot is. That's the whole knob."
+
+### Part 5 — Wrap-up question (5 min)
+
+> *"Tomorrow, you're going to write your OWN bot. What's the very simplest bot you can think of?"*
+
+Possible answers:
+- "Just go up forever." (Dies on top wall — funny.)
+- "Always turn left." (Spirals into itself.)
+- "Random direction each tick." (Lives a few seconds usually.)
+
+Tease: "Tomorrow you'll get a textarea and write `function nextMove(state) { return 'UP' }`. We'll see whose bot lives longest."
+
+### Instructor notes
+- The whiteboard graph for smartness is the hook. Kids remember pictures.
+- Don't dwell on `Math.random() < smartness`. "Roll a dice" is enough.
+- If a kid asks "what if there are two foods at the same distance?" — show that `safe.sort(...)` picks the first one, which is whichever appears first in the foods list. Ties are arbitrary, which is fine.
+
+---
+
+## Day 2 PM — Try v3 (free play, ~60–90 min)
+
+No new lesson. Same "exposure" pattern as Day 1 PM. Kids look at v3-coder and play with sample bots.
+
+**Suggested flow:**
+1. Project v3-coder. Show the new thing: there's a **textarea** with code in it.
+2. Walk through the 3 sample bots in order:
+   - **random.js** — "I roll a dice every tick"
+   - **greedy.js** — "I always chase the nearest food"
+   - **safe.js** — "I avoid walls and my own body"
+3. Each kid joins a room and picks one sample bot. Their bot plays against the others.
+4. After 20-30 min, ask: "Which bot won most? Why?"
+5. Park the next question: "Could you write one that beats them all?" — tomorrow's lesson.
+
+---
+
+## Lesson 5 — Be the Bot (90 min · v3-coder)
+
+> **Big idea:** A program can play the game for you. Today you write that program.
+
+> ⚠️ Outline only — will be filled in once v3-coder ships.
+
+### What kids will learn
+- The shape of a bot function: `function nextMove(state) { return 'UP' }`
+- What's in `state` (your snake, others, food, board, tick)
+- How to think about "what should I do?" as code
+
+### Suggested structure
+1. **Recap the sample bots** from yesterday afternoon.
+2. **Walk through `greedy.js` line by line** — the simplest "real" bot.
+3. **Build a `greedy_safe.js` together** — combine greedy + don't crash.
+4. **Kids fork it.** Each kid writes their own version, can change ONE thing:
+   - "Mine chases the closest food, but avoids opponents heads"
+   - "Mine goes to the food with the most other foods near it"
+   - "Mine zigzags so it's harder to corner"
+5. **Test in solo mode** — each kid plays their bot vs the built-in dumb bot.
+
+### Open questions until v3 ships
+- What's the exact `state` shape?
+- How does the kid load/test their bot? Paste in textarea? Save to file?
+- What sample bots ship with v3?
+
+(These get nailed down when we build v3.)
+
+---
+
+## Lesson 6 — Tournament + What's Next (90 min · v3-coder)
+
+> **Big idea:** Your bot vs everyone else's bot. May the best `nextMove()` win.
+
+> ⚠️ Outline only — will be filled in once v3-coder ships.
+
+### Structure (rough)
+1. **Final tweaks** (15 min) — kids polish their bots.
+2. **Tournament** (45 min) — instructor hosts a v3-coder room in **teacher mode**. All kids' bots join. Run 5 rounds, score persistent. Project the room.
+3. **Discussion** (15 min):
+   - Which bot won? Why?
+   - What's a hack you'd add if you had another day?
+   - What would you change about the rules?
+4. **Parents arrive** (15 min):
+   - Kids each demo their bot (30 seconds each).
+   - One celebratory tournament run.
+
+### Open questions
+- Tournament format: round-robin? single elimination? "battle royale" with all bots in one room?
+- Scoring: longest snake wins? most foods eaten? last alive?
+- (Decide when v3 ships and we know what "winning" feels like.)
 
 ---
 
@@ -312,3 +587,8 @@ To be written after `v2-arena` and `v3-coder` are built. Same play+lecture forma
 - **Camera** — the top-left world cell that's currently shown on screen.
 - **World vs View** — the world is everything (60×60). The view is what fits on screen (24×24).
 - **pendingDirection** — the direction we'll apply on the next tick. Lets us buffer player input.
+- **Client** — your iPad. Runs `public/main.js`. Draws the screen, sends inputs.
+- **Server** — Mr. Yancy's laptop. Runs `server.js`. Holds the truth. Tells all clients what to draw.
+- **WebSocket** — the "phone line" between client and server. Stays open all game.
+- **Bot** — code that decides moves instead of a human. Lives in `bot.js` (v2) or in your textarea (v3).
+- **Smartness** — a number from 0 to 1. 1 = always picks the best move. 0 = pure random.
