@@ -3,9 +3,13 @@ import { botMove, computeSmartness } from './bot.js';
 import {
   WORLD_COLS, WORLD_ROWS, VIEW_COLS, VIEW_ROWS,
   TICK_MS, FOOD_COUNT, POINTS_PER_FOOD,
-  PLAYER_COLORS, BOT_COLOR,
+  PLAYER_COLORS, BOT_COLOR, FUNNY_NAMES,
   MAX_PLAYERS, RESTART_DELAY_MS,
 } from './public/constants.js';
+
+function pickFunnyName() {
+  return FUNNY_NAMES[Math.floor(Math.random() * FUNNY_NAMES.length)];
+}
 
 const SPAWN_POSITIONS = [
   { x: 12, y: 30, dir: 'RIGHT' },
@@ -135,7 +139,7 @@ export class Game {
   spawnBot() {
     const spawn = this.pickSpawn();
     const snake = new Snake('bot', spawn.x, spawn.y, spawn.dir, undefined, { isBot: true });
-    snake.name = 'Bot';
+    snake.name = pickFunnyName();
     snake.color = BOT_COLOR;
     this.bot = { snake, score: 0, smartness: 1.0 };
   }
@@ -277,7 +281,7 @@ export class Game {
     if (this.bot) {
       const spawn = this.pickSpawn();
       this.bot.snake = new Snake('bot', spawn.x, spawn.y, spawn.dir, undefined, { isBot: true });
-      this.bot.snake.name = 'Bot';
+      this.bot.snake.name = pickFunnyName();
       this.bot.snake.color = BOT_COLOR;
       this.bot.score = 0;
     }
@@ -294,7 +298,7 @@ export class Game {
     }
     if (this.bot) {
       scores['bot'] = {
-        name: 'Bot',
+        name: this.bot.snake.name,
         color: BOT_COLOR,
         score: this.bot.score,
         isBot: true,

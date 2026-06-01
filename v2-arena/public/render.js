@@ -151,8 +151,11 @@ export class Renderer {
     }
 
     // --- Name letters along the body (not on the head) ---
+    // Bots and humans both get their name painted. A trailing space in the
+    // padded string creates a one-cell gap before the name repeats.
     const labelName = (s.name || '').toUpperCase();
-    if (labelName && !s.isBot && s.body.length > 1) {
+    if (labelName && s.body.length > 1) {
+      const padded = labelName + ' ';
       ctx.fillStyle = COLORS.bodyText;
       ctx.font = `bold ${Math.floor(CELL_SIZE * 0.5)}px -apple-system, system-ui, monospace`;
       ctx.textAlign = 'center';
@@ -160,9 +163,10 @@ export class Renderer {
       for (let i = 1; i < s.body.length; i++) {
         const cell = s.body[i];
         if (!this._inView(cell.x, cell.y, camX, camY)) continue;
+        const char = padded[(i - 1) % padded.length];
+        if (char === ' ') continue;   // skip drawing on the gap cells
         const cx = (cell.x - camX) * CELL_SIZE + CELL_SIZE / 2;
         const cy = (cell.y - camY) * CELL_SIZE + CELL_SIZE / 2;
-        const char = labelName[(i - 1) % labelName.length];
         ctx.fillText(char, cx, cy + 1);
       }
     }

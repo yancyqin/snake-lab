@@ -1,4 +1,4 @@
-import { PLAYER_COLORS, POINTS_PER_FOOD } from './constants.js';
+import { PLAYER_COLORS, POINTS_PER_FOOD, FUNNY_NAMES } from './constants.js';
 import { Renderer } from './render.js';
 
 const params = new URLSearchParams(location.search);
@@ -103,14 +103,7 @@ function randomRoomName() {
 }
 
 function randomFunnyName() {
-  const names = [
-    'Slinky', 'Wiggles', 'Hisstopher', 'Coily', 'Snek',
-    'Noodle', 'Squiggle', 'Zigzag', 'Pickle', 'Wormy',
-    'Sushi', 'Curly', 'Loopy', 'Pretzel', 'Mochi',
-    'Pebbles', 'Tofu', 'Wasabi', 'Slither', 'Boopy',
-    'Sir Hiss', 'Cap. Snek', 'Lord Bendy', 'Dr. Wiggle',
-  ];
-  return names[Math.floor(Math.random() * names.length)];
+  return FUNNY_NAMES[Math.floor(Math.random() * FUNNY_NAMES.length)];
 }
 
 // ============ GAME ============

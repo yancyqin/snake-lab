@@ -32,6 +32,15 @@ export const PLAYER_COLORS = [
 
 export const BOT_COLOR = '#94a3b8';      // slate gray — distinct from human colors
 
+// Funny default names — used in the lobby (for humans) and the bot.
+export const FUNNY_NAMES = [
+  'Slinky', 'Wiggles', 'Hisstopher', 'Coily', 'Snek',
+  'Noodle', 'Squiggle', 'Zigzag', 'Pickle', 'Wormy',
+  'Sushi', 'Curly', 'Loopy', 'Pretzel', 'Mochi',
+  'Pebbles', 'Tofu', 'Wasabi', 'Slither', 'Boopy',
+  'Sir Hiss', 'Cap. Snek', 'Lord Bendy', 'Dr. Wiggle',
+];
+
 export const COLORS = {
   bgFar:        '#0c0c18',
   bgNear:       '#1e2042',      // radial gradient — darker at edges, slightly warmer in the middle
