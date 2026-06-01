@@ -101,6 +101,7 @@ See [docs/LESSONS.md](docs/LESSONS.md) for the full curriculum and [docs/PREP.md
 - [docs/README.md](docs/README.md) — what's where
 - [docs/LESSONS.md](docs/LESSONS.md) — 3-day camp curriculum
 - [docs/PREP.md](docs/PREP.md) — instructor pre-camp checklist
+- [docs/PROTOCOL.md](docs/PROTOCOL.md) — every WebSocket message between client & server (used in L3)
 - [docs/IDEAS.md](docs/IDEAS.md) — future tune-ups parked here
 
 ## Built by

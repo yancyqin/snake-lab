@@ -320,14 +320,17 @@ The **mystery is the lesson** — kids leave Day 1 wondering "how do our games s
 
 ---
 
-## Lesson 3 — Two Computers Talk (60 min · v2-arena)
+## Lesson 3 — Two Computers Talk (70 min · v2-arena)
 
 > **Big idea:** When you played v2 yesterday, your iPad and every other iPad were all talking to **one computer in the middle** — the server. The server holds the truth about the game. Everyone connects to it.
+
+**Reference for the instructor:** [PROTOCOL.md](PROTOCOL.md) lists every message type with examples. Kids should see real JSON in this lesson, not just metaphors.
 
 ### What kids will learn
 - **Client vs server** — your iPad is the client; my laptop is the server.
 - **What a WebSocket is** — a phone line that stays open between client and server.
 - **The new files in v2-arena/** — server-side files don't run on your iPad, they run on my laptop.
+- **The actual messages** that fly between the two computers — they're JSON, they're readable, kids can see them in DevTools.
 
 ### Part 1 — Play (5 min) + the dangling question
 Quick warm-up. Remind them of yesterday's mystery: how do iPads stay in sync?
@@ -376,33 +379,72 @@ v2-arena/
 
 > "v1 had `js/` — that was all client-side. v2 has TWO sets of code. The stuff outside `public/` runs on my laptop. The stuff inside `public/` runs on your iPad. They talk to each other."
 
-### Part 4 — Lecture: "What's a WebSocket?" (15 min)
+### Part 4 — Lecture: "What's a WebSocket? What gets said?" (20 min)
 
 > "Normally when you visit a website, your iPad sends a question, the server sends an answer, then they hang up. Like sending a text. But for snake, we need them to talk **all the time**. So we use a **WebSocket** — it's like a phone call that stays open."
 
-Open the DevTools Network tab on the projector → WS filter → show the persistent connection with messages flowing both ways.
+So **what do they say to each other?** Two things happen on this phone call:
 
-> "Every time you swipe, your iPad sends a tiny message: `{type: 'direction', dir: 'UP'}`. Every 130ms, the server sends the whole game state to every iPad: `{type: 'state', snakes: [...], foods: [...]}`. That's how everyone stays in sync."
+**Your iPad → server:** only ONE kind of message, ever.
+```json
+{ "type": "direction", "dir": "UP" }
+```
+> "Every time you swipe, your iPad whispers this into the phone. That's it. You can ONLY ask to turn. You can't say 'give me food' or 'kill that snake.' The server decides everything."
 
-**Concrete demo on the projector:**
+**Server → your iPad:** lots of messages, but **one big one runs the show.** Every 130ms, the server broadcasts the whole game state to everyone:
+```json
+{
+  "type": "state",
+  "tick": 42,
+  "snakes": [
+    { "id": "p1", "name": "Curly",  "color": "#4ade80", "body": [...], "alive": true },
+    { "id": "bot","name": "Snek",   "color": "#94a3b8", "body": [...], "alive": true }
+  ],
+  "foods": [ {"x":5,"y":10}, {"x":17,"y":42}, ... ],
+  "scores": { "p1": {...}, "bot": {...} }
+}
+```
+> "This is the **truth**. Your iPad's only job is to draw what's in here. If `snakes[0].body` changes, your snake moved. If a food disappears from `foods`, someone ate it. Everything you see on the screen comes from this message."
+
+There are a few other server → client messages for special moments (when you join, when a round ends, when a new player joins, when the room is full). The full list is in **[PROTOCOL.md](PROTOCOL.md)** if you're curious.
+
+### Part 5 — Hands-on: peek at the messages (10 min)
+
+Now kids see the messages **live**. Two ways to look:
+
+**(a) DevTools Network tab — see the raw phone call.**
+1. Open DevTools (F12 or Right-click → Inspect)
+2. **Network** tab → filter **WS** (WebSocket)
+3. Click the open WebSocket connection
+4. **Messages** sub-tab — every 130ms a new green/red line appears with the JSON payload
+5. Click any `state` message → expand `snakes` → kids see THEIR snake's `body` cells
+
+**(b) JS Console — poke at the last message.**
 ```js
-// On a kid's iPad, in DevTools console:
-window.snakeArena.ws            // → WebSocket {readyState: 1, ...}
-window.snakeArena.state.snakes  // → [{id: 'p1', body: [...], ...}, ...]
+window.snakeArena.state.tick           // current tick number — changes every 130ms
+window.snakeArena.state.snakes.length  // how many snakes are in the room
+window.snakeArena.state.foods          // every food in the world
+window.snakeArena.state.scores         // the live scoreboard
+window.snakeArena.myId                 // your own playerId
 ```
 
-> "Here's the open phone line. Here's the last message the server sent us. The server sends one of these every 130ms, all day long."
+> "The server tells your iPad EVERYTHING, every 130ms. There are no secrets. You can see exactly what your iPad sees."
 
-### Part 5 — Wrap-up question (5 min)
+### Part 6 — Wrap-up question (5 min)
 
 > *"What happens if Mr. Yancy closes his laptop?"*
 
-Lead them to: **all the games stop**. The server is the truth — no server, no game. (This is also why we need to deploy v2 to render.com if we want to play after camp.)
+Lead them to: **all the games stop**. The server is the truth — no server, no game. (This is also why we deploy v2 to render.com so kids can play after camp.)
+
+**Tease v3:**
+> "Tomorrow afternoon you'll see v3 — programmable snake. Same protocol, same messages. The only difference is: instead of *you* deciding which way to turn, *your code* decides. Your code sends `{type: 'direction', dir: 'UP'}` just like your finger does."
 
 ### Instructor notes
-- Don't use the word "protocol." Use "phone call."
-- The terminal log is **the** demo — kids LOVE seeing their join show up as a log line. Make it big and readable.
+- Don't use the word "protocol" in the lecture. Use "phone call" or "what they say." The PROTOCOL.md file is for *you*; the kids hear it as a phone call.
+- The terminal log is **the** demo for Part 2 — kids LOVE seeing their join show up as a log line. Make it big and readable.
+- For Part 5, if iPads can't access DevTools, project ONE kid's session on the screen via Web Inspector over USB. Everyone watches; one kid drives.
 - If a kid asks "what's a port?" — sidebar: "a port is like an apartment number on the same street address. Different programs on the same computer can each have their own port." Then move on.
+- If a kid asks "is JSON a programming language?" — "no, it's just a way to write data so two computers can both read it. `{` opens a thing with properties, `[` opens a list. Same as JS object literals."
 
 ---
 

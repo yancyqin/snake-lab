@@ -46,6 +46,7 @@ For the actual lesson content see [LESSONS.md](LESSONS.md). For the broader proj
   - Day 3 AM/PM: v3 on 8082
 - [ ] **Open the editor on the projector** with the lesson's target file(s) ready (`Snake.js` for L1, `Game.js` for L2, `server.js`+`bot.js` for L3/L4, etc.).
 - [ ] **Open a fresh terminal** in the projected window so kids can see "+player joined" log lines fly by (L3's killer demo).
+- [ ] **Have [PROTOCOL.md](PROTOCOL.md) open in a tab** for L3 — the JSON examples land harder when you can also project the raw doc.
 
 ## During camp
 
