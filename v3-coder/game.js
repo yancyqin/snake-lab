@@ -252,8 +252,14 @@ export class Game {
         log(this.name, 'resumed by host');
       }
     } else if (msg.type === 'step') {
-      // One forced tick even while paused — useful for "what should your bot do here?"
-      if (this.paused) this._tickOnce();
+      // Step pauses the game if it's running, then advances exactly one tick.
+      // So a kid can hit Step without Pause first and the game stops where it lands.
+      if (!this.paused) {
+        this.paused = true;
+        this.broadcastModeChange();
+        log(this.name, 'paused by host (via step)');
+      }
+      this._tickOnce();
     } else if (msg.type === 'setTickRate' && typeof msg.ms === 'number') {
       this.tickRate = Math.max(50, Math.min(2000, Math.round(msg.ms)));
       this._startTimer();

@@ -87,7 +87,7 @@
     .samples-row button.sample:hover { background: #334155; }
     textarea#botCode {
       width: 100%;
-      min-height: 280px;
+      min-height: 220px;
       background: #0f0f1a;
       color: #f1f5f9;
       border: 1px solid #334155;
@@ -334,6 +334,20 @@
     </div>
 
     <div class="panel">
+      <h2>Room mode <span style="font-size:11px; color:#64748b; text-transform:none; letter-spacing:0;">(when creating)</span></h2>
+      <div class="mode-picker" id="modePicker">
+        <button class="mode-btn selected" data-mode="regular">
+          <div class="mode-title">▶ Regular</div>
+          <div class="mode-sub">Your bot plays. Standard match.</div>
+        </button>
+        <button class="mode-btn" data-mode="teacher">
+          <div class="mode-title">👨‍🏫 Teacher</div>
+          <div class="mode-sub">You host. No bot — control pause, step, speed, reset.</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel" id="botCodePanel">
       <h2>Your bot code</h2>
       <div class="samples-row">
         <span>Start from:</span>
@@ -345,20 +359,6 @@
       <div class="bot-help">
         Define <code>nextMove(state)</code> returning <code>'UP'</code> / <code>'DOWN'</code> / <code>'LEFT'</code> / <code>'RIGHT'</code>.
         State has <code>me</code>, <code>food</code>, <code>others</code>, <code>board</code>, <code>tick</code>.
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>Room mode <span style="font-size:11px; color:#64748b; text-transform:none; letter-spacing:0;">(when creating)</span></h2>
-      <div class="mode-picker" id="modePicker">
-        <button class="mode-btn selected" data-mode="regular">
-          <div class="mode-title">▶ Regular</div>
-          <div class="mode-sub">Your bot plays. Standard match.</div>
-        </button>
-        <button class="mode-btn" data-mode="teacher">
-          <div class="mode-title">👨‍🏫 Teacher</div>
-          <div class="mode-sub">You host. No bot — control pause, step, speed, reset.</div>
-        </button>
       </div>
     </div>
 

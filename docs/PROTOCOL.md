@@ -44,7 +44,7 @@ Hosts don't have a snake, so they don't send `direction`. They send room-control
 ```json
 { "type": "pause" }
 { "type": "resume" }
-{ "type": "step" }                       // run one tick while paused
+{ "type": "step" }                       // pause (if running) and advance one tick
 { "type": "setTickRate", "ms": 300 }     // clamped to [50, 2000]
 { "type": "reset" }                      // end the round now, restart in 1.5s
 ```

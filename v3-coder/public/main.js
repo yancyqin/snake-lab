@@ -45,11 +45,14 @@ function startLobby() {
   const modePicker  = document.getElementById('modePicker');
 
   // Mode picker — extensible selector. Forward-compat for future modes.
+  // When teacher mode is selected, hide the bot-code panel (host doesn't run a bot).
+  const botCodePanel = document.getElementById('botCodePanel');
   let selectedMode = sessionStorage.getItem('roomMode') || 'regular';
   function applyMode() {
     modePicker.querySelectorAll('.mode-btn').forEach(b => {
       b.classList.toggle('selected', b.dataset.mode === selectedMode);
     });
+    botCodePanel.classList.toggle('hidden', selectedMode === 'teacher');
   }
   applyMode();
   modePicker.querySelectorAll('.mode-btn').forEach(b => {
