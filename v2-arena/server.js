@@ -71,7 +71,7 @@ wss.on('connection', (ws, req) => {
 
   let room = rooms.get(roomName);
   if (!room) {
-    room = new Game(roomName);
+    room = new Game(roomName, { king: params.get('king') === '1' });
     rooms.set(roomName, room);
     room.start();
   }

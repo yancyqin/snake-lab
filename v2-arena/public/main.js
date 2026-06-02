@@ -29,16 +29,22 @@ function startLobby() {
   const roomList      = document.getElementById('roomList');
   const createBtn     = document.getElementById('createRoomBtn');
   const teacherToggle = document.getElementById('teacherToggle');
+  const kingToggle    = document.getElementById('kingToggle');
 
-  // Teacher mode is one of several room settings (future: fog, king, ...).
-  // Each is an orthogonal checkbox. Selected = applied when CREATING a room.
+  // Room settings — orthogonal checkboxes. Each one applied when CREATING a room.
   teacherToggle.checked = sessionStorage.getItem('teacherMode') === '1';
+  kingToggle.checked    = sessionStorage.getItem('kingMode')    === '1';
   function applySettingsUI() {
     teacherToggle.closest('.setting-row').classList.toggle('checked', teacherToggle.checked);
+    kingToggle.closest('.setting-row').classList.toggle('checked', kingToggle.checked);
   }
   applySettingsUI();
   teacherToggle.addEventListener('change', () => {
     sessionStorage.setItem('teacherMode', teacherToggle.checked ? '1' : '0');
+    applySettingsUI();
+  });
+  kingToggle.addEventListener('change', () => {
+    sessionStorage.setItem('kingMode', kingToggle.checked ? '1' : '0');
     applySettingsUI();
   });
 
@@ -84,16 +90,18 @@ function startLobby() {
     for (const r of list) {
       const li = document.createElement('li');
       const full = r.players >= r.max;
-      const badge = r.hasHost ? '<span class="room-mode">👨‍🏫 TEACHER</span>' : '';
+      const badges =
+        (r.hasHost   ? '<span class="room-mode">👨‍🏫</span>' : '') +
+        (r.kingMode  ? '<span class="room-mode">👑</span>'   : '');
       li.innerHTML = `
-        <span class="room-name">${badge}${escapeHtml(r.name)}</span>
+        <span class="room-name">${badges}${escapeHtml(r.name)}</span>
         <span style="display:flex; gap:10px; align-items:center;">
           <span class="room-count${full ? ' full' : ''}">${r.players}/${r.max}</span>
           <button ${full ? 'class="disabled" disabled' : ''} data-room="${escapeHtml(r.name)}">${full ? 'Full' : 'Join'}</button>
         </span>`;
       const btn = li.querySelector('button');
-      // Joining an existing room is always as a player. Host slot was claimed at room creation.
-      if (!full) btn.addEventListener('click', () => joinRoom(r.name, false));
+      // Joining an existing room is always as a player. Settings (host/king) were locked at room creation.
+      if (!full) btn.addEventListener('click', () => joinRoom(r.name, false, false));
       roomList.appendChild(li);
     }
   }
@@ -101,14 +109,15 @@ function startLobby() {
   const refreshTimer = setInterval(refreshRooms, 3000);
 
   createBtn.addEventListener('click', () => {
-    joinRoom(randomRoomName(), teacherToggle.checked);
+    joinRoom(randomRoomName(), teacherToggle.checked, kingToggle.checked);
   });
 
-  function joinRoom(roomName, asHost = false) {
+  function joinRoom(roomName, asHost = false, asKing = false) {
     clearInterval(refreshTimer);
     const url = new URL(location.href);
     url.searchParams.set('room', roomName);
     if (asHost) url.searchParams.set('host', '1');
+    if (asKing) url.searchParams.set('king', '1');
     location.href = url.toString();
   }
 }
@@ -136,14 +145,17 @@ function startGame(room) {
   const name  = sessionStorage.getItem('snakeName')  || '';
   const color = sessionStorage.getItem('snakeColor') || PLAYER_COLORS[0];
 
-  // host=1 in the URL → this connection wants the host slot (claimed by first connection only)
+  // host=1 → claim teacher slot (first connection only).
+  // king=1 → applied at room creation (first connection only).
   const urlParams = new URLSearchParams(location.search);
   const requestedHost = urlParams.get('host') === '1';
+  const requestedKing = urlParams.get('king') === '1';
 
   const qs = new URLSearchParams({ room: cleanRoom });
   if (name)  qs.set('name', name);
   if (color) qs.set('color', color);
   if (requestedHost) qs.set('host', '1');
+  if (requestedKing) qs.set('king', '1');
   const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
   const wsUrl = `${wsProto}://${location.host}?${qs.toString()}`;
 
@@ -156,6 +168,7 @@ function startGame(room) {
 
   let myId = null;
   let isHost = false;
+  let kingMode = false;
   let paused = false;
   let tickRate = 130;
   let lastState = null;
@@ -168,11 +181,13 @@ function startGame(room) {
   const pauseBtn      = document.getElementById('pauseBtn');
   const tickRateLabel = document.getElementById('tickRateLabel');
 
+  const kingBadge = document.getElementById('kingBadge');
   function applyModeUI() {
     hostPanel.classList.toggle('hidden', !isHost);
     pausedBanner.classList.toggle('hidden', !paused || isHost);
     pauseBtn.textContent = paused ? '▶ Resume' : '⏸ Pause';
     tickRateLabel.textContent = `${tickRate}ms`;
+    if (kingBadge) kingBadge.classList.toggle('hidden', !kingMode);
   }
 
   function sendHostMsg(type, extra = {}) {
@@ -193,6 +208,7 @@ function startGame(room) {
     if (msg.type === 'welcome') {
       myId = msg.playerId;
       isHost   = !!msg.isHost;
+      kingMode = !!msg.kingMode;
       paused   = !!msg.paused;
       tickRate =  msg.tickRate || 130;
       applyModeUI();

@@ -8,7 +8,7 @@ A place to park ideas we tried, decided against, or might revisit. Not committed
 
 ### Predator NPCs
 
-We had an immortal predator that chased the nearest snake every 2 ticks. **Removed in v2.2** because it dominated solo play and overshadowed the core human-vs-bot mechanic. Worth keeping as an **optional "hard mode"** toggled per room — show a checkbox in the lobby like "🦂 Predator mode."
+We had an immortal predator that chased the nearest snake every 2 ticks. **Removed in v2.2** because it dominated solo play and overshadowed the core human-vs-bot mechanic. Worth keeping as an **optional "hard mode"** toggled per room — drop in a new checkbox in the lobby's room-settings panel (like 👑 King and 👨‍🏫 Teacher already are).
 
 Implementation reference: see commit `97a37bf` (file `v2-arena/bot.js` had `predatorMove`, `game.js` had `spawnPredators` / `this.predators`).
 

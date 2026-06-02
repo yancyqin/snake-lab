@@ -26,12 +26,12 @@ let nextPlayerId = 1;
 const log = (room, ...args) => console.log(`[room ${room}]`, ...args);
 
 export class Game {
-  constructor(name) {
+  constructor(name, options = {}) {
     this.name = name;
-    // "Teacher mode" = there's a host. It's an ORTHOGONAL flag, not a game mode.
-    // (Future game modes — fog, king — will be separate fields like this.fog, this.king.)
+    // Orthogonal room flags. Locked at room creation (set by the first connection).
     this.hostId = null;              // set when the first connection claims host=1
-    this.hostLocked = false;         // once any connection has joined, the host slot is closed
+    this.hostLocked = false;         // after first connect, host slot is closed
+    this.kingMode = !!options.king;  // snake-eat-snake: killer absorbs victim's length
     this.paused = false;
     this.tickRate = TICK_MS;
     this.players = new Map();        // includes the host (with isHost: true, snake: null)
@@ -81,6 +81,7 @@ export class Game {
       players: this.playerCount(),
       max: MAX_PLAYERS,
       hasHost: this.hostId !== null,
+      kingMode: this.kingMode,
     };
   }
 
@@ -121,6 +122,7 @@ export class Game {
       type: 'welcome',
       playerId: id,
       isHost,
+      kingMode: this.kingMode,
       paused: this.paused,
       tickRate: this.tickRate,
       world: { cols: WORLD_COLS, rows: WORLD_ROWS },
@@ -315,10 +317,47 @@ export class Game {
     // Step
     for (const s of alive) s.step(s._willEat);
 
-    // Collisions
+    // Collision detection — three categories:
+    //   wall/self    → just die
+    //   head-on-head → both die (no absorption, even in king mode)
+    //   head-on-body → die; killer is the other snake (king mode: killer absorbs length)
+    //
+    // (a) Group snakes by their NEW head position to detect head-on-head pairs.
+    const headAt = new Map();
     for (const s of alive) {
-      if (s.hitWall() || s.hitSelf() || s.hitOther(this.allSnakes())) {
+      const key = `${s.body[0].x},${s.body[0].y}`;
+      if (!headAt.has(key)) headAt.set(key, []);
+      headAt.get(key).push(s);
+    }
+    // (b) Resolve each snake's fate; remember the killer for body collisions.
+    const killedBy = new Map();   // victim → killer (only set for body collisions)
+    for (const s of alive) {
+      if (s.hitWall() || s.hitSelf()) { s.alive = false; continue; }
+      if (headAt.get(`${s.body[0].x},${s.body[0].y}`).length >= 2) {
         s.alive = false;
+        continue;
+      }
+      for (const other of alive) {
+        if (other === s) continue;
+        // Check other's body[1..] — head was handled by the head-on-head check
+        for (let i = 1; i < other.body.length; i++) {
+          if (other.body[i].x === s.body[0].x && other.body[i].y === s.body[0].y) {
+            s.alive = false;
+            killedBy.set(s, other);
+            break;
+          }
+        }
+        if (!s.alive) break;
+      }
+    }
+    // (c) King mode — killer absorbs victim's body length (appended at the tail).
+    if (this.kingMode) {
+      for (const [victim, killer] of killedBy) {
+        if (!killer.alive) continue;   // killer also died this tick — no absorption
+        const tail = killer.body[killer.body.length - 1];
+        for (let i = 0; i < victim.body.length; i++) {
+          killer.body.push({ x: tail.x, y: tail.y });
+        }
       }
     }
 

@@ -67,10 +67,11 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 - [x] v2-arena — playable, deployed to Render
 - [x] v3-coder — playable, deployed to Render
 - [x] **Teacher mode** (v2 + v3) — host has no snake, controls pause/step/slower/faster/reset. Used in L6 tournament.
+- [x] **King-snake mode** (v2 + v3) — orthogonal checkbox: killer absorbs victim's length. Head-on-head still kills both.
 - [x] [docs/LESSONS.md](docs/LESSONS.md) — full 3-day camp curriculum (L1–L6)
 - [x] [docs/PREP.md](docs/PREP.md) — instructor pre-camp checklist
 - [x] [docs/PROTOCOL.md](docs/PROTOCOL.md) — WebSocket message reference (used in L3)
-- [ ] **King-snake mode + fog-of-war mode** — toggled by the host. Parked in [IDEAS.md](docs/IDEAS.md).
+- [ ] **Fog-of-war mode** — limited visibility around the snake head. Parked in [IDEAS.md](docs/IDEAS.md).
 - [ ] `COMMON_MISTAKES.md` — retro-fit after first camp run
 
 ## Camp

@@ -23,6 +23,7 @@ wss://snake-lab-arena.onrender.com/?room=demo&name=Curly&color=%234ade80
 | `name` | no | Sanitized server-side; max 12 chars; auto-assigned `Snake N` if missing |
 | `color` | no | Must be one of the 8 `PLAYER_COLORS` hex codes; auto-picks an unused one if missing/taken |
 | `host` | no — defaults to off | `host=1` claims the teacher slot. **Only the first connection to a room can claim host.** After anyone has joined, the host slot is locked closed. |
+| `king` | no — defaults to off | `king=1` enables **king-snake mode** for the room. Only honored on first connect (when the room is created). Killer absorbs victim's body length; head-on-head still kills both. |
 
 If the room is full (8/8 — host doesn't count), the server sends a `rejected` message and closes with code `4001`.
 
@@ -61,6 +62,7 @@ Six message types.
   "type": "welcome",
   "playerId": "p3",
   "isHost": false,
+  "kingMode": false,
   "paused": false,
   "tickRate": 130,
   "world": { "cols": 60, "rows": 60 },
@@ -69,7 +71,7 @@ Six message types.
 }
 ```
 
-Your `playerId` is how you find yourself in later state messages. `isHost: true` means you're the teacher (no snake, control panel shown). `paused` and `tickRate` reflect any changes the host has already made before you connected.
+Your `playerId` is how you find yourself in later state messages. `isHost: true` means you're the teacher (no snake, control panel shown). `kingMode: true` means the room is in king-snake mode (eat-snake-to-grow). `paused` and `tickRate` reflect any changes the host has already made.
 
 ### 2. `state` — every tick (130ms)
 

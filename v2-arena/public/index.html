@@ -333,9 +333,13 @@
             <span class="sub">Host the room — no snake, just controls (pause, step, slower, faster, reset).</span>
           </span>
         </label>
-        <!-- Future modes will appear here as more checkboxes:
-             [ ] 🌫️ Fog of war   (coming)
-             [ ] 👑 King snake    (coming)  -->
+        <label class="setting-row" data-setting="king">
+          <input type="checkbox" id="kingToggle">
+          <span class="label">
+            <strong>👑 King snake</strong>
+            <span class="sub">Eat snake to grow — when your head hits theirs, you absorb their length. Head-on-head: both die.</span>
+          </span>
+        </label>
       </div>
     </div>
 
@@ -354,7 +358,7 @@
   <div id="gameScreen" class="screen hidden">
     <div class="game-header">
       <h1 style="margin:0; font-size:18px;">🐍 Snake Arena</h1>
-      <div class="info">Room <code id="roomName">lobby</code></div>
+      <div class="info">Room <code id="roomName">lobby</code> <span id="kingBadge" class="room-mode hidden">👑 KING</span></div>
       <button id="leaveBtn" class="secondary">Leave</button>
     </div>
 
