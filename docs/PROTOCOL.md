@@ -22,8 +22,7 @@ wss://snake-lab-arena.onrender.com/?room=demo&name=Curly&color=%234ade80
 | `room` | no — defaults to `lobby` | Server creates the room on the first connect |
 | `name` | no | Sanitized server-side; max 12 chars; auto-assigned `Snake N` if missing |
 | `color` | no | Must be one of the 8 `PLAYER_COLORS` hex codes; auto-picks an unused one if missing/taken |
-| `mode` | no — defaults to `regular` | Only honored when the room is first created. `teacher` creates a host-controlled room. |
-| `role` | no — defaults to `player` | `host` claims the teacher slot (only in `mode=teacher` rooms, only the first connect with `role=host`). Other joiners are always players. |
+| `host` | no — defaults to off | `host=1` claims the teacher slot. **Only the first connection to a room can claim host.** After anyone has joined, the host slot is locked closed. |
 
 If the room is full (8/8 — host doesn't count), the server sends a `rejected` message and closes with code `4001`.
 
@@ -62,7 +61,6 @@ Six message types.
   "type": "welcome",
   "playerId": "p3",
   "isHost": false,
-  "mode": "regular",
   "paused": false,
   "tickRate": 130,
   "world": { "cols": 60, "rows": 60 },
@@ -71,7 +69,7 @@ Six message types.
 }
 ```
 
-Your `playerId` is how you find yourself in later state messages. `isHost: true` means you're the teacher (no snake, control panel shown). `mode` is the room's mode at the time you joined. `paused` and `tickRate` reflect any changes the host has already made.
+Your `playerId` is how you find yourself in later state messages. `isHost: true` means you're the teacher (no snake, control panel shown). `paused` and `tickRate` reflect any changes the host has already made before you connected.
 
 ### 2. `state` — every tick (130ms)
 
@@ -143,7 +141,7 @@ Sent right before the server closes the connection with code `4001`. Client aler
 ### 6. `modeChange` — room settings changed (teacher mode only)
 
 ```json
-{ "type": "modeChange", "mode": "teacher", "paused": true, "tickRate": 300 }
+{ "type": "modeChange", "paused": true, "tickRate": 300 }
 ```
 
 Broadcast to **all** clients in the room whenever the host pauses/resumes/changes the tick rate. Clients update their UI (show "PAUSED" banner, update tick-rate label).

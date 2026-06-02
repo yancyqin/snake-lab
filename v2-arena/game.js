@@ -26,10 +26,12 @@ let nextPlayerId = 1;
 const log = (room, ...args) => console.log(`[room ${room}]`, ...args);
 
 export class Game {
-  constructor(name, mode = 'regular') {
+  constructor(name) {
     this.name = name;
-    this.mode = mode;                // 'regular' | 'teacher'
-    this.hostId = null;              // set when a teacher claims the host slot
+    // "Teacher mode" = there's a host. It's an ORTHOGONAL flag, not a game mode.
+    // (Future game modes — fog, king — will be separate fields like this.fog, this.king.)
+    this.hostId = null;              // set when the first connection claims host=1
+    this.hostLocked = false;         // once any connection has joined, the host slot is closed
     this.paused = false;
     this.tickRate = TICK_MS;
     this.players = new Map();        // includes the host (with isHost: true, snake: null)
@@ -45,7 +47,7 @@ export class Game {
   start() {
     this.spawnFoods();
     this._startTimer();
-    log(this.name, `started (mode=${this.mode})`);
+    log(this.name, 'started');
   }
 
   _startTimer() {
@@ -78,18 +80,19 @@ export class Game {
       name: this.name,
       players: this.playerCount(),
       max: MAX_PLAYERS,
-      mode: this.mode,
+      hasHost: this.hostId !== null,
     };
   }
 
   // ---- Membership ----
 
   addPlayer(ws, requestedName, requestedColor, requestedRole = 'player') {
-    // Decide if this connection becomes the host.
-    // Host only exists in teacher rooms and only one per room.
+    // Host slot is claimable by the FIRST connection asking for it.
+    // After anyone has joined the room (as host or player), the slot is locked
+    // — late arrivals are always players, never hosts.
     const wantsHost = requestedRole === 'host';
-    const canBeHost = this.mode === 'teacher' && this.hostId === null;
-    const isHost = wantsHost && canBeHost;
+    const isHost = wantsHost && !this.hostLocked && this.hostId === null;
+    this.hostLocked = true;
 
     if (!isHost && this.isFull()) return null;
 
@@ -118,7 +121,6 @@ export class Game {
       type: 'welcome',
       playerId: id,
       isHost,
-      mode: this.mode,
       paused: this.paused,
       tickRate: this.tickRate,
       world: { cols: WORLD_COLS, rows: WORLD_ROWS },
@@ -277,7 +279,6 @@ export class Game {
   broadcastModeChange() {
     this.broadcast({
       type: 'modeChange',
-      mode: this.mode,
       paused: this.paused,
       tickRate: this.tickRate,
     });

@@ -24,27 +24,22 @@ function startLobby() {
   }
   const savedColor = sessionStorage.getItem('snakeColor') || PLAYER_COLORS[0];
 
-  const nameInput   = document.getElementById('nameInput');
-  const colorPicker = document.getElementById('colorPicker');
-  const roomList    = document.getElementById('roomList');
-  const createBtn   = document.getElementById('createRoomBtn');
-  const modePicker  = document.getElementById('modePicker');
+  const nameInput     = document.getElementById('nameInput');
+  const colorPicker   = document.getElementById('colorPicker');
+  const roomList      = document.getElementById('roomList');
+  const createBtn     = document.getElementById('createRoomBtn');
+  const teacherToggle = document.getElementById('teacherToggle');
 
-  // Mode picker — pick one of the available room modes when creating.
-  // Extensible: add more <button class="mode-btn" data-mode="..."> in index.html.
-  let selectedMode = sessionStorage.getItem('roomMode') || 'regular';
-  function applyMode() {
-    modePicker.querySelectorAll('.mode-btn').forEach(b => {
-      b.classList.toggle('selected', b.dataset.mode === selectedMode);
-    });
+  // Teacher mode is one of several room settings (future: fog, king, ...).
+  // Each is an orthogonal checkbox. Selected = applied when CREATING a room.
+  teacherToggle.checked = sessionStorage.getItem('teacherMode') === '1';
+  function applySettingsUI() {
+    teacherToggle.closest('.setting-row').classList.toggle('checked', teacherToggle.checked);
   }
-  applyMode();
-  modePicker.querySelectorAll('.mode-btn').forEach(b => {
-    b.addEventListener('click', () => {
-      selectedMode = b.dataset.mode;
-      sessionStorage.setItem('roomMode', selectedMode);
-      applyMode();
-    });
+  applySettingsUI();
+  teacherToggle.addEventListener('change', () => {
+    sessionStorage.setItem('teacherMode', teacherToggle.checked ? '1' : '0');
+    applySettingsUI();
   });
 
   nameInput.value = savedName;
@@ -89,7 +84,7 @@ function startLobby() {
     for (const r of list) {
       const li = document.createElement('li');
       const full = r.players >= r.max;
-      const badge = r.mode === 'teacher' ? '<span class="room-mode">👨‍🏫 TEACHER</span>' : '';
+      const badge = r.hasHost ? '<span class="room-mode">👨‍🏫 TEACHER</span>' : '';
       li.innerHTML = `
         <span class="room-name">${badge}${escapeHtml(r.name)}</span>
         <span style="display:flex; gap:10px; align-items:center;">
@@ -97,8 +92,8 @@ function startLobby() {
           <button ${full ? 'class="disabled" disabled' : ''} data-room="${escapeHtml(r.name)}">${full ? 'Full' : 'Join'}</button>
         </span>`;
       const btn = li.querySelector('button');
-      // Joining an existing room is always as a player. The host only exists when CREATING a teacher room.
-      if (!full) btn.addEventListener('click', () => joinRoom(r.name, 'regular', 'player'));
+      // Joining an existing room is always as a player. Host slot was claimed at room creation.
+      if (!full) btn.addEventListener('click', () => joinRoom(r.name, false));
       roomList.appendChild(li);
     }
   }
@@ -106,16 +101,14 @@ function startLobby() {
   const refreshTimer = setInterval(refreshRooms, 3000);
 
   createBtn.addEventListener('click', () => {
-    const role = selectedMode === 'teacher' ? 'host' : 'player';
-    joinRoom(randomRoomName(), selectedMode, role);
+    joinRoom(randomRoomName(), teacherToggle.checked);
   });
 
-  function joinRoom(roomName, mode = 'regular', role = 'player') {
+  function joinRoom(roomName, asHost = false) {
     clearInterval(refreshTimer);
     const url = new URL(location.href);
     url.searchParams.set('room', roomName);
-    if (mode === 'teacher') url.searchParams.set('mode', 'teacher');
-    if (role === 'host')    url.searchParams.set('role', 'host');
+    if (asHost) url.searchParams.set('host', '1');
     location.href = url.toString();
   }
 }
@@ -143,16 +136,14 @@ function startGame(room) {
   const name  = sessionStorage.getItem('snakeName')  || '';
   const color = sessionStorage.getItem('snakeColor') || PLAYER_COLORS[0];
 
-  // Pull mode + role out of the URL so a refresh stays in the same room/role
+  // host=1 in the URL → this connection wants the host slot (claimed by first connection only)
   const urlParams = new URLSearchParams(location.search);
-  const requestedMode = urlParams.get('mode');   // teacher (creates a teacher room)
-  const requestedRole = urlParams.get('role');   // host (claims teacher slot)
+  const requestedHost = urlParams.get('host') === '1';
 
   const qs = new URLSearchParams({ room: cleanRoom });
   if (name)  qs.set('name', name);
   if (color) qs.set('color', color);
-  if (requestedMode) qs.set('mode', requestedMode);
-  if (requestedRole) qs.set('role', requestedRole);
+  if (requestedHost) qs.set('host', '1');
   const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
   const wsUrl = `${wsProto}://${location.host}?${qs.toString()}`;
 
@@ -165,7 +156,6 @@ function startGame(room) {
 
   let myId = null;
   let isHost = false;
-  let roomMode = 'regular';
   let paused = false;
   let tickRate = 130;
   let lastState = null;
@@ -203,7 +193,6 @@ function startGame(room) {
     if (msg.type === 'welcome') {
       myId = msg.playerId;
       isHost   = !!msg.isHost;
-      roomMode =  msg.mode || 'regular';
       paused   = !!msg.paused;
       tickRate =  msg.tickRate || 130;
       applyModeUI();

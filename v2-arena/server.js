@@ -65,13 +65,13 @@ wss.on('connection', (ws, req) => {
   const roomName = (params.get('room') || 'lobby').slice(0, 32);
   const name = params.get('name');
   const color = params.get('color');
-  const role = params.get('role');             // 'player' | 'host'
-  const requestedMode = params.get('mode');    // 'regular' | 'teacher' (only honored on first connect)
+  // role=host claims the teacher slot (only the FIRST connection can claim it).
+  // It's the only "teacher mode" signal — there's no separate room mode.
+  const role = params.get('host') === '1' ? 'host' : 'player';
 
   let room = rooms.get(roomName);
   if (!room) {
-    const mode = (requestedMode === 'teacher') ? 'teacher' : 'regular';
-    room = new Game(roomName, mode);
+    room = new Game(roomName);
     rooms.set(roomName, room);
     room.start();
   }

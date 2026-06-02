@@ -37,30 +37,25 @@ function startLobby() {
   const savedColor = sessionStorage.getItem('snakeColor') || PLAYER_COLORS[0];
   const savedCode  = sessionStorage.getItem('botCode')    || DEFAULT_BOT_CODE;
 
-  const nameInput   = document.getElementById('nameInput');
-  const colorPicker = document.getElementById('colorPicker');
-  const botCode     = document.getElementById('botCode');
-  const roomList    = document.getElementById('roomList');
-  const createBtn   = document.getElementById('createRoomBtn');
-  const modePicker  = document.getElementById('modePicker');
+  const nameInput     = document.getElementById('nameInput');
+  const colorPicker   = document.getElementById('colorPicker');
+  const botCode       = document.getElementById('botCode');
+  const roomList      = document.getElementById('roomList');
+  const createBtn     = document.getElementById('createRoomBtn');
+  const teacherToggle = document.getElementById('teacherToggle');
+  const botCodePanel  = document.getElementById('botCodePanel');
 
-  // Mode picker — extensible selector. Forward-compat for future modes.
-  // When teacher mode is selected, hide the bot-code panel (host doesn't run a bot).
-  const botCodePanel = document.getElementById('botCodePanel');
-  let selectedMode = sessionStorage.getItem('roomMode') || 'regular';
-  function applyMode() {
-    modePicker.querySelectorAll('.mode-btn').forEach(b => {
-      b.classList.toggle('selected', b.dataset.mode === selectedMode);
-    });
-    botCodePanel.classList.toggle('hidden', selectedMode === 'teacher');
+  // Teacher mode = orthogonal checkbox. When checked: host the room (no bot).
+  // Bot code panel hides because the host doesn't write a bot.
+  teacherToggle.checked = sessionStorage.getItem('teacherMode') === '1';
+  function applySettingsUI() {
+    teacherToggle.closest('.setting-row').classList.toggle('checked', teacherToggle.checked);
+    botCodePanel.classList.toggle('hidden', teacherToggle.checked);
   }
-  applyMode();
-  modePicker.querySelectorAll('.mode-btn').forEach(b => {
-    b.addEventListener('click', () => {
-      selectedMode = b.dataset.mode;
-      sessionStorage.setItem('roomMode', selectedMode);
-      applyMode();
-    });
+  applySettingsUI();
+  teacherToggle.addEventListener('change', () => {
+    sessionStorage.setItem('teacherMode', teacherToggle.checked ? '1' : '0');
+    applySettingsUI();
   });
 
   nameInput.value = savedName;
@@ -134,7 +129,7 @@ function startLobby() {
     for (const r of list) {
       const li = document.createElement('li');
       const full = r.players >= r.max;
-      const badge = r.mode === 'teacher' ? '<span class="room-mode">👨‍🏫 TEACHER</span>' : '';
+      const badge = r.hasHost ? '<span class="room-mode">👨‍🏫 TEACHER</span>' : '';
       li.innerHTML = `
         <span class="room-name">${badge}${escapeHtml(r.name)}</span>
         <span style="display:flex; gap:10px; align-items:center;">
@@ -142,8 +137,8 @@ function startLobby() {
           <button ${full ? 'class="disabled" disabled' : ''} data-room="${escapeHtml(r.name)}">${full ? 'Full' : 'Join'}</button>
         </span>`;
       const btn = li.querySelector('button');
-      // Joining an existing room is always as a player (regardless of room mode)
-      if (!full) btn.addEventListener('click', () => joinRoom(r.name, 'regular', 'player'));
+      // Joining an existing room is always as a player. Host slot was claimed at room creation.
+      if (!full) btn.addEventListener('click', () => joinRoom(r.name, false));
       roomList.appendChild(li);
     }
   }
@@ -151,16 +146,14 @@ function startLobby() {
   const refreshTimer = setInterval(refreshRooms, 3000);
 
   createBtn.addEventListener('click', () => {
-    const role = selectedMode === 'teacher' ? 'host' : 'player';
-    joinRoom(randomRoomName(), selectedMode, role);
+    joinRoom(randomRoomName(), teacherToggle.checked);
   });
 
-  function joinRoom(roomName, mode = 'regular', role = 'player') {
+  function joinRoom(roomName, asHost = false) {
     clearInterval(refreshTimer);
     const url = new URL(location.href);
     url.searchParams.set('room', roomName);
-    if (mode === 'teacher') url.searchParams.set('mode', 'teacher');
-    if (role === 'host')    url.searchParams.set('role', 'host');
+    if (asHost) url.searchParams.set('host', '1');
     location.href = url.toString();
   }
 }
@@ -188,16 +181,14 @@ function startGame(room) {
   const color = sessionStorage.getItem('snakeColor') || PLAYER_COLORS[0];
   const code  = sessionStorage.getItem('botCode')    || DEFAULT_BOT_CODE;
 
-  // Pull mode + role out of URL so refreshes stay in the same role
+  // host=1 in the URL → this connection wants the host slot (only the first connection claims it)
   const urlParams = new URLSearchParams(location.search);
-  const requestedMode = urlParams.get('mode');
-  const requestedRole = urlParams.get('role');
+  const requestedHost = urlParams.get('host') === '1';
 
   const qs = new URLSearchParams({ room: cleanRoom });
   if (name)  qs.set('name', name);
   if (color) qs.set('color', color);
-  if (requestedMode) qs.set('mode', requestedMode);
-  if (requestedRole) qs.set('role', requestedRole);
+  if (requestedHost) qs.set('host', '1');
   const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
   const wsUrl = `${wsProto}://${location.host}?${qs.toString()}`;
 
@@ -266,7 +257,6 @@ function startGame(room) {
   // ---- Networking ----
   let myId = null;
   let isHost = false;
-  let roomMode = 'regular';
   let paused = false;
   let tickRate = 130;
   let lastState = null;
@@ -284,8 +274,9 @@ function startGame(room) {
     pausedBanner.classList.toggle('hidden', !paused || isHost);
     pauseBtn.textContent = paused ? '▶ Resume' : '⏸ Pause';
     tickRateLabel.textContent = `${tickRate}ms`;
-    // Hide the bot-status box if host (we don't run a bot when hosting)
+    // Host has no bot — hide the status box AND the Edit bot button
     botStatusEl.classList.toggle('hidden', isHost);
+    document.getElementById('editBotBtn').style.display = isHost ? 'none' : '';
   }
 
   function sendHostMsg(type, extra = {}) {
@@ -306,7 +297,6 @@ function startGame(room) {
     if (msg.type === 'welcome') {
       myId = msg.playerId;
       isHost   = !!msg.isHost;
-      roomMode =  msg.mode || 'regular';
       paused   = !!msg.paused;
       tickRate =  msg.tickRate || 130;
       applyModeUI();
@@ -402,19 +392,64 @@ function startGame(room) {
   }
   requestAnimationFrame(loop);
 
-  // ---- Leave + Edit ----
+  // ---- Leave + Edit (in-game, no disconnect) ----
   let leaving = false;
   document.getElementById('leaveBtn').addEventListener('click', () => {
     leaving = true;
     ws.close();
     location.href = '/';
   });
-  document.getElementById('editBotBtn').addEventListener('click', () => {
-    leaving = true;
-    ws.close();
-    // Code is already in sessionStorage; lobby will pick it up
-    location.href = '/';
+
+  const editModal      = document.getElementById('editModal');
+  const editBotCode    = document.getElementById('editBotCode');
+  const editError      = document.getElementById('editError');
+
+  function showEditor() {
+    editBotCode.value = sessionStorage.getItem('botCode') || code;
+    editError.textContent = '';
+    editModal.classList.remove('hidden');
+    // Focus textarea so the kid can start typing right away
+    setTimeout(() => editBotCode.focus(), 50);
+  }
+  function hideEditor() {
+    editModal.classList.add('hidden');
+  }
+
+  document.getElementById('editBotBtn').addEventListener('click', showEditor);
+  document.getElementById('modalCancelBtn').addEventListener('click', hideEditor);
+  document.getElementById('modalApplyBtn').addEventListener('click', () => {
+    const newCode = editBotCode.value;
+    try {
+      const newFn = new Function('state', newCode + '\nreturn nextMove(state);');
+      // Hot-swap — game keeps running, next tick uses the new function
+      userBotFn = newFn;
+      sessionStorage.setItem('botCode', newCode);
+      setBotStatus('ok', 'Bot updated', '');
+      hideEditor();
+    } catch (e) {
+      editError.textContent = 'Syntax error: ' + e.message;
+    }
   });
+
+  // Sample bot buttons inside the modal — load the same .js as the lobby
+  editModal.querySelectorAll('.sample').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        const res = await fetch(`/bots/${btn.dataset.sample}.js`);
+        editBotCode.value = await res.text();
+      } catch (_) {}
+    });
+  });
+
+  // Tab key inserts two spaces in the modal textarea
+  editBotCode.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+    const s = editBotCode.selectionStart, t = editBotCode.selectionEnd;
+    editBotCode.value = editBotCode.value.substring(0, s) + '  ' + editBotCode.value.substring(t);
+    editBotCode.selectionStart = editBotCode.selectionEnd = s + 2;
+  });
+
 
   window.snakeCoder = {
     ws,
