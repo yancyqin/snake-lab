@@ -65,15 +65,18 @@ wss.on('connection', (ws, req) => {
   const roomName = (params.get('room') || 'lobby').slice(0, 32);
   const name = params.get('name');
   const color = params.get('color');
+  const role = params.get('role');             // 'player' | 'host'
+  const requestedMode = params.get('mode');    // 'regular' | 'teacher' (only honored on first connect)
 
   let room = rooms.get(roomName);
   if (!room) {
-    room = new Game(roomName);
+    const mode = (requestedMode === 'teacher') ? 'teacher' : 'regular';
+    room = new Game(roomName, mode);
     rooms.set(roomName, room);
     room.start();
   }
 
-  const player = room.addPlayer(ws, name, color);
+  const player = room.addPlayer(ws, name, color, role);
   if (!player) {
     // Room is full
     try { ws.send(JSON.stringify({ type: 'rejected', reason: 'full' })); } catch (_) {}

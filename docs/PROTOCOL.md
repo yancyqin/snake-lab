@@ -22,24 +22,38 @@ wss://snake-lab-arena.onrender.com/?room=demo&name=Curly&color=%234ade80
 | `room` | no — defaults to `lobby` | Server creates the room on the first connect |
 | `name` | no | Sanitized server-side; max 12 chars; auto-assigned `Snake N` if missing |
 | `color` | no | Must be one of the 8 `PLAYER_COLORS` hex codes; auto-picks an unused one if missing/taken |
+| `mode` | no — defaults to `regular` | Only honored when the room is first created. `teacher` creates a host-controlled room. |
+| `role` | no — defaults to `player` | `host` claims the teacher slot (only in `mode=teacher` rooms, only the first connect with `role=host`). Other joiners are always players. |
 
-If the room is full (8/8), the server sends a `rejected` message and closes with code `4001`.
+If the room is full (8/8 — host doesn't count), the server sends a `rejected` message and closes with code `4001`.
 
 ## Client → Server
 
-Just one message type:
+### From a player (regular client)
 
 ```json
 { "type": "direction", "dir": "UP" }
 ```
 
-`dir` is one of `UP` / `DOWN` / `LEFT` / `RIGHT`. Sent on every swipe or arrow-key press. The server stores it as `pendingDirection` and applies it on the next tick. A 180° reverse is silently dropped.
+`dir` is one of `UP` / `DOWN` / `LEFT` / `RIGHT`. Sent on every swipe / arrow-key press (v2) or bot tick (v3). The server stores it as `pendingDirection` and applies on the next tick. A 180° reverse is silently dropped.
 
-**That's it.** Clients only ever ask to turn. Everything else (movement, eating, dying, scoring) happens on the server.
+### From the host (teacher mode only)
+
+Hosts don't have a snake, so they don't send `direction`. They send room-control messages:
+
+```json
+{ "type": "pause" }
+{ "type": "resume" }
+{ "type": "step" }                       // run one tick while paused
+{ "type": "setTickRate", "ms": 300 }     // clamped to [50, 2000]
+{ "type": "reset" }                      // end the round now, restart in 1.5s
+```
+
+The server ignores `direction` from a host and ignores host messages from a player (silently dropped — no errors).
 
 ## Server → Client
 
-Five message types.
+Six message types.
 
 ### 1. `welcome` — once, on connection
 
@@ -47,13 +61,17 @@ Five message types.
 {
   "type": "welcome",
   "playerId": "p3",
+  "isHost": false,
+  "mode": "regular",
+  "paused": false,
+  "tickRate": 130,
   "world": { "cols": 60, "rows": 60 },
   "view":  { "cols": 24, "rows": 24 },
   "tickMs": 130
 }
 ```
 
-Your `playerId` is how you find yourself in later state messages. World/view dimensions and `tickMs` are sent so clients don't need a hard-coded copy.
+Your `playerId` is how you find yourself in later state messages. `isHost: true` means you're the teacher (no snake, control panel shown). `mode` is the room's mode at the time you joined. `paused` and `tickRate` reflect any changes the host has already made.
 
 ### 2. `state` — every tick (130ms)
 
@@ -122,17 +140,27 @@ Heads-up so existing players aren't ambushed. The bot leaves at the restart that
 
 Sent right before the server closes the connection with code `4001`. Client alerts the user and returns to the lobby.
 
+### 6. `modeChange` — room settings changed (teacher mode only)
+
+```json
+{ "type": "modeChange", "mode": "teacher", "paused": true, "tickRate": 300 }
+```
+
+Broadcast to **all** clients in the room whenever the host pauses/resumes/changes the tick rate. Clients update their UI (show "PAUSED" banner, update tick-rate label).
+
 ## Quick reference table
 
 | Direction | Type | When | Source code |
 |---|---|---|---|
-| C → S | URL params (room, name, color) | once, at connect | URL |
-| C → S | `direction` | per swipe/keypress | `v2-arena/public/main.js` `sendDirection()` |
-| S → C | `welcome` | once, on connect | `v2-arena/game.js` `addPlayer()` |
-| S → C | `state` | every 130ms | `v2-arena/game.js` `broadcastState()` |
-| S → C | `roundOver` | round end | `v2-arena/game.js` `endRound()` |
-| S → C | `restartCountdown` | new player joining | `v2-arena/game.js` `addPlayer()` |
-| S → C | `rejected` | room full at connect | `v2-arena/server.js` |
+| C → S | URL params (room, name, color, mode, role) | once, at connect | URL |
+| C → S | `direction` (player only) | per swipe/keypress/bot tick | `*/public/main.js` `sendDirection()` |
+| C → S | `pause` / `resume` / `step` / `setTickRate` / `reset` (host only) | on button click | `*/public/main.js` host panel |
+| S → C | `welcome` | once, on connect | `*/game.js` `addPlayer()` |
+| S → C | `state` | every `tickRate` ms | `*/game.js` `broadcastState()` |
+| S → C | `roundOver` | round end | `*/game.js` `endRound()` |
+| S → C | `restartCountdown` | new player joining | `*/game.js` `addPlayer()` |
+| S → C | `modeChange` | host changed mode/pause/tickRate | `*/game.js` `handleMessage()` |
+| S → C | `rejected` | room full at connect | `*/server.js` |
 
 ## Why it's this shape
 
@@ -155,9 +183,18 @@ window.snakeArena.state      // the most recent state message
 window.snakeArena.myId       // your playerId
 ```
 
-## For v3-coder (when it ships)
+## v2 vs v3
 
-Same protocol, plus teacher-mode additions:
+The wire protocol is **identical** between v2-arena and v3-coder. Both implement:
+- The player/host message types above
+- Teacher mode + room-mode infrastructure
 
-- **Teacher → server:** `pause`, `resume`, `step` (one tick), `setTickRate`, `reset`, `setVisibility`
-- **Bot moves** still come in as `{type: 'direction', dir: '...'}` from each browser — the server doesn't care if it's a human swiping or a bot's `nextMove()` returning. That's the elegance: v2 and v3 share the wire format.
+The only difference is **who sends the `direction` messages**:
+- v2-arena: a human's finger (swipe) or keyboard
+- v3-coder: a JavaScript `nextMove(state)` function running in the player's browser
+
+The server doesn't know which. That's the elegance — and the punchline of Lesson 5.
+
+**Not yet shipped** (parked in [IDEAS.md](IDEAS.md)):
+- `setVisibility` host message — fog-of-war toggle
+- `setKingMode` host message — eat-snake-to-grow toggle

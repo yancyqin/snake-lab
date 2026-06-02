@@ -104,6 +104,36 @@
     .create-row { display: flex; justify-content: center; }
     #createRoomBtn { width: 100%; padding: 12px; font-size: 16px; }
 
+    /* Mode picker */
+    .mode-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mode-btn {
+      flex: 1 1 auto;
+      background: #0f0f1a;
+      border: 2px solid #334155;
+      color: #cbd5e1;
+      padding: 12px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition: all 0.1s;
+      min-width: 140px;
+    }
+    .mode-btn .mode-title { font-weight: 600; font-size: 14px; color: #f1f5f9; }
+    .mode-btn .mode-sub   { font-size: 11px; color: #94a3b8; margin-top: 4px; line-height: 1.4; }
+    .mode-btn.selected { border-color: #4ade80; background: #14532d22; }
+    .mode-btn:hover { border-color: #64748b; }
+    .mode-btn.selected:hover { border-color: #4ade80; }
+
+    .room-list .room-mode {
+      font-size: 10px;
+      color: #94a3b8;
+      background: #1e293b;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+
     button {
       background: #4ade80;
       color: #1a1a2e;
@@ -173,6 +203,45 @@
       gap: 14px;
       min-width: 200px;
       max-width: 240px;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Host controls (teacher mode) */
+    .host-panel {
+      background: #1a1a2e;
+      border: 1px solid #4ade80;
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .host-panel h3 { margin: 0; font-size: 12px; color: #4ade80; letter-spacing: 0.05em; text-transform: uppercase; }
+    .host-panel .row { display: flex; gap: 6px; }
+    .host-panel button {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      min-height: 36px;
+      background: #1e293b;
+      color: #f1f5f9;
+    }
+    .host-panel button:hover { background: #334155; }
+    .host-panel button.primary { background: #4ade80; color: #1a1a2e; }
+    .host-panel button.primary:hover { background: #22c55e; }
+    .host-panel .meta { color: #94a3b8; font-size: 11px; }
+
+    .paused-banner {
+      background: #422006;
+      color: #fbbf24;
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
     }
 
     #scoreboard {
@@ -249,6 +318,20 @@
     </div>
 
     <div class="panel">
+      <h2>Room mode <span style="font-size:11px; color:#64748b; text-transform:none; letter-spacing:0;">(when creating)</span></h2>
+      <div class="mode-picker" id="modePicker">
+        <button class="mode-btn selected" data-mode="regular">
+          <div class="mode-title">▶ Regular</div>
+          <div class="mode-sub">You play. Standard match.</div>
+        </button>
+        <button class="mode-btn" data-mode="teacher">
+          <div class="mode-title">👨‍🏫 Teacher</div>
+          <div class="mode-sub">You host. No snake — control pause, speed, reset.</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
       <h2>Rooms</h2>
       <ul class="room-list" id="roomList">
         <li class="empty">No rooms yet — tap Create to start one</li>
@@ -270,6 +353,20 @@
     <div class="play-area">
       <canvas id="game"></canvas>
       <div class="sidebar">
+        <div id="hostPanel" class="host-panel hidden">
+          <h3>👨‍🏫 Host controls</h3>
+          <div class="row">
+            <button id="pauseBtn" class="primary">⏸ Pause</button>
+            <button id="stepBtn">⏭ Step</button>
+          </div>
+          <div class="row">
+            <button id="slowBtn">🐢 Slower</button>
+            <button id="fastBtn">🐇 Faster</button>
+          </div>
+          <button id="resetBtn">⏹ Reset round</button>
+          <div class="meta">Tick: <span id="tickRateLabel">130ms</span></div>
+        </div>
+        <div id="pausedBanner" class="paused-banner hidden">⏸ PAUSED BY HOST</div>
         <div id="scoreboard"></div>
         <div class="minimap-block">
           <canvas id="minimap"></canvas>

@@ -28,6 +28,24 @@ function startLobby() {
   const colorPicker = document.getElementById('colorPicker');
   const roomList    = document.getElementById('roomList');
   const createBtn   = document.getElementById('createRoomBtn');
+  const modePicker  = document.getElementById('modePicker');
+
+  // Mode picker — pick one of the available room modes when creating.
+  // Extensible: add more <button class="mode-btn" data-mode="..."> in index.html.
+  let selectedMode = sessionStorage.getItem('roomMode') || 'regular';
+  function applyMode() {
+    modePicker.querySelectorAll('.mode-btn').forEach(b => {
+      b.classList.toggle('selected', b.dataset.mode === selectedMode);
+    });
+  }
+  applyMode();
+  modePicker.querySelectorAll('.mode-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      selectedMode = b.dataset.mode;
+      sessionStorage.setItem('roomMode', selectedMode);
+      applyMode();
+    });
+  });
 
   nameInput.value = savedName;
   nameInput.addEventListener('input', () => {
@@ -71,26 +89,33 @@ function startLobby() {
     for (const r of list) {
       const li = document.createElement('li');
       const full = r.players >= r.max;
+      const badge = r.mode === 'teacher' ? '<span class="room-mode">👨‍🏫 TEACHER</span>' : '';
       li.innerHTML = `
-        <span class="room-name">${escapeHtml(r.name)}</span>
+        <span class="room-name">${badge}${escapeHtml(r.name)}</span>
         <span style="display:flex; gap:10px; align-items:center;">
           <span class="room-count${full ? ' full' : ''}">${r.players}/${r.max}</span>
           <button ${full ? 'class="disabled" disabled' : ''} data-room="${escapeHtml(r.name)}">${full ? 'Full' : 'Join'}</button>
         </span>`;
       const btn = li.querySelector('button');
-      if (!full) btn.addEventListener('click', () => joinRoom(r.name));
+      // Joining an existing room is always as a player. The host only exists when CREATING a teacher room.
+      if (!full) btn.addEventListener('click', () => joinRoom(r.name, 'regular', 'player'));
       roomList.appendChild(li);
     }
   }
   refreshRooms();
   const refreshTimer = setInterval(refreshRooms, 3000);
 
-  createBtn.addEventListener('click', () => joinRoom(randomRoomName()));
+  createBtn.addEventListener('click', () => {
+    const role = selectedMode === 'teacher' ? 'host' : 'player';
+    joinRoom(randomRoomName(), selectedMode, role);
+  });
 
-  function joinRoom(roomName) {
+  function joinRoom(roomName, mode = 'regular', role = 'player') {
     clearInterval(refreshTimer);
     const url = new URL(location.href);
     url.searchParams.set('room', roomName);
+    if (mode === 'teacher') url.searchParams.set('mode', 'teacher');
+    if (role === 'host')    url.searchParams.set('role', 'host');
     location.href = url.toString();
   }
 }
@@ -118,9 +143,16 @@ function startGame(room) {
   const name  = sessionStorage.getItem('snakeName')  || '';
   const color = sessionStorage.getItem('snakeColor') || PLAYER_COLORS[0];
 
+  // Pull mode + role out of the URL so a refresh stays in the same room/role
+  const urlParams = new URLSearchParams(location.search);
+  const requestedMode = urlParams.get('mode');   // teacher (creates a teacher room)
+  const requestedRole = urlParams.get('role');   // host (claims teacher slot)
+
   const qs = new URLSearchParams({ room: cleanRoom });
   if (name)  qs.set('name', name);
   if (color) qs.set('color', color);
+  if (requestedMode) qs.set('mode', requestedMode);
+  if (requestedRole) qs.set('role', requestedRole);
   const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
   const wsUrl = `${wsProto}://${location.host}?${qs.toString()}`;
 
@@ -132,9 +164,36 @@ function startGame(room) {
   const renderer = new Renderer(canvas, minimap);
 
   let myId = null;
-  let lastState = null;     // most recent state from server
-  let prevSnakes = null;    // last tick's snakes — for detecting eats
-  const popups = [];        // active +10 popups: { cellX, cellY, text, color, startTime }
+  let isHost = false;
+  let roomMode = 'regular';
+  let paused = false;
+  let tickRate = 130;
+  let lastState = null;
+  let prevSnakes = null;
+  const popups = [];
+
+  // ---- Host UI elements ----
+  const hostPanel     = document.getElementById('hostPanel');
+  const pausedBanner  = document.getElementById('pausedBanner');
+  const pauseBtn      = document.getElementById('pauseBtn');
+  const tickRateLabel = document.getElementById('tickRateLabel');
+
+  function applyModeUI() {
+    hostPanel.classList.toggle('hidden', !isHost);
+    pausedBanner.classList.toggle('hidden', !paused || isHost);
+    pauseBtn.textContent = paused ? '▶ Resume' : '⏸ Pause';
+    tickRateLabel.textContent = `${tickRate}ms`;
+  }
+
+  function sendHostMsg(type, extra = {}) {
+    if (!isHost || ws.readyState !== 1) return;
+    ws.send(JSON.stringify({ type, ...extra }));
+  }
+  pauseBtn.addEventListener('click', () => sendHostMsg(paused ? 'resume' : 'pause'));
+  document.getElementById('stepBtn').addEventListener('click', () => sendHostMsg('step'));
+  document.getElementById('slowBtn').addEventListener('click', () => sendHostMsg('setTickRate', { ms: Math.min(1500, tickRate + 70) }));
+  document.getElementById('fastBtn').addEventListener('click', () => sendHostMsg('setTickRate', { ms: Math.max(60,   tickRate - 30) }));
+  document.getElementById('resetBtn').addEventListener('click', () => sendHostMsg('reset'));
 
   const ws = new WebSocket(wsUrl);
   ws.onopen = () => setStatus('Connecting...', 'info');
@@ -143,7 +202,16 @@ function startGame(room) {
     const msg = JSON.parse(e.data);
     if (msg.type === 'welcome') {
       myId = msg.playerId;
+      isHost   = !!msg.isHost;
+      roomMode =  msg.mode || 'regular';
+      paused   = !!msg.paused;
+      tickRate =  msg.tickRate || 130;
+      applyModeUI();
       setStatus('', '');
+    } else if (msg.type === 'modeChange') {
+      if (typeof msg.paused === 'boolean')   paused = msg.paused;
+      if (typeof msg.tickRate === 'number')  tickRate = msg.tickRate;
+      applyModeUI();
     } else if (msg.type === 'rejected') {
       alert(msg.reason === 'full' ? 'This room is full (8/8). Pick another.' : 'Could not join.');
       location.href = '/';

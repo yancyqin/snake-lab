@@ -5,8 +5,6 @@ import url from 'node:url';
 import { WebSocketServer } from 'ws';
 import { Game } from './game.js';
 
-// Identical to v2-arena/server.js. Same protocol, same wire format.
-
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 8080;
 
@@ -19,11 +17,13 @@ const MIME = {
   '.svg':  'image/svg+xml',
 };
 
-const rooms = new Map();
+const rooms = new Map();   // roomName → Game
 
+// ---- HTTP: static files + /api/rooms ----
 const server = http.createServer((req, res) => {
   const urlPath = req.url.split('?')[0];
 
+  // Room list API for the lobby
   if (urlPath === '/api/rooms') {
     const summary = [...rooms.values()].map(r => r.summary());
     res.writeHead(200, {
@@ -34,6 +34,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Static files
   let p = urlPath === '/' ? '/index.html' : urlPath;
   const safe = path.normalize(p).replace(/^(\.\.[/\\])+/, '');
   const filePath = path.join(__dirname, 'public', safe);
@@ -47,6 +48,7 @@ const server = http.createServer((req, res) => {
     const ext = path.extname(filePath).toLowerCase();
     res.writeHead(200, {
       'Content-Type': MIME[ext] || 'application/octet-stream',
+      // Don't cache — kids on iPads should always get the latest after a push
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
       'Pragma': 'no-cache',
       'Expires': '0',
@@ -55,6 +57,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
+// ---- WebSocket: one Game per room ----
 const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws, req) => {
@@ -62,16 +65,20 @@ wss.on('connection', (ws, req) => {
   const roomName = (params.get('room') || 'lobby').slice(0, 32);
   const name = params.get('name');
   const color = params.get('color');
+  const role = params.get('role');             // 'player' | 'host'
+  const requestedMode = params.get('mode');    // 'regular' | 'teacher' (only honored on first connect)
 
   let room = rooms.get(roomName);
   if (!room) {
-    room = new Game(roomName);
+    const mode = (requestedMode === 'teacher') ? 'teacher' : 'regular';
+    room = new Game(roomName, mode);
     rooms.set(roomName, room);
     room.start();
   }
 
-  const player = room.addPlayer(ws, name, color);
+  const player = room.addPlayer(ws, name, color, role);
   if (!player) {
+    // Room is full
     try { ws.send(JSON.stringify({ type: 'rejected', reason: 'full' })); } catch (_) {}
     ws.close(4001, 'Room is full');
     return;
@@ -81,7 +88,9 @@ wss.on('connection', (ws, req) => {
     try {
       const msg = JSON.parse(data);
       room.handleMessage(player, msg);
-    } catch (_) {}
+    } catch (_) {
+      // ignore bad json
+    }
   });
 
   ws.on('close', () => {

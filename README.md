@@ -65,11 +65,12 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 
 - [x] v1-classic — playable, deployed to GitHub Pages
 - [x] v2-arena — playable, deployed to Render
-- [x] v3-coder — playable, deployed to Render. Regular mode shipped; teacher mode (pause/step/setTickRate) is a follow-up.
+- [x] v3-coder — playable, deployed to Render
+- [x] **Teacher mode** (v2 + v3) — host has no snake, controls pause/step/slower/faster/reset. Used in L6 tournament.
 - [x] [docs/LESSONS.md](docs/LESSONS.md) — full 3-day camp curriculum (L1–L6)
 - [x] [docs/PREP.md](docs/PREP.md) — instructor pre-camp checklist
 - [x] [docs/PROTOCOL.md](docs/PROTOCOL.md) — WebSocket message reference (used in L3)
-- [ ] **Teacher mode for v3** — pause / resume / step / setTickRate / reset / setVisibility. Used in L6 (tournament).
+- [ ] **King-snake mode + fog-of-war mode** — toggled by the host. Parked in [IDEAS.md](docs/IDEAS.md).
 - [ ] `COMMON_MISTAKES.md` — retro-fit after first camp run
 
 ## Camp

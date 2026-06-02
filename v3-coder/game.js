@@ -7,9 +7,6 @@ import {
   MAX_PLAYERS, RESTART_DELAY_MS,
 } from './public/constants.js';
 
-// Identical to v2-arena/game.js. v3's bots are just clients that send
-// `direction` messages from JavaScript instead of from a finger swipe.
-
 function pickFunnyName() {
   return FUNNY_NAMES[Math.floor(Math.random() * FUNNY_NAMES.length)];
 }
@@ -29,9 +26,13 @@ let nextPlayerId = 1;
 const log = (room, ...args) => console.log(`[room ${room}]`, ...args);
 
 export class Game {
-  constructor(name) {
+  constructor(name, mode = 'regular') {
     this.name = name;
-    this.players = new Map();
+    this.mode = mode;                // 'regular' | 'teacher'
+    this.hostId = null;              // set when a teacher claims the host slot
+    this.paused = false;
+    this.tickRate = TICK_MS;
+    this.players = new Map();        // includes the host (with isHost: true, snake: null)
     this.bot = null;
     this.foods = [];
     this.tick = 0;
@@ -43,8 +44,13 @@ export class Game {
 
   start() {
     this.spawnFoods();
-    this.timer = setInterval(() => this.update(), TICK_MS);
-    log(this.name, 'started');
+    this._startTimer();
+    log(this.name, `started (mode=${this.mode})`);
+  }
+
+  _startTimer() {
+    if (this.timer) clearInterval(this.timer);
+    this.timer = setInterval(() => this.update(), this.tickRate);
   }
 
   stop() {
@@ -52,38 +58,78 @@ export class Game {
     log(this.name, 'stopped');
   }
 
-  isEmpty() { return this.players.size === 0; }
-  isFull()  { return this.players.size >= MAX_PLAYERS; }
-  summary() { return { name: this.name, players: this.players.size, max: MAX_PLAYERS }; }
+  isEmpty() {
+    return this.players.size === 0;
+  }
 
-  addPlayer(ws, requestedName, requestedColor) {
-    if (this.isFull()) return null;
+  // Players that actually take a snake slot (excludes the teacher)
+  playerCount() {
+    let n = 0;
+    for (const p of this.players.values()) if (!p.isHost) n++;
+    return n;
+  }
+
+  isFull() {
+    return this.playerCount() >= MAX_PLAYERS;
+  }
+
+  summary() {
+    return {
+      name: this.name,
+      players: this.playerCount(),
+      max: MAX_PLAYERS,
+      mode: this.mode,
+    };
+  }
+
+  // ---- Membership ----
+
+  addPlayer(ws, requestedName, requestedColor, requestedRole = 'player') {
+    // Decide if this connection becomes the host.
+    // Host only exists in teacher rooms and only one per room.
+    const wantsHost = requestedRole === 'host';
+    const canBeHost = this.mode === 'teacher' && this.hostId === null;
+    const isHost = wantsHost && canBeHost;
+
+    if (!isHost && this.isFull()) return null;
 
     const id = `p${nextPlayerId++}`;
-    const color = this.pickColor(requestedColor);
-    this.usedColors.add(color);
+    const color = isHost ? '#cbd5e1' : this.pickColor(requestedColor);
+    if (!isHost) this.usedColors.add(color);
 
     const player = {
-      id, ws, color,
-      name: this.sanitizeName(requestedName) || `Snake ${this.players.size + 1}`,
+      id,
+      ws,
+      name: this.sanitizeName(requestedName) || (isHost ? 'Teacher' : `Snake ${this.playerCount() + 1}`),
+      color,
+      isHost,
       snake: null,
       score: 0,
     };
-    this.buildSnake(player);
+    if (!isHost) {
+      this.buildSnake(player);
+    } else {
+      this.hostId = id;
+    }
     this.players.set(id, player);
     this.updateBotMembership();
 
     this.send(ws, {
       type: 'welcome',
       playerId: id,
+      isHost,
+      mode: this.mode,
+      paused: this.paused,
+      tickRate: this.tickRate,
       world: { cols: WORLD_COLS, rows: WORLD_ROWS },
       view:  { cols: VIEW_COLS,  rows: VIEW_ROWS },
       tickMs: TICK_MS,
     });
 
-    log(this.name, `+${id} ${player.name} ${color} (${this.players.size}/${MAX_PLAYERS})`);
+    log(this.name, `+${id} ${player.name} ${color} ${isHost ? '(HOST)' : ''} (${this.playerCount()}/${MAX_PLAYERS})`);
 
-    if (this.players.size >= 2 && !this.restarting) {
+    // 2+ playing humans — restart the round in 5s for fairness (host doesn't count)
+    if (!isHost && this.playerCount() >= 2 && !this.restarting) {
       this.restarting = true;
       const delay = 5000;
       this.broadcast({ type: 'restartCountdown', joiner: player.name, delay });
@@ -97,10 +143,11 @@ export class Game {
   removePlayer(id) {
     const p = this.players.get(id);
     if (!p) return;
-    this.usedColors.delete(p.color);
+    if (!p.isHost) this.usedColors.delete(p.color);
+    if (this.hostId === id) this.hostId = null;
     this.players.delete(id);
     this.updateBotMembership();
-    log(this.name, `-${id} (${this.players.size}/${MAX_PLAYERS})`);
+    log(this.name, `-${id} (${this.playerCount()}/${MAX_PLAYERS})`);
   }
 
   sanitizeName(name) {
@@ -116,12 +163,13 @@ export class Game {
   }
 
   updateBotMembership() {
-    if (this.players.size === 1 && !this.bot) {
+    // Bot count uses playerCount (excludes host) — host doesn't count as a player
+    if (this.playerCount() === 1 && !this.bot) {
       this.spawnBot();
       log(this.name, 'bot joined');
-    } else if (this.players.size >= 2 && this.bot) {
+    } else if (this.playerCount() >= 2 && this.bot) {
       this.removeBotNextRound = true;
-    } else if (this.players.size === 0) {
+    } else if (this.playerCount() === 0) {
       this.bot = null;
     }
   }
@@ -153,9 +201,14 @@ export class Game {
     return SPAWN_POSITIONS[0];
   }
 
+  // ---- World ----
+
   allSnakes() {
+    // Hosts don't have snakes — only real players + the auto-bot
     const snakes = [];
-    for (const p of this.players.values()) snakes.push(p.snake);
+    for (const p of this.players.values()) {
+      if (p.snake) snakes.push(p.snake);
+    }
     if (this.bot) snakes.push(this.bot.snake);
     return snakes;
   }
@@ -177,16 +230,65 @@ export class Game {
     return { x: 0, y: 0 };
   }
 
+  // ---- Messaging ----
+
   handleMessage(player, msg) {
-    if (msg.type === 'direction' && player.snake && player.snake.alive) {
+    if (msg.type === 'direction' && !player.isHost && player.snake && player.snake.alive) {
       if (typeof msg.dir === 'string') player.snake.setDirection(msg.dir);
+      return;
+    }
+    // ---- Host-only control messages ----
+    if (!player.isHost) return;
+    if (msg.type === 'pause') {
+      if (!this.paused) {
+        this.paused = true;
+        this.broadcastModeChange();
+        log(this.name, 'paused by host');
+      }
+    } else if (msg.type === 'resume') {
+      if (this.paused) {
+        this.paused = false;
+        this.broadcastModeChange();
+        log(this.name, 'resumed by host');
+      }
+    } else if (msg.type === 'step') {
+      // One forced tick even while paused — useful for "what should your bot do here?"
+      if (this.paused) this._tickOnce();
+    } else if (msg.type === 'setTickRate' && typeof msg.ms === 'number') {
+      this.tickRate = Math.max(50, Math.min(2000, Math.round(msg.ms)));
+      this._startTimer();
+      this.broadcastModeChange();
+      log(this.name, `tickRate=${this.tickRate}ms`);
+    } else if (msg.type === 'reset') {
+      // Force-end the round right now (skips winner detection)
+      this.restarting = true;
+      this.broadcast({ type: 'roundOver', winner: null });
+      setTimeout(() => this.restart(), 1500);
+      log(this.name, 'reset by host');
     }
   }
 
+  broadcastModeChange() {
+    this.broadcast({
+      type: 'modeChange',
+      mode: this.mode,
+      paused: this.paused,
+      tickRate: this.tickRate,
+    });
+  }
+
+  // ---- Tick ----
+
   update() {
+    if (this.restarting || this.paused) return;
+    this._tickOnce();
+  }
+
+  _tickOnce() {
     if (this.restarting) return;
     this.tick++;
 
+    // Bot picks direction
     if (this.bot && this.bot.snake.alive) {
       const dir = botMove(this.bot.snake, this.allSnakes(), this.foods);
       this.bot.snake.setDirection(dir);
@@ -195,20 +297,25 @@ export class Game {
 
     const alive = this.allSnakes().filter(s => s.alive);
 
+    // Peek for food
     for (const s of alive) {
       const nh = s.nextHead();
       const foodIdx = this.foods.findIndex(f => f.x === nh.x && f.y === nh.y);
       s._willEat = foodIdx !== -1;
       s._foodIdx = foodIdx;
     }
+
+    // Step
     for (const s of alive) s.step(s._willEat);
 
+    // Collisions
     for (const s of alive) {
       if (s.hitWall() || s.hitSelf() || s.hitOther(this.allSnakes())) {
         s.alive = false;
       }
     }
 
+    // Award food to survivors
     const eaten = new Set();
     for (const s of alive) {
       if (!s.alive || !s._willEat) continue;
@@ -220,20 +327,27 @@ export class Game {
     for (const idx of [...eaten].sort((a, b) => b - a)) this.foods.splice(idx, 1);
     while (this.foods.length < FOOD_COUNT) this.foods.push(this.makeFood());
 
-    const total = this.players.size + (this.bot ? 1 : 0);
-    const aliveCount = [...this.players.values()].filter(p => p.snake.alive).length
-                     + (this.bot && this.bot.snake.alive ? 1 : 0);
-    let over = false;
-    if (total >= 2) { if (aliveCount <= 1) over = true; }
-    else            { if (aliveCount === 0) over = true; }
-    if (over) this.endRound();
+    // End of round — host doesn't count toward player totals.
+    // If there are no real players at all (e.g. teacher alone waiting for kids),
+    // we don't run end-of-round logic — the world idles peacefully.
+    const total = this.playerCount() + (this.bot ? 1 : 0);
+    if (this.playerCount() > 0) {
+      const aliveCount = [...this.players.values()].filter(p => p.snake && p.snake.alive).length
+                       + (this.bot && this.bot.snake.alive ? 1 : 0);
+      let over = false;
+      if (total >= 2) { if (aliveCount <= 1) over = true; }
+      else            { if (aliveCount === 0) over = true; }
+      if (over) this.endRound();
+    }
 
     this.broadcastState();
   }
 
   endRound() {
     this.restarting = true;
-    const survivors = [...this.players.values()].filter(p => p.snake.alive).map(p => p.snake);
+    const survivors = [...this.players.values()]
+      .filter(p => p.snake && p.snake.alive)
+      .map(p => p.snake);
     if (this.bot && this.bot.snake.alive) survivors.push(this.bot.snake);
     const winner = survivors.length === 1 ? survivors[0].name : null;
     log(this.name, `round over (winner: ${winner ?? 'none'})`);
@@ -247,11 +361,13 @@ export class Game {
       this.removeBotNextRound = false;
       log(this.name, 'bot removed');
     }
+    // Respawn snakes for actual players; host stays snake-less
     for (const p of this.players.values()) {
+      if (p.isHost) continue;
       this.buildSnake(p);
       p.score = 0;
     }
-    if (this.players.size === 1 && !this.bot) {
+    if (this.playerCount() === 1 && !this.bot) {
       this.spawnBot();
       log(this.name, 'bot joined');
     }
@@ -271,6 +387,7 @@ export class Game {
   broadcastState() {
     const scores = {};
     for (const p of this.players.values()) {
+      if (p.isHost) continue;  // host has no snake → not on the scoreboard
       scores[p.id] = { name: p.name, color: p.color, score: p.score, isBot: false };
     }
     if (this.bot) {

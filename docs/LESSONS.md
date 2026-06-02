@@ -762,11 +762,21 @@ Kids open v3, hit **Edit bot**, polish. Things to tell them to look at:
 
 Encourage testing: each kid creates a fresh room, watches their bot vs the auto-bot. If it dies in <30 seconds, fix it.
 
-### Part 2 — Tournament (45 min)
+### Part 2 — Tournament (45 min) — in **teacher mode**
 
-Instructor picks a room name kids can all type — e.g. `final`. **Every kid joins the same room.** As more join, the server sends `restartCountdown` (5 seconds, see [PROTOCOL.md](PROTOCOL.md)) so everyone enters cleanly.
+**Instructor creates the room in Teacher mode.** In the v3 lobby: pick **👨‍🏫 Teacher** under Room Mode, click Create. You land in the room with no snake and a Host Controls panel — Pause / Step / Slower / Faster / Reset.
 
-Once everyone's in, project the room on the big screen. **Run 5 rounds.** Keep score on a whiteboard (the per-room scoreboard resets each round; you tally cumulative manually):
+Share the room name with the kids (e.g. `final`). Each kid joins the room — the server sends a `restartCountdown` (5s) each time someone arrives, so everyone enters cleanly.
+
+Once all are in, **project the room on the big screen.** Run 5 rounds. The host controls turn this from "watch chaos" into a real teaching session:
+
+- **Pause** mid-round when something interesting happens — "Wait! Pickle's bot is about to hit a wall. What should it do?"
+- **Step** one tick to see the next move WITHOUT releasing the pause. Great for debugging strategies.
+- **Slower** (🐢) to drop to 200ms/tick so kids can follow what each bot is doing.
+- **Faster** (🐇) when nothing interesting is happening.
+- **Reset** to force the next round whenever you want — no waiting for natural game-over.
+
+Keep score on a whiteboard (the per-room scoreboard resets each round; you tally cumulative manually):
 
 | Round | 🥇 1st (+3) | 🥈 2nd (+2) | 🥉 3rd (+1) |
 |---|---|---|---|
@@ -778,12 +788,14 @@ Once everyone's in, project the room on the big screen. **Run 5 rounds.** Keep s
 
 After all 5, total points = tournament rank.
 
-**Between rounds**, call out observations:
+**Between rounds** (Pause), call out observations:
 - "Pickle's bot stayed alive 40 seconds — what was it doing?"
 - "Tofu's bot is the only one that turned around when boxed in. Nice."
 - "Sir Hiss is going in circles. What might've happened?"
 
-This is the **best teaching moment of camp** — kids' bots are visible, the strategies are visible, everyone learns from everyone.
+**During a round**, when you spot a teachable moment, just hit Pause and ask the room — "What's about to happen here?" Step a tick at a time to confirm.
+
+This is the **best teaching moment of camp** — kids' bots are visible, the strategies are visible, the instructor's pause-and-narrate makes everyone learn from every move.
 
 ### Part 3 — Discussion (15 min)
 
@@ -807,6 +819,9 @@ Then **one final tournament run** — all bots, one room, in front of parents. L
 
 ### Instructor notes
 - Project the **server terminal log** during the tournament. The "+player joined" and "round over (winner: Tofu)" lines fly by — kids love seeing their name in the log.
+- The teacher-mode panel's **Slower** button is your friend — at 300–500ms/tick, kids can actually follow what each bot is doing. Speed back up when the action gets slow.
+- **Pause early and often.** The first time a bot does something unexpected — pause. Ask: "What did it see?" then `window.snakeCoder.state` in DevTools shows the exact state the bot was looking at.
+- If a bot is clearly broken (errors in the kid's bot status box), let it ride — the visible failure is its own lesson. Don't pause the game to fix one bot; just note it for the post-round discussion.
 - Have a small token prize for 1st place (sticker, lollipop). Mostly symbolic — the recognition is the prize.
 - For the parent demos, prepare a 1-paragraph card for each kid with: their bot's name, color, one-sentence description, and what they tried that didn't quite work (i.e. a story, not a brag).
 - After parents leave, hand out the feedback form (see [PREP.md](PREP.md)).
