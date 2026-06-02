@@ -317,48 +317,75 @@ export class Game {
     // Step
     for (const s of alive) s.step(s._willEat);
 
-    // Collision detection — three categories:
-    //   wall/self    → just die
-    //   head-on-head → both die (no absorption, even in king mode)
-    //   head-on-body → die; killer is the other snake (king mode: killer absorbs length)
+    // Collision detection. Three categories:
+    //   wall/self       → just die
+    //   head-on-head    → both die (no absorption, even in king mode)
+    //   head-on-body    → AGGRESSOR (the one whose head crashed) is at stake:
+    //                       regular: aggressor dies, defender unhurt
+    //                       king:    DEFENDER dies, aggressor lives and absorbs defender's length
     //
-    // (a) Group snakes by their NEW head position to detect head-on-head pairs.
+    // (a) Detect head-on-head: group by NEW head position.
     const headAt = new Map();
     for (const s of alive) {
       const key = `${s.body[0].x},${s.body[0].y}`;
       if (!headAt.has(key)) headAt.set(key, []);
       headAt.get(key).push(s);
     }
-    // (b) Resolve each snake's fate; remember the killer for body collisions.
-    const killedBy = new Map();   // victim → killer (only set for body collisions)
+    // (b) Kill wall/self and head-on-head first. Build a list of head-on-body aggressions.
+    const aggressions = [];  // [{aggressor, victim}]
     for (const s of alive) {
       if (s.hitWall() || s.hitSelf()) { s.alive = false; continue; }
       if (headAt.get(`${s.body[0].x},${s.body[0].y}`).length >= 2) {
-        s.alive = false;
+        s.alive = false;  // head-on-head: dies, can't aggress
         continue;
       }
+      // Look for "my head landed on someone's body cell (body[1..])"
       for (const other of alive) {
         if (other === s) continue;
-        // Check other's body[1..] — head was handled by the head-on-head check
+        let hit = false;
         for (let i = 1; i < other.body.length; i++) {
           if (other.body[i].x === s.body[0].x && other.body[i].y === s.body[0].y) {
-            s.alive = false;
-            killedBy.set(s, other);
-            break;
+            hit = true; break;
           }
         }
-        if (!s.alive) break;
+        if (hit) { aggressions.push({ aggressor: s, victim: other }); break; }
       }
     }
-    // (c) King mode — killer absorbs victim's body length (appended at the tail).
+    // (c) Apply outcomes based on mode.
     if (this.kingMode) {
-      for (const [victim, killer] of killedBy) {
-        if (!killer.alive) continue;   // killer also died this tick — no absorption
-        const tail = killer.body[killer.body.length - 1];
-        for (let i = 0; i < victim.body.length; i++) {
-          killer.body.push({ x: tail.x, y: tail.y });
+      // King mode: aggressor LIVES, defender DIES, aggressor absorbs defender's length.
+      // Edge case: mutual aggression (A's head on B's body AND B's head on A's body) — both die.
+      const aggressorOf = new Map();
+      for (const a of aggressions) aggressorOf.set(a.aggressor, a);
+      const mutual = new Set();
+      for (const a of aggressions) {
+        // If my victim also aggressed me, it's mutual
+        const reverse = aggressorOf.get(a.victim);
+        if (reverse && reverse.victim === a.aggressor) {
+          mutual.add(a.aggressor);
+          mutual.add(a.victim);
         }
       }
+      for (const s of mutual) s.alive = false;
+      // Non-mutual: aggressor eats victim. Snapshot lengths FIRST so chain reactions
+      // don't double-count (e.g., A→B→C: A grows by len(B), not len(B)+len(C)).
+      const growths = [];
+      for (const a of aggressions) {
+        if (mutual.has(a.aggressor)) continue;
+        if (!a.aggressor.alive) continue;             // aggressor killed by something else
+        growths.push({ aggressor: a.aggressor, victim: a.victim, growBy: a.victim.body.length });
+        a.victim.alive = false;
+      }
+      for (const g of growths) {
+        if (!g.aggressor.alive) continue;
+        const tail = g.aggressor.body[g.aggressor.body.length - 1];
+        for (let i = 0; i < g.growBy; i++) {
+          g.aggressor.body.push({ x: tail.x, y: tail.y });
+        }
+      }
+    } else {
+      // Regular: aggressor dies (classic snake — crashing into a body kills you).
+      for (const a of aggressions) a.aggressor.alive = false;
     }
 
     // Award food to survivors

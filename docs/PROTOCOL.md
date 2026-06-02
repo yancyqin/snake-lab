@@ -23,7 +23,7 @@ wss://snake-lab-arena.onrender.com/?room=demo&name=Curly&color=%234ade80
 | `name` | no | Sanitized server-side; max 12 chars; auto-assigned `Snake N` if missing |
 | `color` | no | Must be one of the 8 `PLAYER_COLORS` hex codes; auto-picks an unused one if missing/taken |
 | `host` | no — defaults to off | `host=1` claims the teacher slot. **Only the first connection to a room can claim host.** After anyone has joined, the host slot is locked closed. |
-| `king` | no — defaults to off | `king=1` enables **king-snake mode** for the room. Only honored on first connect (when the room is created). Killer absorbs victim's body length; head-on-head still kills both. |
+| `king` | no — defaults to off | `king=1` enables **king-snake mode** for the room. Only honored on first connect (when the room is created). When your head hits another snake's body: in regular mode the aggressor dies; in king mode the aggressor lives, the defender dies, and the aggressor absorbs the defender's length. Head-on-head: both die in either mode. |
 
 If the room is full (8/8 — host doesn't count), the server sends a `rejected` message and closes with code `4001`.
 
