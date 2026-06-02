@@ -177,6 +177,39 @@ field(col2_x, row_y, "Location",  "TBA")
 
 y = box_top - box_height - 0.20*inch
 
+# ---- "Please note" box ----
+note_top = y
+note_height = 0.95*inch
+NOTE_BG = HexColor("#fefce8")     # very light yellow
+NOTE_BORDER = HexColor("#fde68a")
+c.setFillColor(NOTE_BG)
+c.setStrokeColor(NOTE_BORDER)
+c.setLineWidth(1)
+c.roundRect(0.6*inch, note_top - note_height, PAGE_W - 1.2*inch, note_height, 6, fill=1, stroke=1)
+
+c.setFillColor(HexColor("#92400e"))
+c.setFont("Helvetica-Bold", 10)
+c.drawString(0.8*inch, note_top - 0.25*inch, "PLEASE NOTE")
+
+note_style = ParagraphStyle('note', parent=styles['Normal'],
+    fontName='Helvetica', fontSize=9.5, leading=12.5, textColor=HexColor("#78350f"))
+
+notes = [
+    "This is a <b>small, private kids activity camp</b> organized for friends — not a public program.",
+    "Parents sign a simple waiver and provide emergency contact + allergy information.",
+    "Spots are limited to keep things safe and manageable.",
+]
+ny = note_top - 0.42*inch
+for n in notes:
+    c.setFillColor(HexColor("#a16207"))
+    c.circle(0.86*inch, ny + 3, 2, fill=1, stroke=0)
+    p = Paragraph(n, note_style)
+    w, h = p.wrap(PAGE_W - 1.5*inch, 0.5*inch)
+    p.drawOn(c, 0.98*inch, ny - h + 0.10*inch)
+    ny -= 0.20*inch
+
+y = note_top - note_height - 0.18*inch
+
 # ---- Sign-up / Footer ----
 c.setFillColor(INK)
 c.setFont("Helvetica-Bold", 11)
