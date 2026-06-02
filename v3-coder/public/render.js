@@ -1,10 +1,8 @@
 import {
-  CELL_SIZE, WORLD_COLS, WORLD_ROWS, VIEW_COLS, VIEW_ROWS, COLORS,
+  CELL_SIZE, WORLD_COLS, WORLD_ROWS, VIEW_COLS, VIEW_ROWS, COLORS, FOG_RADIUS,
 } from './constants.js';
 
-// Identical to v2-arena/public/render.js. The renderer doesn't care
-// whether the snake is driven by a finger or a function.
-
+// --- tiny color helpers (so we don't add a dependency) ---
 function hexToRgb(hex) {
   return [
     parseInt(hex.slice(1, 3), 16),
@@ -32,17 +30,41 @@ export class Renderer {
     canvas.height = VIEW_ROWS * CELL_SIZE;
     minimap.width = WORLD_COLS * 3;
     minimap.height = WORLD_ROWS * 3;
+
+    // Cached background gradient (regenerated if canvas resizes — but it doesn't)
     this._bgGrad = null;
   }
 
-  draw(state, myId, popups, now) {
+  // `popups` is an array of { cellX, cellY, text, color, startTime } (ms)
+  // `now` is performance.now()
+  draw(state, myId, popups, now, opts = {}) {
     const mySnake = state.snakes.find(s => s.id === myId);
     const focus = mySnake ? mySnake.body[0] : { x: WORLD_COLS / 2, y: WORLD_ROWS / 2 };
     const camX = Math.max(0, Math.min(WORLD_COLS - VIEW_COLS, focus.x - Math.floor(VIEW_COLS / 2)));
     const camY = Math.max(0, Math.min(WORLD_ROWS - VIEW_ROWS, focus.y - Math.floor(VIEW_ROWS / 2)));
 
     this._drawWorld(state, camX, camY, myId, popups, now);
+    // Fog overlay — applied AFTER drawing the world so visible cells stay sharp.
+    // Only when fogMode is on and I have an alive snake to center the radius on.
+    if (opts.fogMode && mySnake && mySnake.alive) {
+      this._drawFog(mySnake.body[0], camX, camY, opts.fogRadius || FOG_RADIUS);
+    }
     this._drawMinimap(state, camX, camY);
+  }
+
+  _drawFog(head, camX, camY, radiusCells) {
+    const ctx = this.ctx;
+    const W = VIEW_COLS * CELL_SIZE;
+    const H = VIEW_ROWS * CELL_SIZE;
+    const cx = (head.x - camX) * CELL_SIZE + CELL_SIZE / 2;
+    const cy = (head.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+    const inner = radiusCells * CELL_SIZE * 0.78;
+    const outer = radiusCells * CELL_SIZE * 1.05;
+    const grad = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
+    grad.addColorStop(0, 'rgba(7, 7, 14, 0)');
+    grad.addColorStop(1, 'rgba(7, 7, 14, 0.95)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
   }
 
   _drawWorld(state, camX, camY, myId, popups, now) {
@@ -50,6 +72,7 @@ export class Renderer {
     const W = VIEW_COLS * CELL_SIZE;
     const H = VIEW_ROWS * CELL_SIZE;
 
+    // Background — radial gradient (warmer in center, darker at edges)
     if (!this._bgGrad) {
       const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H));
       g.addColorStop(0, COLORS.bgNear);
@@ -59,6 +82,7 @@ export class Renderer {
     ctx.fillStyle = this._bgGrad;
     ctx.fillRect(0, 0, W, H);
 
+    // Subtle grid — much less prominent than v2.1
     ctx.strokeStyle = COLORS.grid;
     ctx.lineWidth = 1;
     for (let i = 0; i <= VIEW_COLS; i++) {
@@ -70,6 +94,7 @@ export class Renderer {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     }
 
+    // World edges
     ctx.strokeStyle = COLORS.worldEdge;
     ctx.lineWidth = 4;
     if (camX === 0)                       { ctx.beginPath(); ctx.moveTo(2, 0);     ctx.lineTo(2, H);     ctx.stroke(); }
@@ -77,35 +102,49 @@ export class Renderer {
     if (camY === 0)                       { ctx.beginPath(); ctx.moveTo(0, 2);     ctx.lineTo(W, 2);     ctx.stroke(); }
     if (camY === WORLD_ROWS - VIEW_ROWS)  { ctx.beginPath(); ctx.moveTo(0, H - 2); ctx.lineTo(W, H - 2); ctx.stroke(); }
 
+    // Food — pulsing circles with a soft glow halo
     const t = now / 1000;
     for (const f of state.foods) {
       if (!this._inView(f.x, f.y, camX, camY)) continue;
       const cx = (f.x - camX) * CELL_SIZE + CELL_SIZE / 2;
       const cy = (f.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+      // Per-food phase offset so they don't all pulse in lockstep
       const phase = t * 2.5 + (f.x * 0.7 + f.y * 0.5);
       const pulse = 0.85 + 0.15 * Math.sin(phase);
       const baseR = CELL_SIZE * 0.32;
       const r = baseR * pulse;
+
+      // Glow halo
       ctx.fillStyle = COLORS.foodGlow;
-      ctx.beginPath(); ctx.arc(cx, cy, r * 2.0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 2.0, 0, Math.PI * 2);
+      ctx.fill();
+      // Solid core
       ctx.fillStyle = COLORS.food;
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
     }
 
+    // Snakes — dead first so alive ones cover them
     const ordered = [...state.snakes].sort((a, b) => (a.alive === b.alive ? 0 : a.alive ? 1 : -1));
     for (const s of ordered) {
       this._drawSnake(s, camX, camY, s.id === myId);
     }
     ctx.globalAlpha = 1.0;
 
+    // Score popups (drawn on top of everything)
     this._drawPopups(popups, camX, camY, now);
   }
 
   _drawSnake(s, camX, camY, isMe) {
     const ctx = this.ctx;
-    ctx.globalAlpha = s.alive ? 1.0 : 0.35;
+    const alive = s.alive;
+    ctx.globalAlpha = alive ? 1.0 : 0.35;
 
+    // --- Body as continuous rounded path ---
     if (s.body.length >= 2) {
+      // Outer stroke (dark outline)
       ctx.strokeStyle = COLORS.bodyOutline;
       ctx.lineWidth = CELL_SIZE * 0.92;
       ctx.lineCap = 'round';
@@ -113,22 +152,34 @@ export class Renderer {
       this._tracePath(s.body, camX, camY);
       ctx.stroke();
 
+      // Inner stroke (snake color)
       ctx.strokeStyle = s.color;
       ctx.lineWidth = CELL_SIZE * 0.78;
       this._tracePath(s.body, camX, camY);
       ctx.stroke();
     } else {
+      // Single-cell snake — draw a dot
       const c = s.body[0];
       if (this._inView(c.x, c.y, camX, camY)) {
         const cx = (c.x - camX) * CELL_SIZE + CELL_SIZE / 2;
         const cy = (c.y - camY) * CELL_SIZE + CELL_SIZE / 2;
         ctx.fillStyle = s.color;
-        ctx.beginPath(); ctx.arc(cx, cy, CELL_SIZE * 0.42, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, CELL_SIZE * 0.42, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
 
+    // In fog mode the server may send a partial snake (only the cells within
+    // my radius). `headVisible: false` means body[0] is NOT the real head —
+    // it's just the first visible body cell. We skip the head decoration and
+    // the name letters because we don't know which cell is which.
+    const hasHead = s.headVisible !== false;
+
+    // --- Name letters along the body (only when head is visible — we know
+    // which cell is body[1], body[2], etc.) ---
     const labelName = (s.name || '').toUpperCase();
-    if (labelName && s.body.length > 1) {
+    if (hasHead && labelName && s.body.length > 1) {
       const padded = labelName + ' ';
       ctx.fillStyle = COLORS.bodyText;
       ctx.font = `bold ${Math.floor(CELL_SIZE * 0.5)}px -apple-system, system-ui, monospace`;
@@ -145,9 +196,12 @@ export class Renderer {
       }
     }
 
-    const head = s.body[0];
-    if (this._inView(head.x, head.y, camX, camY)) {
-      this._drawHead(head, s, camX, camY, isMe);
+    // --- Head on top (only if we know which cell is the head) ---
+    if (hasHead) {
+      const head = s.body[0];
+      if (this._inView(head.x, head.y, camX, camY)) {
+        this._drawHead(head, s, camX, camY, isMe);
+      }
     }
   }
 
@@ -169,37 +223,53 @@ export class Renderer {
     const cy = (head.y - camY) * CELL_SIZE + CELL_SIZE / 2;
     const r = CELL_SIZE * 0.48;
 
+    // Outer outline
     ctx.fillStyle = darken(snake.color, 0.35);
-    ctx.beginPath(); ctx.arc(cx, cy, r + 1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 1, 0, Math.PI * 2);
+    ctx.fill();
 
+    // Main fill
     ctx.fillStyle = snake.color;
-    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
 
+    // My-snake aura — soft glow ring around head
     if (isMe && snake.alive) {
       ctx.strokeStyle = 'rgba(255,255,255,0.9)';
       ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(cx, cy, r + 2, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
-    if (!snake.alive) this._drawDeadEyes(cx, cy, snake.direction, r);
-    else              this._drawLiveEyes(cx, cy, snake.direction, r);
+    // Eyes — switch to X eyes if dead
+    if (!snake.alive) {
+      this._drawDeadEyes(cx, cy, snake.direction, r);
+    } else {
+      this._drawLiveEyes(cx, cy, snake.direction, r);
+    }
   }
 
   _drawLiveEyes(cx, cy, dir, r) {
     const ctx = this.ctx;
-    const E = Math.max(3, Math.floor(CELL_SIZE / 7));
-    const fwd = r * 0.45;
-    const side = r * 0.45;
+    const E = Math.max(3, Math.floor(CELL_SIZE / 7));   // eye size
+    const fwd = r * 0.45;                                // distance from center toward facing edge
+    const side = r * 0.45;                               // perpendicular spread
 
+    // Compute eye positions based on direction
     let e1, e2;
     if (dir === 'RIGHT') { e1 = [cx + fwd, cy - side]; e2 = [cx + fwd, cy + side]; }
     if (dir === 'LEFT')  { e1 = [cx - fwd, cy - side]; e2 = [cx - fwd, cy + side]; }
     if (dir === 'UP')    { e1 = [cx - side, cy - fwd]; e2 = [cx + side, cy - fwd]; }
     if (dir === 'DOWN')  { e1 = [cx - side, cy + fwd]; e2 = [cx + side, cy + fwd]; }
 
+    // White sclera
     ctx.fillStyle = '#fef2f2';
     ctx.beginPath(); ctx.arc(e1[0], e1[1], E, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(e2[0], e2[1], E, 0, Math.PI * 2); ctx.fill();
+    // Dark pupil (offset slightly forward)
     const pupilOff = E * 0.35;
     const off = {
       RIGHT: [pupilOff, 0], LEFT: [-pupilOff, 0], UP: [0, -pupilOff], DOWN: [0, pupilOff],
@@ -235,7 +305,7 @@ export class Renderer {
   _drawPopups(popups, camX, camY, now) {
     if (!popups || popups.length === 0) return;
     const ctx = this.ctx;
-    const LIFETIME = 900;
+    const LIFETIME = 900;  // ms
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (const p of popups) {
@@ -244,10 +314,11 @@ export class Renderer {
       if (!this._inView(p.cellX, p.cellY, camX, camY)) continue;
       const progress = age / LIFETIME;
       const alpha = Math.max(0, 1 - progress);
-      const drift = progress * 36;
+      const drift = progress * 36;     // pixels upward over the lifetime
       const sx = (p.cellX - camX) * CELL_SIZE + CELL_SIZE / 2;
       const sy = (p.cellY - camY) * CELL_SIZE + CELL_SIZE / 2 - drift;
       ctx.font = `bold 18px -apple-system, system-ui, sans-serif`;
+      // Shadow then text for legibility on bright body cells
       ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.6})`;
       ctx.fillText(p.text, sx + 1, sy + 1);
       ctx.fillStyle = withAlpha(p.color || '#ffffff', alpha);

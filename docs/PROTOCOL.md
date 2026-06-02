@@ -24,6 +24,7 @@ wss://snake-lab-arena.onrender.com/?room=demo&name=Curly&color=%234ade80
 | `color` | no | Must be one of the 8 `PLAYER_COLORS` hex codes; auto-picks an unused one if missing/taken |
 | `host` | no — defaults to off | `host=1` claims the teacher slot. **Only the first connection to a room can claim host.** After anyone has joined, the host slot is locked closed. |
 | `king` | no — defaults to off | `king=1` enables **king-snake mode** for the room. Only honored on first connect (when the room is created). When your head hits another snake's body: in regular mode the aggressor dies; in king mode the aggressor lives, the defender dies, and the aggressor absorbs the defender's length. Head-on-head: both die in either mode. |
+| `fog`  | no — defaults to off | `fog=1` enables **fog of war** for the room. Each player's `state` message is filtered to cells within `FOG_RADIUS` of their head. Host and dead snakes see everything. Only honored on first connect. |
 
 If the room is full (8/8 — host doesn't count), the server sends a `rejected` message and closes with code `4001`.
 
@@ -63,6 +64,8 @@ Six message types.
   "playerId": "p3",
   "isHost": false,
   "kingMode": false,
+  "fogMode": false,
+  "fogRadius": 8,
   "paused": false,
   "tickRate": 130,
   "world": { "cols": 60, "rows": 60 },
@@ -71,7 +74,7 @@ Six message types.
 }
 ```
 
-Your `playerId` is how you find yourself in later state messages. `isHost: true` means you're the teacher (no snake, control panel shown). `kingMode: true` means the room is in king-snake mode (eat-snake-to-grow). `paused` and `tickRate` reflect any changes the host has already made.
+Your `playerId` is how you find yourself in later state messages. `isHost: true` means you're the teacher (no snake, control panel shown). `kingMode: true` means king-snake (eat-to-grow). `fogMode: true` means your `state` messages are filtered to `fogRadius` cells around your head. `paused` and `tickRate` reflect any changes the host has already made.
 
 ### 2. `state` — every tick (130ms)
 
@@ -115,6 +118,24 @@ Notes:
 - `body[0]` is always the head. Order matters (head → tail).
 - Bots are flagged with `isBot: true`. Bot entries in `scores` carry an extra `smartness` field (0–1).
 - `scores` is keyed by snake id, separate from the snakes array so the client can keep dead players in the scoreboard.
+
+**In fog mode**, each player receives a different `state` payload — only foods and snake cells within `fogRadius` of their head. Partially-visible snakes carry extra flags:
+
+```json
+{
+  "id": "p4",
+  "name": "Wiggles",
+  "color": "#fbbf24",
+  "body": [{"x":42,"y":18},{"x":43,"y":18}],   // only the cells in fog range
+  "headVisible": false,                          // body[0] is NOT the actual head, just the first visible cell
+  "partial": true,                               // full body is longer than what's shown
+  "direction": "RIGHT",
+  "alive": true,
+  "isBot": false
+}
+```
+
+The viewer's own snake is always fully visible (no filtering). Host and dead snakes see the full state.
 
 ### 3. `roundOver` — round ends (someone wins or all dead)
 

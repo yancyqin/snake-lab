@@ -14,6 +14,10 @@ export const POINTS_PER_FOOD = 10;
 export const MAX_PLAYERS = 8;
 export const RESTART_DELAY_MS = 3000;
 
+// Fog of war: only cells within this Euclidean radius (in cells) of your head
+// are visible. Host and dead snakes see everything.
+export const FOG_RADIUS = 8;
+
 // Bot smartness: full smart up to length 10, then drops linearly to 0 by length 30
 export const BOT_SMART_UNTIL = 10;
 export const BOT_DUMB_RAMP = 20;

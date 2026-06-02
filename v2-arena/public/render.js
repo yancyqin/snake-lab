@@ -1,5 +1,5 @@
 import {
-  CELL_SIZE, WORLD_COLS, WORLD_ROWS, VIEW_COLS, VIEW_ROWS, COLORS,
+  CELL_SIZE, WORLD_COLS, WORLD_ROWS, VIEW_COLS, VIEW_ROWS, COLORS, FOG_RADIUS,
 } from './constants.js';
 
 // --- tiny color helpers (so we don't add a dependency) ---
@@ -37,14 +37,34 @@ export class Renderer {
 
   // `popups` is an array of { cellX, cellY, text, color, startTime } (ms)
   // `now` is performance.now()
-  draw(state, myId, popups, now) {
+  draw(state, myId, popups, now, opts = {}) {
     const mySnake = state.snakes.find(s => s.id === myId);
     const focus = mySnake ? mySnake.body[0] : { x: WORLD_COLS / 2, y: WORLD_ROWS / 2 };
     const camX = Math.max(0, Math.min(WORLD_COLS - VIEW_COLS, focus.x - Math.floor(VIEW_COLS / 2)));
     const camY = Math.max(0, Math.min(WORLD_ROWS - VIEW_ROWS, focus.y - Math.floor(VIEW_ROWS / 2)));
 
     this._drawWorld(state, camX, camY, myId, popups, now);
+    // Fog overlay — applied AFTER drawing the world so visible cells stay sharp.
+    // Only when fogMode is on and I have an alive snake to center the radius on.
+    if (opts.fogMode && mySnake && mySnake.alive) {
+      this._drawFog(mySnake.body[0], camX, camY, opts.fogRadius || FOG_RADIUS);
+    }
     this._drawMinimap(state, camX, camY);
+  }
+
+  _drawFog(head, camX, camY, radiusCells) {
+    const ctx = this.ctx;
+    const W = VIEW_COLS * CELL_SIZE;
+    const H = VIEW_ROWS * CELL_SIZE;
+    const cx = (head.x - camX) * CELL_SIZE + CELL_SIZE / 2;
+    const cy = (head.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+    const inner = radiusCells * CELL_SIZE * 0.78;
+    const outer = radiusCells * CELL_SIZE * 1.05;
+    const grad = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
+    grad.addColorStop(0, 'rgba(7, 7, 14, 0)');
+    grad.addColorStop(1, 'rgba(7, 7, 14, 0.95)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
   }
 
   _drawWorld(state, camX, camY, myId, popups, now) {
@@ -150,11 +170,16 @@ export class Renderer {
       }
     }
 
-    // --- Name letters along the body (not on the head) ---
-    // Bots and humans both get their name painted. A trailing space in the
-    // padded string creates a one-cell gap before the name repeats.
+    // In fog mode the server may send a partial snake (only the cells within
+    // my radius). `headVisible: false` means body[0] is NOT the real head —
+    // it's just the first visible body cell. We skip the head decoration and
+    // the name letters because we don't know which cell is which.
+    const hasHead = s.headVisible !== false;
+
+    // --- Name letters along the body (only when head is visible — we know
+    // which cell is body[1], body[2], etc.) ---
     const labelName = (s.name || '').toUpperCase();
-    if (labelName && s.body.length > 1) {
+    if (hasHead && labelName && s.body.length > 1) {
       const padded = labelName + ' ';
       ctx.fillStyle = COLORS.bodyText;
       ctx.font = `bold ${Math.floor(CELL_SIZE * 0.5)}px -apple-system, system-ui, monospace`;
@@ -164,17 +189,19 @@ export class Renderer {
         const cell = s.body[i];
         if (!this._inView(cell.x, cell.y, camX, camY)) continue;
         const char = padded[(i - 1) % padded.length];
-        if (char === ' ') continue;   // skip drawing on the gap cells
+        if (char === ' ') continue;
         const cx = (cell.x - camX) * CELL_SIZE + CELL_SIZE / 2;
         const cy = (cell.y - camY) * CELL_SIZE + CELL_SIZE / 2;
         ctx.fillText(char, cx, cy + 1);
       }
     }
 
-    // --- Head on top ---
-    const head = s.body[0];
-    if (this._inView(head.x, head.y, camX, camY)) {
-      this._drawHead(head, s, camX, camY, isMe);
+    // --- Head on top (only if we know which cell is the head) ---
+    if (hasHead) {
+      const head = s.body[0];
+      if (this._inView(head.x, head.y, camX, camY)) {
+        this._drawHead(head, s, camX, camY, isMe);
+      }
     }
   }
 

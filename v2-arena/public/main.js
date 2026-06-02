@@ -30,13 +30,16 @@ function startLobby() {
   const createBtn     = document.getElementById('createRoomBtn');
   const teacherToggle = document.getElementById('teacherToggle');
   const kingToggle    = document.getElementById('kingToggle');
+  const fogToggle     = document.getElementById('fogToggle');
 
   // Room settings — orthogonal checkboxes. Each one applied when CREATING a room.
   teacherToggle.checked = sessionStorage.getItem('teacherMode') === '1';
   kingToggle.checked    = sessionStorage.getItem('kingMode')    === '1';
+  fogToggle.checked     = sessionStorage.getItem('fogMode')     === '1';
   function applySettingsUI() {
     teacherToggle.closest('.setting-row').classList.toggle('checked', teacherToggle.checked);
     kingToggle.closest('.setting-row').classList.toggle('checked', kingToggle.checked);
+    fogToggle.closest('.setting-row').classList.toggle('checked', fogToggle.checked);
   }
   applySettingsUI();
   teacherToggle.addEventListener('change', () => {
@@ -45,6 +48,10 @@ function startLobby() {
   });
   kingToggle.addEventListener('change', () => {
     sessionStorage.setItem('kingMode', kingToggle.checked ? '1' : '0');
+    applySettingsUI();
+  });
+  fogToggle.addEventListener('change', () => {
+    sessionStorage.setItem('fogMode', fogToggle.checked ? '1' : '0');
     applySettingsUI();
   });
 
@@ -92,7 +99,8 @@ function startLobby() {
       const full = r.players >= r.max;
       const badges =
         (r.hasHost   ? '<span class="room-mode">👨‍🏫</span>' : '') +
-        (r.kingMode  ? '<span class="room-mode">👑</span>'   : '');
+        (r.kingMode  ? '<span class="room-mode">👑</span>'   : '') +
+        (r.fogMode   ? '<span class="room-mode">🌫️</span>'  : '');
       li.innerHTML = `
         <span class="room-name">${badges}${escapeHtml(r.name)}</span>
         <span style="display:flex; gap:10px; align-items:center;">
@@ -100,8 +108,8 @@ function startLobby() {
           <button ${full ? 'class="disabled" disabled' : ''} data-room="${escapeHtml(r.name)}">${full ? 'Full' : 'Join'}</button>
         </span>`;
       const btn = li.querySelector('button');
-      // Joining an existing room is always as a player. Settings (host/king) were locked at room creation.
-      if (!full) btn.addEventListener('click', () => joinRoom(r.name, false, false));
+      // Joining an existing room is always as a player. Settings were locked at room creation.
+      if (!full) btn.addEventListener('click', () => joinRoom(r.name, false, false, false));
       roomList.appendChild(li);
     }
   }
@@ -109,15 +117,16 @@ function startLobby() {
   const refreshTimer = setInterval(refreshRooms, 3000);
 
   createBtn.addEventListener('click', () => {
-    joinRoom(randomRoomName(), teacherToggle.checked, kingToggle.checked);
+    joinRoom(randomRoomName(), teacherToggle.checked, kingToggle.checked, fogToggle.checked);
   });
 
-  function joinRoom(roomName, asHost = false, asKing = false) {
+  function joinRoom(roomName, asHost = false, asKing = false, asFog = false) {
     clearInterval(refreshTimer);
     const url = new URL(location.href);
     url.searchParams.set('room', roomName);
     if (asHost) url.searchParams.set('host', '1');
     if (asKing) url.searchParams.set('king', '1');
+    if (asFog)  url.searchParams.set('fog', '1');
     location.href = url.toString();
   }
 }
@@ -145,17 +154,18 @@ function startGame(room) {
   const name  = sessionStorage.getItem('snakeName')  || '';
   const color = sessionStorage.getItem('snakeColor') || PLAYER_COLORS[0];
 
-  // host=1 → claim teacher slot (first connection only).
-  // king=1 → applied at room creation (first connection only).
+  // Room-mode flags from URL — only honored on FIRST connection (room creation).
   const urlParams = new URLSearchParams(location.search);
   const requestedHost = urlParams.get('host') === '1';
   const requestedKing = urlParams.get('king') === '1';
+  const requestedFog  = urlParams.get('fog')  === '1';
 
   const qs = new URLSearchParams({ room: cleanRoom });
   if (name)  qs.set('name', name);
   if (color) qs.set('color', color);
   if (requestedHost) qs.set('host', '1');
   if (requestedKing) qs.set('king', '1');
+  if (requestedFog)  qs.set('fog',  '1');
   const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
   const wsUrl = `${wsProto}://${location.host}?${qs.toString()}`;
 
@@ -169,6 +179,8 @@ function startGame(room) {
   let myId = null;
   let isHost = false;
   let kingMode = false;
+  let fogMode = false;
+  let fogRadius = 8;
   let paused = false;
   let tickRate = 130;
   let lastState = null;
@@ -182,12 +194,14 @@ function startGame(room) {
   const tickRateLabel = document.getElementById('tickRateLabel');
 
   const kingBadge = document.getElementById('kingBadge');
+  const fogBadge  = document.getElementById('fogBadge');
   function applyModeUI() {
     hostPanel.classList.toggle('hidden', !isHost);
     pausedBanner.classList.toggle('hidden', !paused || isHost);
     pauseBtn.textContent = paused ? '▶ Resume' : '⏸ Pause';
     tickRateLabel.textContent = `${tickRate}ms`;
     if (kingBadge) kingBadge.classList.toggle('hidden', !kingMode);
+    if (fogBadge)  fogBadge.classList.toggle('hidden',  !fogMode);
   }
 
   function sendHostMsg(type, extra = {}) {
@@ -207,10 +221,12 @@ function startGame(room) {
     const msg = JSON.parse(e.data);
     if (msg.type === 'welcome') {
       myId = msg.playerId;
-      isHost   = !!msg.isHost;
-      kingMode = !!msg.kingMode;
-      paused   = !!msg.paused;
-      tickRate =  msg.tickRate || 130;
+      isHost    = !!msg.isHost;
+      kingMode  = !!msg.kingMode;
+      fogMode   = !!msg.fogMode;
+      fogRadius =  msg.fogRadius || 8;
+      paused    = !!msg.paused;
+      tickRate  =  msg.tickRate || 130;
       applyModeUI();
       setStatus('', '');
     } else if (msg.type === 'modeChange') {
@@ -298,9 +314,8 @@ function startGame(room) {
   // RAF loop — keeps food pulsing and popups animating between state arrivals
   function loop() {
     const now = performance.now();
-    // Drop popups older than their lifetime
     while (popups.length && now - popups[0].startTime > 900) popups.shift();
-    if (lastState) renderer.draw(lastState, myId, popups, now);
+    if (lastState) renderer.draw(lastState, myId, popups, now, { fogMode, fogRadius });
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);

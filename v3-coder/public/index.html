@@ -399,6 +399,13 @@
             <span class="sub">Snake eats snake — when your head hits another snake's body, you absorb their length and they die. Head-on-head still kills both.</span>
           </span>
         </label>
+        <label class="setting-row" data-setting="fog">
+          <input type="checkbox" id="fogToggle">
+          <span class="label">
+            <strong>🌫️ Fog of war</strong>
+            <span class="sub">Bots only see what's near their own head. Real strategy — your <code>nextMove(state)</code> gets filtered <code>state.others</code> and <code>state.food</code>.</span>
+          </span>
+        </label>
       </div>
     </div>
 
@@ -432,7 +439,7 @@
   <div id="gameScreen" class="screen hidden">
     <div class="game-header">
       <h1 style="margin:0; font-size:18px;">🐍 Snake Coder</h1>
-      <div class="info">Room <code id="roomName">lobby</code> <span id="kingBadge" class="room-mode hidden">👑 KING</span></div>
+      <div class="info">Room <code id="roomName">lobby</code> <span id="kingBadge" class="room-mode hidden">👑 KING</span> <span id="fogBadge" class="room-mode hidden">🌫️ FOG</span></div>
       <button id="editBotBtn" class="secondary">Edit bot</button>
       <button id="leaveBtn" class="secondary">Leave</button>
     </div>

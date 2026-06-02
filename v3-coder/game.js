@@ -4,11 +4,37 @@ import {
   WORLD_COLS, WORLD_ROWS, VIEW_COLS, VIEW_ROWS,
   TICK_MS, FOOD_COUNT, POINTS_PER_FOOD,
   PLAYER_COLORS, BOT_COLOR, FUNNY_NAMES,
-  MAX_PLAYERS, RESTART_DELAY_MS,
+  MAX_PLAYERS, RESTART_DELAY_MS, FOG_RADIUS,
 } from './public/constants.js';
 
 function pickFunnyName() {
   return FUNNY_NAMES[Math.floor(Math.random() * FUNNY_NAMES.length)];
+}
+
+// Build a fog-filtered view of the world from a specific player's perspective.
+// Returns { snakes, foods } — only cells within FOG_RADIUS of the viewer's head.
+// The viewer's own snake is always fully visible.
+function filterStateForPlayer(viewerSnake, allSerializedSnakes, allFoods) {
+  const head = viewerSnake.body[0];
+  const r2 = FOG_RADIUS * FOG_RADIUS;
+  const inFog = (x, y) => {
+    const dx = x - head.x, dy = y - head.y;
+    return dx * dx + dy * dy <= r2;
+  };
+  const snakes = [];
+  for (const s of allSerializedSnakes) {
+    if (s.id === viewerSnake.id) { snakes.push(s); continue; }   // see myself fully
+    const visible = s.body.filter(c => inFog(c.x, c.y));
+    if (visible.length === 0) continue;                          // nothing of this snake visible
+    snakes.push({
+      ...s,
+      body: visible,
+      headVisible: inFog(s.body[0].x, s.body[0].y),
+      partial: visible.length < s.body.length,
+    });
+  }
+  const foods = allFoods.filter(f => inFog(f.x, f.y));
+  return { snakes, foods };
 }
 
 const SPAWN_POSITIONS = [
@@ -32,6 +58,7 @@ export class Game {
     this.hostId = null;              // set when the first connection claims host=1
     this.hostLocked = false;         // after first connect, host slot is closed
     this.kingMode = !!options.king;  // snake-eat-snake: killer absorbs victim's length
+    this.fogMode  = !!options.fog;   // fog of war: per-player visibility radius
     this.paused = false;
     this.tickRate = TICK_MS;
     this.players = new Map();        // includes the host (with isHost: true, snake: null)
@@ -82,6 +109,7 @@ export class Game {
       max: MAX_PLAYERS,
       hasHost: this.hostId !== null,
       kingMode: this.kingMode,
+      fogMode: this.fogMode,
     };
   }
 
@@ -123,6 +151,8 @@ export class Game {
       playerId: id,
       isHost,
       kingMode: this.kingMode,
+      fogMode: this.fogMode,
+      fogRadius: FOG_RADIUS,
       paused: this.paused,
       tickRate: this.tickRate,
       world: { cols: WORLD_COLS, rows: WORLD_ROWS },
@@ -472,13 +502,29 @@ export class Game {
         smartness: this.bot.smartness,
       };
     }
-    this.broadcast({
-      type: 'state',
-      tick: this.tick,
-      snakes: this.allSnakes().map(s => s.serialize()),
-      foods: this.foods,
-      scores,
-    });
+    const all = this.allSnakes();
+    const allSnakesData = all.map(s => s.serialize());
+    const baseMsg = { type: 'state', tick: this.tick, scores };
+
+    // Fast path: no fog → everyone gets the same full state.
+    if (!this.fogMode) {
+      this.broadcast({ ...baseMsg, snakes: allSnakesData, foods: this.foods });
+      return;
+    }
+
+    // Fog path: build a per-player filtered payload.
+    // Host and dead snakes see everything (no fog).
+    const fullPayload = JSON.stringify({ ...baseMsg, snakes: allSnakesData, foods: this.foods });
+    for (const p of this.players.values()) {
+      if (p.ws.readyState !== 1) continue;
+      const seesAll = p.isHost || !p.snake || !p.snake.alive;
+      if (seesAll) {
+        p.ws.send(fullPayload);
+        continue;
+      }
+      const filtered = filterStateForPlayer(p.snake, allSnakesData, this.foods);
+      p.ws.send(JSON.stringify({ ...baseMsg, ...filtered }));
+    }
   }
 
   broadcast(msg) {
