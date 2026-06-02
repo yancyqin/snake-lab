@@ -166,7 +166,7 @@ def field(x, y, label, value, value_bold=False):
     c.setFont("Helvetica-Bold" if value_bold else "Helvetica", 11.5)
     c.drawString(x, y - 0.18*inch, value)
 
-field(col1_x, row_y, "Ages", "10 – 14")
+field(col1_x, row_y, "Ages", "9 and up")
 field(col2_x, row_y, "Class size", "Up to 8 kids")
 row_y -= 0.42*inch
 field(col1_x, row_y, "Dates",     "To be announced (first trial run)")
@@ -183,7 +183,7 @@ c.setFont("Helvetica-Bold", 11)
 c.drawString(0.6*inch, y, "Interested?")
 c.setFont("Helvetica", 10.5)
 c.setFillColor(INK_MID)
-c.drawString(0.6*inch, y - 0.18*inch, "Email yqin@paciolan.com to hold a spot or ask questions.")
+c.drawString(0.6*inch, y - 0.18*inch, "Email yancyqin@gmail.com to hold a spot or ask questions.")
 
 y -= 0.50*inch
 
