@@ -570,31 +570,177 @@ No new lesson. Same "exposure" pattern as Day 1 PM. Kids look at v3-coder and pl
 
 ## Lesson 5 — Be the Bot (90 min · v3-coder)
 
-> **Big idea:** A program can play the game for you. Today you write that program.
-
-> ⚠️ Outline only — will be filled in once v3-coder ships.
+> **Big idea:** A program can play the game for you. Today you write that program. Same wire protocol as v2 — your bot sends `{type: 'direction', dir: 'UP'}` just like your finger swiping yesterday.
 
 ### What kids will learn
 - The shape of a bot function: `function nextMove(state) { return 'UP' }`
 - What's in `state` (your snake, others, food, board, tick)
-- How to think about "what should I do?" as code
+- How to think about "what should I do here?" as code, line by line
+- That writing a bot is just a different way of sending the same message — see [PROTOCOL.md](PROTOCOL.md)
 
-### Suggested structure
-1. **Recap the sample bots** from yesterday afternoon.
-2. **Walk through `greedy.js` line by line** — the simplest "real" bot.
-3. **Build a `greedy_safe.js` together** — combine greedy + don't crash.
-4. **Kids fork it.** Each kid writes their own version, can change ONE thing:
-   - "Mine chases the closest food, but avoids opponents heads"
-   - "Mine goes to the food with the most other foods near it"
-   - "Mine zigzags so it's harder to corner"
-5. **Test in solo mode** — each kid plays their bot vs the built-in dumb bot.
+### Part 1 — Play yesterday's sample bots one more time (10 min)
 
-### Open questions until v3 ships
-- What's the exact `state` shape?
-- How does the kid load/test their bot? Paste in textarea? Save to file?
-- What sample bots ship with v3?
+Quick refresher. Three sample bots, kids pick one in the lobby, watch them play:
+- **random.js** — picks any direction. Lives ~5 seconds. Hilarious.
+- **greedy.js** — chases the nearest food. Lives longer but crashes into walls eventually.
+- **safe.js** — chases food AND avoids walls and bodies. The champion sample.
 
-(These get nailed down when we build v3.)
+> "Each of these is **less than 30 lines of code.** Let's read one."
+
+### Part 2 — Lecture: "The shape of a bot" (15 min)
+
+Project the lobby. Show the textarea. The whole API in one screenshot:
+
+```js
+function nextMove(state) {
+  return 'RIGHT';
+}
+```
+
+> "Every 130ms, your code gets called with `state`. It returns a direction string. That's it. Whatever you return becomes your snake's next move."
+
+**The `state` object** — project this as a poster too:
+
+```js
+state = {
+  me:   { body: [{x, y}, ...], direction: 'UP', alive: true },
+  food: [ {x: 5, y: 10}, {x: 17, y: 42}, ... ],
+  others: [
+    { body: [...], direction: 'RIGHT', alive: true },
+    { body: [...], direction: 'DOWN',  alive: true },
+  ],
+  board: { width: 60, height: 60 },
+  tick:  42
+}
+```
+
+> "`me.body[0]` is your head. `food` is every food in the world. `others` is every other snake. Same `body` shape — list of cells, head first."
+
+**Connect to yesterday:**
+> "Remember the `state` message from L3? That `state` object the server sends every 130ms? Your `nextMove(state)` gets almost the same thing. The browser pulls your snake out as `me`, the rest as `others`, and hands it to you."
+
+### Part 3 — Lecture: Read `greedy.js` line by line (15 min)
+
+Project [`v3-coder/public/bots/greedy.js`](../v3-coder/public/bots/greedy.js) on the screen. Slow walk-through:
+
+```js
+function nextMove(state) {
+  const head = state.me.body[0];
+```
+> "First we grab my head. That's `state.me.body[0]`."
+
+```js
+  let nearest = state.food[0];
+  let nearestD = Math.abs(nearest.x - head.x) + Math.abs(nearest.y - head.y);
+  for (const f of state.food) {
+    const d = Math.abs(f.x - head.x) + Math.abs(f.y - head.y);
+    if (d < nearestD) { nearest = f; nearestD = d; }
+  }
+```
+> "Now we look at every food and figure out which is closest. Distance is `|food.x - head.x| + |food.y - head.y|` — how many cells you have to walk left/right plus up/down. That's called **Manhattan distance**."
+
+```js
+  const dx = nearest.x - head.x;
+  const dy = nearest.y - head.y;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    return dx > 0 ? 'RIGHT' : 'LEFT';
+  } else {
+    return dy > 0 ? 'DOWN' : 'UP';
+  }
+}
+```
+> "Now move toward it. Is the food more to the side or more up/down? Pick whichever is further. Go in that direction."
+
+**Pause and ask:**
+> *"This bot doesn't check for walls. What happens when food is right next to the wall?"*
+
+Lead them to: it'll keep heading toward the wall, then crash into it.
+
+### Part 4 — Hands-on: build `greedy_safe.js` together (20 min)
+
+Open the lobby. Click **Greedy** to load the code. Instructor shows the projected textarea.
+
+> "Let's fix the wall-crashing. We need to: pick a direction, then CHECK if it'll kill us. If it will, pick a different one."
+
+Type the new function together on the projector:
+
+```js
+function nextMove(state) {
+  const head = state.me.body[0];
+  const W = state.board.width;
+  const H = state.board.height;
+
+  // Find the closest food (same as before)
+  let nearest = state.food[0];
+  let nearestD = Math.abs(nearest.x - head.x) + Math.abs(nearest.y - head.y);
+  for (const f of state.food) {
+    const d = Math.abs(f.x - head.x) + Math.abs(f.y - head.y);
+    if (d < nearestD) { nearest = f; nearestD = d; }
+  }
+
+  // NEW: a helper that asks "is this cell deadly?"
+  function deadly(x, y) {
+    if (x < 0 || x >= W || y < 0 || y >= H) return true;     // wall
+    for (const cell of state.me.body) {
+      if (cell.x === x && cell.y === y) return true;          // myself
+    }
+    for (const other of state.others) {
+      for (const cell of other.body) {
+        if (cell.x === x && cell.y === y) return true;        // any other snake
+      }
+    }
+    return false;
+  }
+
+  // Try each of the 4 directions. Pick the one closest to food and NOT deadly.
+  const moves = {
+    UP:    { x: head.x,     y: head.y - 1 },
+    DOWN:  { x: head.x,     y: head.y + 1 },
+    LEFT:  { x: head.x - 1, y: head.y     },
+    RIGHT: { x: head.x + 1, y: head.y     },
+  };
+  let best = null, bestD = Infinity;
+  for (const [dir, pos] of Object.entries(moves)) {
+    if (deadly(pos.x, pos.y)) continue;
+    const d = Math.abs(pos.x - nearest.x) + Math.abs(pos.y - nearest.y);
+    if (d < bestD) { best = dir; bestD = d; }
+  }
+  return best || state.me.direction;   // if every direction is deadly, accept fate
+}
+```
+
+(This is `safe.js` we already shipped. By building it together kids see it isn't magic.)
+
+**Click Create new room.** The kid's bot — well, the instructor's typed version of it — starts playing live on the projector against the auto-bot. Cheers all around when it eats food without crashing.
+
+### Part 5 — Kids fork it (25 min)
+
+Each kid opens v3 on their iPad, clicks **Safe** to load the working bot, then changes ONE thing. Suggested mods (write on the whiteboard, kids pick or invent):
+
+- **Closer wins** — break ties between two foods by checking which has MORE foods near it (a "rich neighborhood")
+- **Head-on dodge** — never move to a cell that's adjacent to an opponent's head (they might land there)
+- **Tail-chaser** — chase your own tail when no food is close (keeps you in tight circles, safer)
+- **Greedy-but-patient** — only chase food if it's within 10 cells, otherwise sit still in safe loops
+- **Wall-runner** — prefer cells against the wall (smaller risk of being cornered)
+
+Kids paste their bot, click **+ Create new room**, watch it run against the auto-bot. Iterate.
+
+### Part 6 — Wrap-up: "Show me a bot, in one sentence" (5 min)
+
+Go around the room. Each kid finishes:
+> "My bot is the one that ______."
+
+If a kid can't articulate it in one sentence, the bot isn't quite a real strategy yet — that's a great signal for what to fix tomorrow morning.
+
+Tease L6:
+> "Tomorrow we put all your bots in **one room** and see who wins."
+
+### Instructor notes
+- The big risk in this lesson is JavaScript syntax (missing braces, typos). **Tell kids:** if the bot status shows red "Syntax error" — read the error message, count your braces, ask for help. The lobby textarea is forgiving — they can fix and re-create the room.
+- If a kid asks "can I use `for` loops? `if`? `let`?" — yes to all. It's plain JavaScript. Show the sample bots use them.
+- If a kid asks "can my bot remember things between ticks?" — yes! Declare a variable OUTSIDE `nextMove`, e.g. `let lastMove = 'UP';`. It persists across calls. This is a nice "scope" lesson on the side.
+- Watch for **infinite loops** in kids' code (`while(true)` without break). The browser will freeze. Tell them to refresh and remove the offending code. Web Worker isolation is parked in [IDEAS.md](IDEAS.md) for next year.
+- The "Edit bot" button in the game header lets kids tweak code without re-typing their name. They click it → land back in lobby with code preserved → edit → Create new room.
 
 ---
 
@@ -602,23 +748,73 @@ No new lesson. Same "exposure" pattern as Day 1 PM. Kids look at v3-coder and pl
 
 > **Big idea:** Your bot vs everyone else's bot. May the best `nextMove()` win.
 
-> ⚠️ Outline only — will be filled in once v3-coder ships.
+### What kids will do
+- Polish their bots with everything they learned in L5.
+- Put all bots in **one room** for a head-to-head tournament.
+- Reflect on what worked. Demo to parents.
 
-### Structure (rough)
-1. **Final tweaks** (15 min) — kids polish their bots.
-2. **Tournament** (45 min) — instructor hosts a v3-coder room in **teacher mode**. All kids' bots join. Run 5 rounds, score persistent. Project the room.
-3. **Discussion** (15 min):
-   - Which bot won? Why?
-   - What's a hack you'd add if you had another day?
-   - What would you change about the rules?
-4. **Parents arrive** (15 min):
-   - Kids each demo their bot (30 seconds each).
-   - One celebratory tournament run.
+### Part 1 — Final tweaks (15 min)
 
-### Open questions
-- Tournament format: round-robin? single elimination? "battle royale" with all bots in one room?
-- Scoring: longest snake wins? most foods eaten? last alive?
-- (Decide when v3 ships and we know what "winning" feels like.)
+Kids open v3, hit **Edit bot**, polish. Things to tell them to look at:
+- Are you handling the case where `state.others` is empty? (No opponents — just you and the auto-bot)
+- Is your bot ever returning something other than the 4 strings? (Bot status will show "Bad return" if so)
+- Does it crash if `state.food` is somehow short? (Should be 18 always, but defend anyway)
+
+Encourage testing: each kid creates a fresh room, watches their bot vs the auto-bot. If it dies in <30 seconds, fix it.
+
+### Part 2 — Tournament (45 min)
+
+Instructor picks a room name kids can all type — e.g. `final`. **Every kid joins the same room.** As more join, the server sends `restartCountdown` (5 seconds, see [PROTOCOL.md](PROTOCOL.md)) so everyone enters cleanly.
+
+Once everyone's in, project the room on the big screen. **Run 5 rounds.** Keep score on a whiteboard (the per-room scoreboard resets each round; you tally cumulative manually):
+
+| Round | 🥇 1st (+3) | 🥈 2nd (+2) | 🥉 3rd (+1) |
+|---|---|---|---|
+| 1 | | | |
+| 2 | | | |
+| 3 | | | |
+| 4 | | | |
+| 5 | | | |
+
+After all 5, total points = tournament rank.
+
+**Between rounds**, call out observations:
+- "Pickle's bot stayed alive 40 seconds — what was it doing?"
+- "Tofu's bot is the only one that turned around when boxed in. Nice."
+- "Sir Hiss is going in circles. What might've happened?"
+
+This is the **best teaching moment of camp** — kids' bots are visible, the strategies are visible, everyone learns from everyone.
+
+### Part 3 — Discussion (15 min)
+
+Sit kids in a circle. Round-robin questions:
+1. **Which bot won? Why do you think it won?**
+2. **If you had one more day, what would you add?** (encourage specifics — "I'd make mine avoid opponents' heads")
+3. **What surprised you about your own bot?**
+4. **What was the hardest part of this whole camp?**
+
+Capture answers on a whiteboard photo — feeds the camp retro and parent communication.
+
+### Part 4 — Parents arrive (15 min)
+
+Each kid demos their bot **for 30 seconds**. Format:
+> "Hi, I'm Lucas. My bot is called Tofu. It chases food but avoids walls AND opponent heads. It came in 2nd in our tournament. *(start a solo game on parent's phone or the projector)* Watch it eat."
+
+Then **one final tournament run** — all bots, one room, in front of parents. Loud cheering encouraged.
+
+**Wrap with the future:**
+> "All of this is on GitHub. Your code is in your iPad's browser memory — if you want to keep your bot, copy-paste it somewhere safe. Snake Coder lives at https://snake-lab-coder.onrender.com so you can keep playing at home."
+
+### Instructor notes
+- Project the **server terminal log** during the tournament. The "+player joined" and "round over (winner: Tofu)" lines fly by — kids love seeing their name in the log.
+- Have a small token prize for 1st place (sticker, lollipop). Mostly symbolic — the recognition is the prize.
+- For the parent demos, prepare a 1-paragraph card for each kid with: their bot's name, color, one-sentence description, and what they tried that didn't quite work (i.e. a story, not a brag).
+- After parents leave, hand out the feedback form (see [PREP.md](PREP.md)).
+
+### What's next (for the kids who want to keep going)
+- **Add features to v3** — different food types, walls inside the world, larger world (the obstacles + predators sat in [IDEAS.md](IDEAS.md) — kids can resurrect them!)
+- **Build their own game** using the same pattern: `index.html` + `js/` + a state object + a render loop. Mention `lucasgame` and `snake-lab` as templates.
+- **Read other people's bots** — bot code is just text. Forums and Discord servers exist for snake-bot competitions (Battlesnake, etc.).
 
 ---
 

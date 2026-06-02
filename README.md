@@ -12,7 +12,7 @@ A three-version snake game built as a vibe-coding learning journey for kids. Eac
 |---|---|---|---|
 | **v1-classic** | Single-player snake | Static HTML + vanilla JS | https://yancyqin.github.io/snake-lab/ |
 | **v2-arena** | Multiplayer snake (humans) | Node.js + `ws` | https://snake-lab-arena.onrender.com |
-| **v3-coder** | Programmable bots | Node.js + `ws` | *(coming)* |
+| **v3-coder** | Programmable bots | Node.js + `ws` | https://snake-lab-coder.onrender.com |
 
 ## The three versions
 
@@ -65,9 +65,11 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 
 - [x] v1-classic — playable, deployed to GitHub Pages
 - [x] v2-arena — playable, deployed to Render
-- [ ] v3-coder (regular + teacher) — **next up**
-- [~] [docs/LESSONS.md](docs/LESSONS.md) — 3-day camp curriculum drafted: **L1/L2** (v1) and **L3/L4** (v2) fully written; **L5/L6** (v3) outlined, to be filled in once v3-coder ships
+- [x] v3-coder — playable, deployed to Render. Regular mode shipped; teacher mode (pause/step/setTickRate) is a follow-up.
+- [x] [docs/LESSONS.md](docs/LESSONS.md) — full 3-day camp curriculum (L1–L6)
 - [x] [docs/PREP.md](docs/PREP.md) — instructor pre-camp checklist
+- [x] [docs/PROTOCOL.md](docs/PROTOCOL.md) — WebSocket message reference (used in L3)
+- [ ] **Teacher mode for v3** — pause / resume / step / setTickRate / reset / setVisibility. Used in L6 (tournament).
 - [ ] `COMMON_MISTAKES.md` — retro-fit after first camp run
 
 ## Camp

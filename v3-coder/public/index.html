@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Snake Coder — v3</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #0f0f1a;
+      color: #f1f5f9;
+      font-family: -apple-system, system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      margin: 0;
+      min-height: 100vh;
+      touch-action: manipulation;
+    }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    h2 { margin: 16px 0 8px; font-size: 16px; color: #94a3b8; letter-spacing: 0.05em; text-transform: uppercase; }
+    code, kbd { background: #0f0f1a; padding: 1px 6px; border-radius: 3px; font-family: ui-monospace, Menlo, monospace; }
+
+    .screen { width: 100%; display: flex; flex-direction: column; align-items: center; }
+    .hidden { display: none !important; }
+
+    /* ---- Lobby ---- */
+    #lobby { max-width: 720px; padding: 12px; }
+    .tagline {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .panel {
+      background: #1a1a2e;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 16px 20px;
+      width: 100%;
+      margin-bottom: 14px;
+    }
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: #94a3b8;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    input[type="text"] {
+      background: #0f0f1a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #f1f5f9;
+      padding: 10px 12px;
+      font-size: 16px;
+      width: 100%;
+      font-family: inherit;
+    }
+    input[type="text"]:focus { outline: none; border-color: #4ade80; }
+
+    .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+    .color-swatch {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.1s, transform 0.1s;
+    }
+    .color-swatch:hover { transform: scale(1.1); }
+    .color-swatch.selected { border-color: #ffffff; }
+
+    /* Bot code panel */
+    .samples-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; font-size: 13px; color: #94a3b8; }
+    .samples-row button.sample {
+      background: #1e293b; color: #f1f5f9; border: 1px solid #334155;
+      padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer;
+      min-height: 28px;
+    }
+    .samples-row button.sample:hover { background: #334155; }
+    textarea#botCode {
+      width: 100%;
+      min-height: 280px;
+      background: #0f0f1a;
+      color: #f1f5f9;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: ui-monospace, Menlo, "SF Mono", Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: vertical;
+    }
+    textarea#botCode:focus { outline: none; border-color: #4ade80; }
+    .bot-help { font-size: 12px; color: #64748b; margin-top: 8px; }
+    .bot-help code { font-size: 12px; }
+
+    .room-list { list-style: none; padding: 0; margin: 0 0 12px; max-height: 200px; overflow-y: auto; }
+    .room-list li {
+      background: #0f0f1a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .room-list li.empty { color: #64748b; text-align: center; font-size: 13px; }
+    .room-list .room-name { font-weight: 600; }
+    .room-list .room-count { color: #94a3b8; font-size: 13px; }
+    .room-list .room-count.full { color: #f87171; }
+
+    .create-row { display: flex; justify-content: center; }
+    #createRoomBtn { width: 100%; padding: 12px; font-size: 16px; }
+
+    button {
+      background: #4ade80;
+      color: #1a1a2e;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 40px;
+      font-family: inherit;
+    }
+    button:hover, button:active { background: #22c55e; }
+    button:disabled, button.disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+    button.secondary { background: #1e293b; color: #f1f5f9; }
+    button.secondary:hover { background: #334155; }
+
+    /* ---- Game ---- */
+    #gameScreen { padding-bottom: 24px; }
+    .game-header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .game-header .info { color: #94a3b8; font-size: 13px; }
+    .game-header button { padding: 6px 12px; font-size: 12px; min-height: 32px; }
+
+    .play-area {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-start;
+      max-width: 100%;
+      justify-content: center;
+    }
+    canvas#game {
+      border: 2px solid #334155;
+      border-radius: 4px;
+      background: #1a1a2e;
+      display: block;
+      max-width: 100%;
+      max-height: calc(100vh - 220px);
+      height: auto;
+      width: auto;
+      image-rendering: pixelated;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 220px;
+      max-width: 260px;
+    }
+
+    /* Bot status box (top of sidebar) */
+    .bot-status {
+      background: #1a1a2e;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+    .bot-status .status-row { display: flex; align-items: center; gap: 8px; }
+    .bot-status .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #64748b;
+      flex-shrink: 0;
+    }
+    .bot-status.ok    .dot { background: #4ade80; }
+    .bot-status.err   .dot { background: #f87171; }
+    .bot-status .label { color: #f1f5f9; font-weight: 600; }
+    .bot-status .detail { color: #94a3b8; font-size: 11px; margin-top: 6px; word-break: break-word; }
+    .bot-status .move { color: #4ade80; font-family: ui-monospace, monospace; }
+
+    #scoreboard { display: flex; flex-direction: column; gap: 6px; }
+    .scoreItem {
+      background: #1a1a2e;
+      border-left: 4px solid #4ade80;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .scoreItem.me { box-shadow: 0 0 0 2px #f1f5f9; }
+    .scoreItem.dead { opacity: 0.4; }
+    .scoreItem .name-cell { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .scoreItem strong { color: #4ade80; }
+    .scoreItem .label { color: #64748b; font-size: 10px; letter-spacing: 0.05em; }
+
+    .minimap-block { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+    canvas#minimap {
+      border: 1px solid #334155;
+      border-radius: 4px;
+      background: #0f0f1a;
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    .minimap-block .label { font-size: 11px; color: #64748b; letter-spacing: 0.05em; }
+
+    @media (max-width: 1000px) {
+      .play-area { flex-direction: column; align-items: center; }
+      .sidebar { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-start; max-width: 100%; min-width: 0; gap: 12px; }
+      #scoreboard { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    }
+
+    #status {
+      margin-top: 10px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      min-height: 20px;
+      text-align: center;
+    }
+    #status.win  { background: #14532d; color: #4ade80; }
+    #status.lose { background: #7f1d1d; color: #fca5a5; }
+    #status.info { background: #1e293b; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+  <!-- ============ LOBBY ============ -->
+  <div id="lobby" class="screen">
+    <h1>🐍 Snake Coder</h1>
+    <div class="tagline">Write a JavaScript function. Your code controls the snake. Beat other kids' bots.</div>
+
+    <div class="panel">
+      <h2>Your snake</h2>
+      <div class="field">
+        <label for="nameInput">Name</label>
+        <input id="nameInput" type="text" maxlength="12" placeholder="Slinky" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Color</label>
+        <div class="color-picker" id="colorPicker"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Your bot code</h2>
+      <div class="samples-row">
+        <span>Start from:</span>
+        <button class="sample" data-sample="random">Random</button>
+        <button class="sample" data-sample="greedy">Greedy</button>
+        <button class="sample" data-sample="safe">Safe</button>
+      </div>
+      <textarea id="botCode" spellcheck="false"></textarea>
+      <div class="bot-help">
+        Define <code>nextMove(state)</code> returning <code>'UP'</code> / <code>'DOWN'</code> / <code>'LEFT'</code> / <code>'RIGHT'</code>.
+        State has <code>me</code>, <code>food</code>, <code>others</code>, <code>board</code>, <code>tick</code>.
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Rooms</h2>
+      <ul class="room-list" id="roomList">
+        <li class="empty">No rooms yet — tap Create to start one</li>
+      </ul>
+      <div class="create-row">
+        <button id="createRoomBtn">+ Create new room</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ GAME ============ -->
+  <div id="gameScreen" class="screen hidden">
+    <div class="game-header">
+      <h1 style="margin:0; font-size:18px;">🐍 Snake Coder</h1>
+      <div class="info">Room <code id="roomName">lobby</code></div>
+      <button id="editBotBtn" class="secondary">Edit bot</button>
+      <button id="leaveBtn" class="secondary">Leave</button>
+    </div>
+
+    <div class="play-area">
+      <canvas id="game"></canvas>
+      <div class="sidebar">
+        <div id="botStatus" class="bot-status">
+          <div class="status-row">
+            <span class="dot"></span>
+            <span class="label">Loading bot...</span>
+          </div>
+          <div class="detail" id="botStatusDetail"></div>
+        </div>
+        <div id="scoreboard"></div>
+        <div class="minimap-block">
+          <canvas id="minimap"></canvas>
+          <div class="label">MINIMAP</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="status"></div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

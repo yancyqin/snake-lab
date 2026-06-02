@@ -1,0 +1,16 @@
+{
+  "name": "snake-lab-coder",
+  "version": "1.0.0",
+  "description": "Snake arena where each player is a JavaScript function. Same wire protocol as v2-arena.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -18,15 +18,14 @@ services:
       # PORT is injected automatically by Render — our server.js already
       # reads process.env.PORT (defaults to 8080 locally).
 
-  # ---------- v3-coder (placeholder for when we ship it) ----------
-  # - type: web
-  #   name: snake-lab-coder
-  #   runtime: docker
-  #   plan: free
-  #   region: oregon
-  #   rootDir: v3-coder
-  #   healthCheckPath: /
-  #   autoDeploy: true
-  #   envVars:
-  #     - key: NODE_ENV
-  #       value: production
+  - type: web
+    name: snake-lab-coder
+    runtime: docker
+    plan: free
+    region: oregon
+    rootDir: v3-coder
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
