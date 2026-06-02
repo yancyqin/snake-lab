@@ -10,6 +10,7 @@ This folder collects everything that isn't code or deploy config. Code lives in 
 | [PREP.md](PREP.md) | Pre-camp checklist — posters, hex codes, port table, feedback form | Instructor, day before camp |
 | [PROTOCOL.md](PROTOCOL.md) | WebSocket message reference — every message that flows between client and server | Instructor for L3; v3 designers |
 | [IDEAS.md](IDEAS.md) | Future tune-ups — things tried and removed, things not yet tried | Whoever's looking for "what's next" |
+| [flyer/](flyer/) | 1-page camp advertisement (PDF + editable Python source) | For recruiting / parent-facing |
 
 ## Conventions
 
