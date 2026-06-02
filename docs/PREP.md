@@ -53,6 +53,25 @@ For the actual lesson content see [LESSONS.md](LESSONS.md). For the broader proj
 - [ ] After each session, jot down what landed and what flopped — file under "lessons learned" so next year's camp is better.
 - [ ] Take photos of kids' iPad screens with permission — useful for a recap email to parents.
 
+## Friday afternoon — set up Saturday bonus day
+
+The week ends with **L6 tournament Friday PM**. Then there's a **bonus Saturday** with parents (see [LESSONS.md](LESSONS.md) — "Bonus — Saturday").
+
+- [ ] **Invite parents** — short message, e.g.:
+  > "Saturday 10am–1pm: kids show off their snake bots, then we unlock 👑 King mode (snake eats snake) and 🌫️ Fog of war. Families welcome to play. Lab address: [...]."
+- [ ] **Make sure kids saved their bot code.** Friday's sessionStorage may clear. Have kids paste their bot into Notes / email it to themselves / send to a shared Slack/Discord. **A kid showing up Saturday with no bot is the saddest scenario** — engineer around it.
+- [ ] **Print "Snake Lab graduate" certificates** (optional, nice touch). One per kid.
+- [ ] **Pre-stage room names** so kids don't have to invent them on the spot — e.g. `kings`, `fog-finals`, `family`, `chaos`.
+
+## Saturday morning (bonus day)
+
+- [ ] Pull latest code (in case any last-minute fixes landed).
+- [ ] Start v2 + v3 servers locally (same port table as the rest of the week).
+- [ ] Write the Mac's IP on the whiteboard. Add a column for each tournament's room name.
+- [ ] Have a snack table — kids and parents will be here for ~3 hours.
+- [ ] Open the leaderboard whiteboard (same format as L6).
+- [ ] Charge the projector / screencast device. Saturday's a long play day.
+
 ## After camp
 
 - [ ] Send parents a recap email with photos + the feedback form

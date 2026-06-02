@@ -82,6 +82,7 @@ A 3-day camp curriculum is built around these games. **Play + lecture** format �
 Day 1  Hello Snake     AM: L1 + L2 (v1 walk-through)       PM: try v2
 Day 2  Snake Arena     AM: L3 + L4 (server + bot)          PM: try v3
 Day 3  Code Your Snake AM: L5 (write your bot)             PM: L6 tournament + parents demo
+Sat    Bonus day       All day: 👑 King + 🌫️ Fog play, families welcome
 ```
 
 See [docs/LESSONS.md](docs/LESSONS.md) for the full curriculum and [docs/PREP.md](docs/PREP.md) for the instructor checklist.

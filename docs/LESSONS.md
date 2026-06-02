@@ -6,7 +6,7 @@ A 3-day camp curriculum built around the three Snake games in this repo. Format:
 > **For the AI assistant guide, read [../CLAUDE.md](../CLAUDE.md).**
 > **For the pre-camp instructor checklist, read [PREP.md](PREP.md).**
 
-## Camp agenda (3 days, 6 sessions)
+## Camp agenda (3 days + bonus Saturday)
 
 | Day | Session | Topic | Time | Lessons |
 |-----|---------|-------|------|---------|
@@ -16,6 +16,7 @@ A 3-day camp curriculum built around the three Snake games in this repo. Format:
 | | PM | Try v3 — watch sample bots play | ~1.5 h | (free play) |
 | **3 — Code Your Snake** | AM | Write your own bot | ~2.5 h | **L5** |
 | | PM | Tournament, reflection, parents demo | ~1.5 h | **L6** |
+| **Bonus — Saturday** | All day | 👑 King + 🌫️ Fog play, **parents welcome** | ~3 h | (family play) |
 
 ## Instructor setup (do once before camp)
 
@@ -830,6 +831,59 @@ Then **one final tournament run** — all bots, one room, in front of parents. L
 - **Add features to v3** — different food types, walls inside the world, larger world (the obstacles + predators sat in [IDEAS.md](IDEAS.md) — kids can resurrect them!)
 - **Build their own game** using the same pattern: `index.html` + `js/` + a state object + a render loop. Mention `lucasgame` and `snake-lab` as templates.
 - **Read other people's bots** — bot code is just text. Forums and Discord servers exist for snake-bot competitions (Battlesnake, etc.).
+
+---
+
+## Bonus — Saturday (~3 hours · family play)
+
+> **Vibe:** Camp officially ended Friday. Saturday is the victory lap. Parents are invited, kids show off their bots, and we unlock the two crazier game modes that we held back from the main curriculum.
+
+No new lecture. Two new game modes — both are checkboxes in the lobby's **Room Settings** panel, alongside Teacher mode.
+
+### 👑 King snake mode
+
+When your head hits another snake's BODY, **you absorb their length** — you grow by whatever they were. They die. (Head-on-head still kills both.)
+
+Strategy shift: don't crash into snakes. Lay out long bodies so others crash into YOU. Big snakes get bigger.
+
+### 🌫️ Fog of war mode
+
+Each snake only sees **8 cells around its own head**. The rest of the world is in fog. The minimap reflects fog too — you have to *explore* to know what's out there.
+
+Strategy shift: in v3 bot mode, kids' bots now get a filtered `state.others` and `state.food`. Their `safe.js` clone still works, but loses to anyone whose bot ventures into the dark to scout.
+
+### Suggested running order
+
+| Time | What |
+|------|------|
+| 0:00–0:15 | Parents arrive, kids greet, instructor recaps the week with a 3-slide story (or just hand them a printed "What Lucas built" card) |
+| 0:15–0:45 | **King-mode v2 tournament** — humans only. Kids vs parents. Whoever has the longest snake at the end of 3 rounds wins. Use the host's **Slower** button to make it watchable. |
+| 0:45–1:15 | **King-mode v3 tournament** — kids' bots compete. Parents bet on whose bot wins. |
+| 1:15–1:30 | Snack break ☕ |
+| 1:30–2:15 | **Fog-mode v3 tournament** — same bots, fog enabled. Watch the rankings shuffle as bots that thrived in full-view fail without exploration. Pause and ask: "What would you add to your bot to find food in the fog?" |
+| 2:15–2:45 | **Mixed mode finale** — King + Fog + Teacher, all checkboxes on. Pure chaos. One king emerges from the fog. |
+| 2:45–3:00 | Group photo, "Snake Lab graduate" certificates (optional), reminder that `snake-lab-arena.onrender.com` and `snake-lab-coder.onrender.com` stay live so they can keep playing |
+
+### Setup notes for the instructor
+
+- **One room per tournament**, instructor hosts in Teacher mode so they can pause and explain mid-round.
+- For king-mode v2, kids and parents play with their fingers. iPads charged.
+- For v3 tournaments, kids paste their bot code from earlier in the week. Tell them to bring a USB stick / GitHub Gist / screenshot of their bot if they want to use Friday's code (sessionStorage may have cleared).
+- Project the running terminal — Saturday's most fun moment is when "+player joined" lines roll in as parents type their names.
+- Have a leaderboard whiteboard ready (same format as L6).
+
+### Parent FAQ (be ready for these)
+
+- **"How does my kid keep their bot?"** — Copy-paste the code from the Edit-bot modal into Notes or email it to themselves.
+- **"Can they play this at home?"** — Yes. v1 at https://yancyqin.github.io/snake-lab/, v2 at https://snake-lab-arena.onrender.com, v3 at https://snake-lab-coder.onrender.com.
+- **"How did they build this?"** — Show them README.md + LESSONS.md. Mention `lucasgame` as the precursor.
+
+### Why this day is worth doing
+
+- **Kids ship a bot in front of their parents.** This is the moment that turns "summer activity" into "I am someone who codes."
+- **Fog mode is the strategy unlock** — bots that just chase food die; bots that explore win. Kids see *why* their L5 work matters.
+- **King mode is the chaos unlock** — it's just plain fun and parents get it instantly ("oh, like Slither.io!").
+- **The two modes together** turn the same game we learned all week into something the kids haven't quite seen before. Camp ends on "there's still more to discover" instead of "we're done."
 
 ---
 
