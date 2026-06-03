@@ -4,7 +4,13 @@ This file is read by Claude Code when working in `snake-lab`. **Read [README.md]
 
 ## Project context
 
-`snake-lab` is a **vibe-coding teaching project for kids**, modeled on `../lucasgame/`. The end goal is a 5-lesson curriculum that uses three progressively richer snake games as the substrate. Currently building **v1-classic** (single-player); v2-arena (multiplayer humans) and v3-coder (programmable bots, with a teacher mode) come after.
+`snake-lab` is a **vibe-coding teaching project for kids**, modeled on `../lucasgame/`. The camp is a **6-lesson, 3-day + bonus-Saturday curriculum** using three progressively richer snake games as the substrate. All three versions are built, deployed, and used in the curriculum:
+
+- **v1-classic** — single-player snake (L1 — the "snake is data, code is a map" lesson)
+- **v2-arena** — multiplayer humans + an auto-bot (L2 — "two computers talk, the bot's brain")
+- **v3-coder** — programmable bots (L3 "Hello, AI" → L4 "Strategy" → L5 "Learning" → L6 tournament)
+
+The curriculum threads three big ideas: **build with AI** (Claude/ChatGPT as coding partner from L3), **think like AI** (tune strategies by hand in L4), **watch AI learn** (a Q-learning bot in L5). See [docs/LESSONS.md](docs/LESSONS.md) for the full plan.
 
 ## How to run
 

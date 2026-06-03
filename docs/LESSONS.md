@@ -1,21 +1,35 @@
 # Snake Lab — Camp Lessons
 
-A 3-day camp curriculum built around the three Snake games in this repo. Format: **play + lecture**. Kids play the running game on their iPads; the instructor uses the game as a live demo to teach concepts. Kids don't do free-form tuning — every code interaction is instructor-led.
+A 3-day camp curriculum built around the three Snake games in this repo. Format: **play + lecture**. Kids play the running game on their iPads; the instructor uses the game as a live demo to teach concepts.
+
+The first two lessons move fast on purpose — they cover the v1 + v2 fundamentals so we can spend the meat of camp on what's really exciting: bots that play for you, strategies you can tune, and a bot that **learns by itself**.
 
 > **For the full project plan, read [../README.md](../README.md).**
 > **For the AI assistant guide, read [../CLAUDE.md](../CLAUDE.md).**
 > **For the pre-camp instructor checklist, read [PREP.md](PREP.md).**
 
+## What the camp teaches, honestly
+
+Three threads run through the week. By the end, every kid can finish all three sentences.
+
+| Thread | Where it happens | What the kid takes home |
+|---|---|---|
+| **Build with AI** | L3 onward — Claude/ChatGPT as a coding partner | "I asked an AI for help. It worked." |
+| **Think like AI** | L4 — design a strategy as numbers (weights) | "A strategy is just numbers I can tune." |
+| **Watch AI learn** | L5 — Q-learning bot improves over rounds | "A bot can do my tuning by itself." |
+
+The bots kids build are not magic. They are normal code — that's the point. We earn the "AI" label by being honest about what's foundation and what's the real thing.
+
 ## Camp agenda (3 days + bonus Saturday)
 
 | Day | Session | Topic | Time | Lessons |
 |-----|---------|-------|------|---------|
-| **1 — Hello Snake** | AM | Intros, play v1, learn how the snake works | ~2.5 h | **L1, L2** |
+| **1 — Hello Snake** | AM | The snake is data, code is a map | ~1.5 h | **L1** |
 | | PM | Try v2 — multiplayer chaos | ~1.5 h | (free play) |
-| **2 — Snake Arena** | AM | How the server works, the bot's brain | ~2.5 h | **L3, L4** |
-| | PM | Try v3 — watch sample bots play | ~1.5 h | (free play) |
-| **3 — Code Your Snake** | AM | Write your own bot | ~2.5 h | **L5** |
-| | PM | Tournament, reflection, parents demo | ~1.5 h | **L6** |
+| **2 — Snake Arena** | AM | Two computers talk, the bot's brain | ~1.5 h | **L2** |
+| | PM | Hello, AI — meet your coding partner | ~1.5 h | **L3** |
+| **3 — Code Your Snake** | AM | Strategy (you tune), then learning (it tunes itself) | ~2.5 h | **L4, L5** |
+| | PM | Tournament + parents demo | ~1.5 h | **L6** |
 | **Bonus — Saturday** | All day | 👑 King + 🌫️ Fog play, **parents welcome** | ~3 h | (family play) |
 
 ## Instructor setup (do once before camp)
@@ -27,40 +41,39 @@ A 3-day camp curriculum built around the three Snake games in this repo. Format:
    python3 server.py 8080
    ```
    Tell kids: open `http://<instructor-mac-ip>:8080`.
-3. **Day 2+3** — serve v2 (and later v3) locally too:
+3. **Day 2+3** — serve v2 and v3 locally too (different ports so v1 can stay running):
    ```bash
    cd snake-lab/v2-arena
-   node server.js
+   PORT=8081 node server.js
+
+   cd snake-lab/v3-coder
+   PORT=8082 node server.js
    ```
-   Kids open `http://<instructor-mac-ip>:8080` (different port if v1 still running).
-4. After-camp play is available at **https://snake-lab-arena.onrender.com** (v2) — first hit takes ~30s while Render wakes the machine.
+4. After-camp play is at **https://snake-lab-arena.onrender.com** (v2) and **https://snake-lab-coder.onrender.com** (v3) — first hit takes ~30s while Render wakes the machine.
 5. Have a projector or screen share so the instructor can walk through code live.
-6. Have the code open in an editor on the projected screen — `Snake.js`, `Game.js`, `server.js`, etc.
+6. **For L3+**: have Claude.ai or ChatGPT open on the projector, signed in, ready to demo.
 
 ---
 
-## Lesson 1 — The Snake is an Array (45–60 min · v1-classic)
+## Lesson 1 — The Snake is Data, Code is a Map (60–75 min · v1-classic)
 
-> **Big idea:** Everything you see — the snake, the food, the score — is just numbers in memory. The game loop reads those numbers 8 times a second and paints them on the screen. If you change the numbers, the picture changes.
+> **Big idea:** Everything you see — the snake, the food, the score — is just numbers in memory. The game loop reads those numbers 8 times a second and paints them on the screen. Code is split into files; each file does one job. We're going to **see** all of this.
+
+This is a deliberately quick pass through what used to be two lessons. Kids who code don't need to dwell here; we move on to the exciting stuff.
 
 ### What kids will learn
 - A "snake" in code is a **list of cells**, not a creature.
-- The game has a **tick** — every 130ms, the computer redraws everything.
-- DevTools is a **window into the game's brain** — you can see the snake's body as an actual list.
+- The game has a **tick** — every 130ms, redraw.
+- DevTools is a **window into the game's brain** — you can see the snake as actual data.
+- Code is **split into files** so each file does one job.
 
-### Part 1 — Play (10 min)
-- Kids open the game on their iPads.
-- Goal: get to score 100.
-- Things to notice (call out before they start):
-  - The head looks different from the body — it has eyes.
-  - There's a tiny **minimap** on the side showing food they can't see.
-  - The world is bigger than the screen — you have to *explore*.
+### Part 1 — Play (8 min)
+- Kids open the game on their iPads. Goal: score 100.
+- Notice: head looks different from body. There's a minimap. The world is bigger than the screen.
 
-### Part 2 — Lecture: "What IS the snake?" (20 min)
+### Part 2 — Lecture: "What IS the snake?" (15 min)
 
-Project `v1-classic/js/Snake.js` on the screen.
-
-**Show the constructor.** Walk through it slowly:
+Project `v1-classic/js/Snake.js`. Walk through the constructor:
 ```js
 constructor(startX, startY, length = INITIAL_SNAKE_LENGTH) {
   this.body = [];
@@ -71,400 +84,152 @@ constructor(startX, startY, length = INITIAL_SNAKE_LENGTH) {
 }
 ```
 
-**Translate to plain English:**
-> "The snake has a property called `body`. It's a list. Each thing in the list is a *cell* — a little object with an `x` and a `y`. The first item (`body[0]`) is the **head**. The rest are the body."
+> "The snake has a `body`. It's a list. Each thing in the list is a *cell* — an object with an `x` and `y`. `body[0]` is the head. The rest is the body."
 
-**Pause for a question to the room:**
-> *"If `body` is a list with 3 items, and we want a snake of length 10, what would `body.length` be?"*
+Now `Game.tick()` — the game loop. Skip the details, just narrate:
+> "Every 130 milliseconds, the computer does this. Look ahead. Check for food. Step. Check death. Maybe count. Redraw. Sleep. Repeat."
 
-Now switch to `Game.js` and show `tick()`:
-```js
-tick() {
-  if (this.over) return;
-  const next = this.snake.nextHead();
-  const eatenIndex = this.foods.findIndex(f => f.x === next.x && f.y === next.y);
-  const willEat = eatenIndex !== -1;
-  this.snake.step(willEat);
-  if (this.snake.isDead()) { ... }
-  if (willEat) { this.score += POINTS_PER_FOOD; ... }
-  this.draw();
-}
-```
+Show `snake.step()` and land **the** insight:
+> "The snake doesn't actually move. We **add a new head at the front** and **remove the tail from the back**. That looks like movement. **Growing = skipping the 'remove tail' step.**"
 
-**Translate:**
-> "Every 130 milliseconds, the computer does these six things. Look ahead. Check for food. Take a step. Check if we died. Maybe count the food. Redraw the screen. Then it sleeps for 130ms and does it again. That's the **game loop**."
-
-Now show `snake.step()`:
-```js
-step(grow = false) {
-  const next = this.nextHead();
-  this.direction = this.pendingDirection;
-  this.body.unshift(next);
-  if (!grow) this.body.pop();
-}
-```
-
-**The "aha" moment:**
-> "The snake doesn't actually move. Every tick, we **add a new head at the front** of the list and **remove the tail from the back**. That looks like movement on the screen. **Growing = skipping the 'remove tail' step.** That's why eating food makes the snake longer — we keep the tail."
-
-Write on the board:
 ```
 move = add head + remove tail
 grow = add head + KEEP tail
 ```
 
-### Part 3 — Hands-on: DevTools spy (10–15 min)
+### Part 3 — Hands-on: DevTools spy (10 min)
 
-This is the magic moment. Kids see the abstract concept as concrete data.
-
-**Setup:** instructor demonstrates on the projector first, then kids try on their device (if they have DevTools), or call out commands for the instructor to type.
-
-In DevTools Console, type:
+Instructor demos on the projector. In DevTools Console:
 ```js
-game.snake.body
-```
-**Expected:** `[{x: 30, y: 30}, {x: 29, y: 30}, {x: 28, y: 30}]` — the actual snake!
-
-Then try:
-```js
-game.snake.body.length         // length of the snake
-game.snake.head()              // just the head cell
-game.foods                     // all 10 foods, with x and y
-game.score                     // current score
+game.snake.body         // the actual snake!
+game.snake.body.length
+game.foods              // every food
+game.score
 ```
 
-**Watch it change live:**
-> "Now play for 5 seconds, then run `game.snake.body` again. What's different?"
+Play 5 seconds. Run `game.snake.body` again. The numbers changed — the list moved.
 
-The `x` and `y` numbers have changed. The list moved.
-
-**Mind-blow** (optional, only if kids are following well):
+**Mind-blow** (optional):
 ```js
 game.snake.body.unshift({ x: 30, y: 30 })
 ```
-The snake just teleported a cell! (It'll behave weirdly after this — that's fine, it shows the data IS the snake.)
+The snake teleported. The data IS the snake.
 
-### Part 4 — Wrap-up question (5 min)
-
-Ask the room:
-> *"If the snake is just a list of cells, and the game just keeps adding to the front and removing from the back — how does the game know when you DIED?"*
-
-Lead them to: **the game checks the head every tick.**
-
-Project `Snake.isDead()`:
-```js
-isDead() {
-  return this.hitWall() || this.hitSelf();
-}
-```
-
-> "Two ways to die. The head went off the world. Or the head landed on its own body. We only check the head — the body never kills itself, because the snake can't turn 180° in one step."
-
-### Instructor notes
-- Don't get bogged down in JavaScript syntax (`unshift`, `pop`, `findIndex`). Translate to plain English: "add to the front," "remove from the back," "find a match."
-- If a kid asks "why 130 milliseconds?" — open `constants.js`, point at `TICK_MS = 130`, say "that number controls how fast. Lower = faster. Try 60 or 300 at home." (Don't get them tuning during the lesson — save it.)
-- If DevTools doesn't work on the iPad, have one kid mirror their screen and let the room shout commands.
-
----
-
-## Lesson 2 — Code is a Map (45–60 min · v1-classic)
-
-> **Big idea:** Real code is split into files. Each file does ONE thing. Then we connect them. Today we follow a swipe all the way from the iPad screen to the snake actually turning.
-
-### What kids will learn
-- **Modularity** — why we have 5 files instead of 1.
-- **The path of an event** — what happens between "I swipe" and "the snake turns."
-- **Why there's a `pendingDirection`** — the buffer that prevents instant death.
-
-### Part 1 — Play (5 min)
-- Quick rounds. Notice: when you swipe, the snake doesn't turn *instantly* — it turns on the next tick. Why?
-
-### Part 2 — Lecture: "5 files, 5 jobs" (15 min)
+### Part 4 — Lecture: "5 files, 5 jobs" (10 min)
 
 Show the folder tree on the screen:
 ```
 v1-classic/
-  index.html       ← The Screen (what you see)
+  index.html       ← The Screen
   js/
-    constants.js   ← The Dial Board (numbers we can change)
-    Snake.js       ← The Snake (only knows snake things)
-    Food.js        ← The Food (only knows food things)
-    Game.js        ← The Boss (coordinates everyone, runs the tick)
+    constants.js   ← Numbers we can change
+    Snake.js       ← Only snake things
+    Food.js        ← Only food things
+    Game.js        ← The Boss (runs the tick, knows everyone)
 ```
 
-**Ask the room first:** *"If we have a file called `Snake.js`, what do you think is in it?"*
+**Key principle:** "Each file does ONE job. The Boss coordinates everyone."
 
-Open each file briefly. Show the top 5–10 lines. Confirm or correct guesses.
+**Then live-change a color.** Open `constants.js`, change `snakeHead`, reload — every kid's snake is now whatever color. "We changed ONE number. The whole game looks different."
 
-**Key principle:**
-> "Each file does ONE job. `Snake.js` doesn't know about food. `Food.js` doesn't know about the snake's direction. The only file that knows about everyone is `Game.js` — the boss."
+### Part 5 — Wrap-up question (5 min)
 
-**Why split them?** Two reasons:
-1. **It's easier to find things.** "Where's the rule that the snake dies?" → `Snake.js`. "Where's the score?" → `Game.js`.
-2. **You can change one without breaking the others.** Adding a new food type doesn't risk breaking how the snake moves.
+> *"If the snake is just a list of cells, and the game just adds to the front and removes from the back — how does it know when you died?"*
 
-### Part 3 — Lecture: "Where does a swipe go?" (15–20 min)
-
-The big code-tracing moment. Project `Game.js` and walk through what happens on a swipe right.
-
-**Step 1.** Browser fires a `touchstart` event when your finger touches the canvas.
-**Step 2.** `_bindTouch()` records where your finger started.
-**Step 3.** On `touchend`, it computes the swipe — `dx` (horizontal) and `dy` (vertical).
-**Step 4.** Whichever is bigger wins. If `dx > 0`, it's a swipe RIGHT.
+Lead them to `Snake.isDead()`:
 ```js
-this.snake.setDirection(dx > 0 ? 'RIGHT' : 'LEFT');
+isDead() { return this.hitWall() || this.hitSelf(); }
 ```
-**Step 5.** Snake stores it as `pendingDirection`. **NOT `direction` yet!**
-```js
-setDirection(dir) {
-  const opposite = { UP: 'DOWN', DOWN: 'UP', LEFT: 'RIGHT', RIGHT: 'LEFT' };
-  if (opposite[dir] === this.direction) return;   // refuse 180° flips
-  this.pendingDirection = dir;
-}
-```
-**Step 6.** *Nothing happens visually yet.* The snake is still moving in its old direction.
-
-**Pause.** Ask the room:
-> *"If I swipe right, when does the snake actually turn?"*
-
-**Step 7.** Up to 130ms later, `tick()` fires.
-**Step 8.** Inside `snake.step()`, this line runs:
-```js
-this.direction = this.pendingDirection;   // NOW the direction changes
-```
-**Step 9.** New head is computed using the new direction. The snake turns. Screen updates.
-
-**The "aha" moment:**
-> "Inputs arrive *between* ticks. We can't move the snake the moment you swipe — we have to wait for the next tick. So we **remember** the swipe in `pendingDirection`. Then the tick applies it."
-
-**Counter-example to drive it home:**
-> "What if we didn't have `pendingDirection`? Suppose you press DOWN, then UP really fast — within one tick. The snake would set direction to DOWN, then immediately to UP, and on the next tick move UP into its own body. **Instant death.** The buffer prevents that."
-
-(Also explain the 180° check — even with the buffer, we refuse direct reversals.)
-
-### Part 4 — Lecture: World vs View (10 min)
-
-Project the running game. Point at the minimap.
-
-> "How big is the world?"
-
-Open `constants.js`:
-```js
-export const WORLD_COLS = 60;
-export const WORLD_ROWS = 60;
-export const VIEW_COLS = 24;
-export const VIEW_ROWS = 24;
-```
-
-> "The **world** is 60 by 60 cells. The **view** is 24 by 24. You only see about a *sixth* of the world at a time. The minimap shows the whole thing."
-
-Project `Game.cameraX()`:
-```js
-cameraX() {
-  const half = Math.floor(VIEW_COLS / 2);
-  return Math.max(0, Math.min(WORLD_COLS - VIEW_COLS, this.snake.head().x - half));
-}
-```
-
-> "The camera tries to keep the snake in the middle of the view. `Math.max(0, ...)` means never scroll off the left side. `Math.min(WORLD - VIEW, ...)` means never scroll off the right side. So the camera follows you, but **stops at the edges**."
-
-Demonstrate: walk the snake to the right wall. The camera scrolls right, then stops. The bright gray wall appears.
-
-### Part 5 — Hands-on: Change a color (10 min)
-
-The instructor opens `constants.js` on the projector. Highlights the `COLORS` block:
-```js
-export const COLORS = {
-  background:   '#1a1a2e',
-  grid:         '#22223a',
-  snakeHead:    '#4ade80',   // ← let's change this!
-  snakeBody:    '#22c55e',
-  ...
-};
-```
-
-Each kid picks a color. (Have a list of color names → hex codes on the board: red `#ef4444`, blue `#3b82f6`, yellow `#eab308`, purple `#a855f7`, pink `#ec4899`, orange `#f97316`.)
-
-Instructor changes the file on the projector, saves, reloads — kids reload their iPads. **Every kid's snake is now their color.**
-
-> "We changed ONE number. The whole game looks different. That's what we mean when we say **data drives behavior**."
-
-### Part 6 — Wrap-up question (5 min)
-
-> *"If we wanted the snake to come out the OTHER side instead of dying when it hits a wall, which file would we change? Which function?"*
-
-Lead them to `Snake.js`, the `hitWall()` function — and beyond that, the `step()` function (where we'd wrap the coordinates instead of letting them go out of bounds).
-
-**Tease the future:**
-> "We won't change it today. But this is how every new feature gets added — figure out which file owns the rule, then change the rule."
+> "Two ways to die. Head went off the world. Or head landed on its own body. The body never kills itself — we only check the head."
 
 ### Instructor notes
-- The pendingDirection trace is the hardest part. Slow way down. Draw it on a whiteboard if needed: swipe → setDirection → pendingDirection → tick → direction changes → snake moves.
-- For the color change, pre-pick the hex codes so kids aren't fumbling.
-- If a kid asks "why is the world bigger than the view?" — say "because exploring is more fun. The minimap helps you find food without seeing the whole thing." (This sets up the spatial/strategy concept for later when bots have to navigate in v3.)
+- This used to be two lessons (L1+L2 in the old curriculum). It's now one fast pass. **Don't get bogged down** in JavaScript syntax (`unshift`, `pop`, `findIndex`). Translate to English: "add to the front," "remove from the back."
+- The DevTools peek is the keeper from old L1. The color change is the keeper from old L2. Everything else can be skimmed.
+- If a kid asks "why 130ms?" — point at `TICK_MS = 130` in `constants.js`. "That number controls speed. Lower = faster. Mess with it at home."
+- If DevTools doesn't work on iPads, project one kid's screen via USB and let the room shout commands.
 
 ---
 
 ## Day 1 PM — Try v2 (free play, ~60–90 min)
 
-No new lesson. The point is **exposure** — kids see multiplayer snake before we explain it.
+No new lesson. **Exposure** — kids see multiplayer snake before we explain it.
 
 **Suggested flow:**
 1. Instructor projects v2 lobby. Picks a funny default name. Picks a color.
 2. Hits **+ Create new room** → lands in `cosmic-viper` or whatever.
-3. Asks: "OK, who wants to join my room?" Kids open the same URL, see the room in the list, click Join.
-4. **Chaos.** 6-8 snakes in one room. Round restarts whenever a new kid joins.
-5. After 20-30 min, instructor calls out: "Notice anything weird? When I die, you can still see me. When you eat food, I see your length grow. How does my iPad know what's happening on yours?"
-6. Don't answer. Park the question for Day 2 morning.
+3. "Who wants to join my room?" Kids open the URL, see the room in the list, click Join.
+4. **Chaos.** 6–8 snakes per room. Round restarts whenever a new kid joins.
+5. After 20–30 min: "Notice anything weird? When I die, you can still see me. How does my iPad know what's happening on yours?"
+6. **Don't answer.** Park the question for tomorrow.
 
-The **mystery is the lesson** — kids leave Day 1 wondering "how do our games stay in sync?" Tomorrow's L3 answers it.
+The **mystery is the lesson** — kids leave Day 1 wondering "how do iPads stay in sync?"
 
 ---
 
-## Lesson 3 — Two Computers Talk (70 min · v2-arena)
+## Lesson 2 — Two Computers + the Bot's Brain (60–75 min · v2-arena)
 
-> **Big idea:** When you played v2 yesterday, your iPad and every other iPad were all talking to **one computer in the middle** — the server. The server holds the truth about the game. Everyone connects to it.
+> **Big idea:** When you played v2 yesterday, every iPad was talking to **one server** in the middle. The server holds the truth. Same server, by the way, is running the bot you played against — and the bot is just code we can read.
 
-**Reference for the instructor:** [PROTOCOL.md](PROTOCOL.md) lists every message type with examples. Kids should see real JSON in this lesson, not just metaphors.
+Compressed from old L3+L4. We blow through the server concept quickly because everyone today knows the internet exists; we spend the saved time on **reading actual bot code** because that's the bridge to L3.
 
 ### What kids will learn
-- **Client vs server** — your iPad is the client; my laptop is the server.
-- **What a WebSocket is** — a phone line that stays open between client and server.
-- **The new files in v2-arena/** — server-side files don't run on your iPad, they run on my laptop.
-- **The actual messages** that fly between the two computers — they're JSON, they're readable, kids can see them in DevTools.
+- **Client vs server** — your iPad is the client; one laptop is the server.
+- **What a WebSocket is** — a phone line that stays open.
+- **What messages fly between them** — they can see them in DevTools (or [PROTOCOL.md](PROTOCOL.md)).
+- **The bot is one function** — `botMove` — and they can read it.
 
 ### Part 1 — Play (5 min) + the dangling question
-Quick warm-up. Remind them of yesterday's mystery: how do iPads stay in sync?
+Quick warm-up. Remind them of yesterday's mystery.
 
-### Part 2 — Lecture: "Two kinds of computers" (15 min)
+### Part 2 — Lecture: "The phone call" (15 min)
 
-Draw on the whiteboard:
+Whiteboard:
 ```
    [iPad 1]            [iPad 2]            [iPad 3]
        \                  |                  /
-        \                 |                 /
-         \                |                /
-          \               |               /
-           --------> [ MAC ] <--------
-                 (Mr. Yancy's laptop)
-                  THE SERVER
+           --------> [ MAC: SERVER ] <--------
+                  (the truth lives here)
 ```
 
-> "Your iPad is a **client**. There can be many clients. My laptop running `node server.js` is the **server**. There's only one. Every client connects to the same server. The server is the **truth**. If the server says your snake is dead, your snake is dead — even if your iPad still shows it alive for a second."
+> "Your iPad is a **client**. One laptop is the **server**. Every client connects to the same server. The server is the truth."
 
-**Show the projector's terminal where `node server.js` is running.** Kids see it logging:
+**Show the terminal where `node server.js` is running.** It logs each kid joining live:
 ```
 [room cosmic-viper] +p1 Curly #4ade80 (1/8)
-[room cosmic-viper] bot joined
 [room cosmic-viper] +p2 Wiggles #fbbf24 (2/8)
-[room cosmic-viper] restart in 5000ms (new player joined)
 ```
 
-> "When you opened v2, that `+p1 Curly` line is YOU joining the server. Each line is something happening. Every kid here is in this log."
+**Phone call basics**, in two messages:
 
-### Part 3 — Lecture: "What's in v2-arena/?" (15 min)
-
-Project the folder tree:
-```
-v2-arena/
-  server.js          ← runs on MY LAPTOP only — kids never see this run
-  game.js            ← runs on the server
-  snake.js           ← runs on the server (server is the boss of all snakes)
-  bot.js             ← runs on the server (the bot's brain)
-  public/            ← THIS is what your iPad downloads
-    index.html
-    main.js          ← runs on YOUR IPAD
-    render.js        ← runs on YOUR IPAD (draws the snake)
-    constants.js     ← shared between server and client
-```
-
-> "v1 had `js/` — that was all client-side. v2 has TWO sets of code. The stuff outside `public/` runs on my laptop. The stuff inside `public/` runs on your iPad. They talk to each other."
-
-### Part 4 — Lecture: "What's a WebSocket? What gets said?" (20 min)
-
-> "Normally when you visit a website, your iPad sends a question, the server sends an answer, then they hang up. Like sending a text. But for snake, we need them to talk **all the time**. So we use a **WebSocket** — it's like a phone call that stays open."
-
-So **what do they say to each other?** Two things happen on this phone call:
-
-**Your iPad → server:** only ONE kind of message, ever.
+**iPad → server (the ONLY thing your iPad ever asks for):**
 ```json
 { "type": "direction", "dir": "UP" }
 ```
-> "Every time you swipe, your iPad whispers this into the phone. That's it. You can ONLY ask to turn. You can't say 'give me food' or 'kill that snake.' The server decides everything."
+> "Every swipe = this message. That's it. You can ONLY ask to turn. The server decides everything else."
 
-**Server → your iPad:** lots of messages, but **one big one runs the show.** Every 130ms, the server broadcasts the whole game state to everyone:
+**Server → iPad (the big one, every 130ms):**
 ```json
-{
-  "type": "state",
-  "tick": 42,
-  "snakes": [
-    { "id": "p1", "name": "Curly",  "color": "#4ade80", "body": [...], "alive": true },
-    { "id": "bot","name": "Snek",   "color": "#94a3b8", "body": [...], "alive": true }
-  ],
-  "foods": [ {"x":5,"y":10}, {"x":17,"y":42}, ... ],
-  "scores": { "p1": {...}, "bot": {...} }
-}
+{ "type": "state", "tick": 42, "snakes": [...], "foods": [...] }
 ```
-> "This is the **truth**. Your iPad's only job is to draw what's in here. If `snakes[0].body` changes, your snake moved. If a food disappears from `foods`, someone ate it. Everything you see on the screen comes from this message."
+> "This is the truth. Your iPad's only job is to draw what's in here. Every snake's body, every food — it all comes from this."
 
-There are a few other server → client messages for special moments (when you join, when a round ends, when a new player joins, when the room is full). The full list is in **[PROTOCOL.md](PROTOCOL.md)** if you're curious.
+Other messages (join, end, restart) — list in [PROTOCOL.md](PROTOCOL.md), don't dwell.
 
-### Part 5 — Hands-on: peek at the messages (10 min)
+### Part 3 — Hands-on: peek at the phone call (10 min)
 
-Now kids see the messages **live**. Two ways to look:
-
-**(a) DevTools Network tab — see the raw phone call.**
-1. Open DevTools (F12 or Right-click → Inspect)
-2. **Network** tab → filter **WS** (WebSocket)
-3. Click the open WebSocket connection
-4. **Messages** sub-tab — every 130ms a new green/red line appears with the JSON payload
-5. Click any `state` message → expand `snakes` → kids see THEIR snake's `body` cells
-
-**(b) JS Console — poke at the last message.**
+DevTools → Network → WS → click the connection → Messages. Watch JSON fly by every 130ms. Or in the Console:
 ```js
-window.snakeArena.state.tick           // current tick number — changes every 130ms
-window.snakeArena.state.snakes.length  // how many snakes are in the room
-window.snakeArena.state.foods          // every food in the world
-window.snakeArena.state.scores         // the live scoreboard
-window.snakeArena.myId                 // your own playerId
+window.snakeArena.state.tick
+window.snakeArena.state.snakes.length
+window.snakeArena.state.foods
 ```
+> "No secrets. Your iPad sees exactly what every iPad sees."
 
-> "The server tells your iPad EVERYTHING, every 130ms. There are no secrets. You can see exactly what your iPad sees."
+### Part 4 — Lecture: "The bot is one function" (20 min)
 
-### Part 6 — Wrap-up question (5 min)
+Now the **bridge** to tomorrow's lesson on writing your own bot.
 
-> *"What happens if Mr. Yancy closes his laptop?"*
-
-Lead them to: **all the games stop**. The server is the truth — no server, no game. (This is also why we deploy v2 to render.com so kids can play after camp.)
-
-**Tease v3:**
-> "Tomorrow afternoon you'll see v3 — programmable snake. Same protocol, same messages. The only difference is: instead of *you* deciding which way to turn, *your code* decides. Your code sends `{type: 'direction', dir: 'UP'}` just like your finger does."
-
-### Instructor notes
-- Don't use the word "protocol" in the lecture. Use "phone call" or "what they say." The PROTOCOL.md file is for *you*; the kids hear it as a phone call.
-- The terminal log is **the** demo for Part 2 — kids LOVE seeing their join show up as a log line. Make it big and readable.
-- For Part 5, if iPads can't access DevTools, project ONE kid's session on the screen via Web Inspector over USB. Everyone watches; one kid drives.
-- If a kid asks "what's a port?" — sidebar: "a port is like an apartment number on the same street address. Different programs on the same computer can each have their own port." Then move on.
-- If a kid asks "is JSON a programming language?" — "no, it's just a way to write data so two computers can both read it. `{` opens a thing with properties, `[` opens a list. Same as JS object literals."
-
----
-
-## Lesson 4 — The Bot's Brain (45 min · v2-arena)
-
-> **Big idea:** The bot you play against is just code. It looks at the same game state you see, decides where to go, and sends a move. We can read its brain.
-
-### What kids will learn
-- The bot is **not magic** — it's a function that runs on the server every tick.
-- **Smartness can be a number** — 1.0 means perfect play, 0.0 means random.
-- The "bot gets dumber as it grows" rule is **one line of code** they can read.
-
-### Part 1 — Play (5 min)
-Solo room. Watch the bot. Notice it says "100% smart" in the scoreboard when it's short. After a couple of foods, watch the smartness number.
-
-### Part 2 — Lecture: "Where does the bot decide?" (15 min)
-
-Project `v2-arena/bot.js`. Walk through `botMove`:
-
+Project `v2-arena/bot.js`, the function `botMove`:
 ```js
 export function botMove(bot, allSnakes, foods) {
   const smartness = computeSmartness(bot.body.length);
@@ -476,35 +241,15 @@ export function botMove(bot, allSnakes, foods) {
 }
 ```
 
-**Translate:**
-> "Every tick, the bot rolls a dice. If it rolls below `smartness`, it picks the smart move — the direction that gets closest to food without dying. Otherwise it picks any direction that doesn't kill it. At 100% smart, it ALWAYS picks the smart move. At 0% smart, it ALWAYS rolls random."
+> "Every tick, the bot rolls a dice. If it rolls below `smartness`, it picks a smart move. Otherwise random. At length 10 it's 100% smart. By length 30 it's totally random — that's why you can catch up to it."
 
-Then `computeSmartness`:
-```js
-export function computeSmartness(length) {
-  if (length <= BOT_SMART_UNTIL) return 1.0;
-  return Math.max(0, 1 - (length - BOT_SMART_UNTIL) / BOT_DUMB_RAMP);
-}
-```
-
-> "Until the bot is length 10, it's 100% smart. After length 10, it gets dumber by 5% per cell. By length 30, it's totally random."
-
-Draw this on the whiteboard as a graph: x = length, y = smartness. Flat line at 1.0 until x=10, then linear drop to 0 at x=30.
-
-### Part 3 — Lecture: "What does 'smart' even mean?" (15 min)
-
-Project `smartMove`:
+Then show `smartMove`:
 ```js
 function smartMove(bot, allSnakes, foods) {
-  const head = bot.body[0];
   const food = nearestFood(head, foods);
   const candidates = validDirs(bot.direction).map(dir => {
     const nh = nextHeadIn(dir, head);
-    return {
-      dir,
-      deadly: isDeadly(nh, allSnakes),
-      distToFood: Math.abs(nh.x - food.x) + Math.abs(nh.y - food.y),
-    };
+    return { dir, deadly: isDeadly(nh, allSnakes), distToFood: ... };
   });
   const safe = candidates.filter(c => !c.deadly);
   if (safe.length === 0) return candidates[0]?.dir || bot.direction;
@@ -513,332 +258,462 @@ function smartMove(bot, allSnakes, foods) {
 }
 ```
 
-**Walk through, line by line:**
-1. Find the nearest food.
-2. For each direction we could go (excluding 180° reverse): figure out where the head would land, whether that's deadly, and how far from food.
-3. Drop the deadly ones.
-4. Pick the safe move that gets us closest to food.
+**Walk through:** find food, list the 4 possible moves, drop deadly ones, pick the one closest to food.
 
-> "That's it. That's the whole 'smart' brain. Find food, don't die. Just like how YOU play. The only difference is the bot is doing this math 8 times per second."
+> "That's the whole brain. Find food, don't die. It's about 30 lines. It's just **code you could write**."
 
-### Part 4 — Hands-on: Tune the bot (10 min)
-
-Instructor opens `constants.js`:
-```js
-export const BOT_SMART_UNTIL = 10;
-export const BOT_DUMB_RAMP = 20;
-```
-
-Change `BOT_SMART_UNTIL = 2`. Restart server. Bot is now dumb almost immediately.
-
-Change `BOT_SMART_UNTIL = 50`. Bot stays smart even when really long. Now it's nearly unbeatable.
-
-> "Two numbers control how mean the bot is. That's the whole knob."
+This is the cue: **tomorrow you'll write your own.**
 
 ### Part 5 — Wrap-up question (5 min)
 
-> *"Tomorrow, you're going to write your OWN bot. What's the very simplest bot you can think of?"*
+> *"If I close my laptop, what happens to the games?"*
 
-Possible answers:
-- "Just go up forever." (Dies on top wall — funny.)
-- "Always turn left." (Spirals into itself.)
-- "Random direction each tick." (Lives a few seconds usually.)
-
-Tease: "Tomorrow you'll get a textarea and write `function nextMove(state) { return 'UP' }`. We'll see whose bot lives longest."
+All games stop. The server is the truth. (Which is why we deploy to Render so kids can keep playing.)
 
 ### Instructor notes
-- The whiteboard graph for smartness is the hook. Kids remember pictures.
-- Don't dwell on `Math.random() < smartness`. "Roll a dice" is enough.
-- If a kid asks "what if there are two foods at the same distance?" — show that `safe.sort(...)` picks the first one, which is whichever appears first in the foods list. Ties are arbitrary, which is fine.
+- This used to be two lessons (L3+L4). It's one now. **Less time on what's a port / what's JSON** — kids today have a vibe for the internet already. **More time reading `smartMove`** because that's the bridge to L3.
+- If a kid asks "why is it called WebSocket?" — "regular web pages: you ask, you get an answer, hang up. WebSocket: phone stays open." Move on.
+- The terminal log is the demo for Part 2. Kids LOVE seeing their join show up. Make the font big.
 
 ---
 
-## Day 2 PM — Try v3 (free play, ~60–90 min)
+## Lesson 3 — Hello, AI (60–75 min · v3-coder)
 
-No new lesson. Same "exposure" pattern as Day 1 PM. Kids look at v3-coder and play with sample bots.
+> **Big idea:** You're going to write code. You're not going to write it alone. You'll have an AI sitting next to you — Claude or ChatGPT — to ask questions, fix your mistakes, and suggest ideas. Today you meet your coding partner.
 
-**Suggested flow:**
-1. Project v3-coder. Show the new thing: there's a **textarea** with code in it.
-2. Walk through the 3 sample bots in order:
-   - **random.js** — "I roll a dice every tick"
-   - **greedy.js** — "I always chase the nearest food"
-   - **safe.js** — "I avoid walls and my own body"
-3. Each kid joins a room and picks one sample bot. Their bot plays against the others.
-4. After 20-30 min, ask: "Which bot won most? Why?"
-5. Park the next question: "Could you write one that beats them all?" — tomorrow's lesson.
-
----
-
-## Lesson 5 — Be the Bot (90 min · v3-coder)
-
-> **Big idea:** A program can play the game for you. Today you write that program. Same wire protocol as v2 — your bot sends `{type: 'direction', dir: 'UP'}` just like your finger swiping yesterday.
+This is the NEW lesson — the one that earns the "Build with AI" line on the flyer. Kids see a real AI session, then everyone does one.
 
 ### What kids will learn
-- The shape of a bot function: `function nextMove(state) { return 'UP' }`
-- What's in `state` (your snake, others, food, board, tick)
-- How to think about "what should I do here?" as code, line by line
-- That writing a bot is just a different way of sending the same message — see [PROTOCOL.md](PROTOCOL.md)
+- v3-coder works: textarea + `nextMove(state)` + run.
+- How to ask Claude/ChatGPT for code help **like an engineer** (paste the code, paste the error, ask why).
+- That an AI is a partner, not a magic-answer button.
 
-### Part 1 — Play yesterday's sample bots one more time (10 min)
+### Part 1 — Play the sample bots (10 min)
 
-Quick refresher. Three sample bots, kids pick one in the lobby, watch them play:
-- **random.js** — picks any direction. Lives ~5 seconds. Hilarious.
-- **greedy.js** — chases the nearest food. Lives longer but crashes into walls eventually.
-- **safe.js** — chases food AND avoids walls and bodies. The champion sample.
+Project v3 lobby. Walk through the 5 sample buttons:
+- **Random** — picks a dice each tick. Dies in 5 seconds. Funny.
+- **Greedy** — chases nearest food. Crashes into walls eventually.
+- **Safe** — chases food AND avoids death. The champion sample.
+- **Tunable** — tomorrow's lesson; preview it now.
+- **Learning** — tomorrow afternoon's lesson; preview it now.
 
-> "Each of these is **less than 30 lines of code.** Let's read one."
+Kids join a room with their pick. Watch them play.
 
-### Part 2 — Lecture: "The shape of a bot" (15 min)
+> "Each of these is a **function** that returns `'UP' / 'DOWN' / 'LEFT' / 'RIGHT'`. About 30 lines each. Let's read one with the help of a friend."
 
-Project the lobby. Show the textarea. The whole API in one screenshot:
+### Part 2 — Lecture: "Reading code with an AI" (10 min)
 
+Switch the projector to **Claude.ai** (or ChatGPT). New chat. Paste in `greedy.js` — all 30 lines. Type:
+
+> *"Explain this code to me as if I'm 10 years old. What does each section do?"*
+
+Watch Claude reply line by line. Pause and ask the room: "Does that match what you thought it did?"
+
+Now ask Claude:
+
+> *"What happens if the closest food is on the other side of a wall? Will this bot get there?"*
+
+Claude reasons through it. Kids see how an AI can think *with* you about code that's open in front of you.
+
+**Then the punchline:**
+> "I'm not asking Claude to write the bot for me. I'm asking Claude to help ME think about the code. That's the difference between using AI to skip the work, and using AI to learn faster. We'll do both this week."
+
+### Part 3 — Lecture: "The shape of YOUR bot" (10 min)
+
+Back to the v3 lobby. Project the textarea. Type the smallest possible bot:
 ```js
 function nextMove(state) {
   return 'RIGHT';
 }
 ```
 
-> "Every 130ms, your code gets called with `state`. It returns a direction string. That's it. Whatever you return becomes your snake's next move."
+> "Every 130ms, your function gets called with `state`. It returns a direction. That's it."
 
-**The `state` object** — project this as a poster too:
-
+Project the `state` shape as a poster:
 ```js
 state = {
   me:   { body: [{x, y}, ...], direction: 'UP', alive: true },
-  food: [ {x: 5, y: 10}, {x: 17, y: 42}, ... ],
-  others: [
-    { body: [...], direction: 'RIGHT', alive: true },
-    { body: [...], direction: 'DOWN',  alive: true },
-  ],
+  food: [ {x, y}, ... ],
+  others: [ { body, direction, alive }, ... ],
   board: { width: 60, height: 60 },
   tick:  42
 }
 ```
 
-> "`me.body[0]` is your head. `food` is every food in the world. `others` is every other snake. Same `body` shape — list of cells, head first."
+**Connect to yesterday:** "Remember the `state` message the server sends every 130ms? Your `nextMove(state)` gets that, with `me` peeled out for you. You're a tiny version of the bot we read in L2."
 
-**Connect to yesterday:**
-> "Remember the `state` message from L3? That `state` object the server sends every 130ms? Your `nextMove(state)` gets almost the same thing. The browser pulls your snake out as `me`, the rest as `others`, and hands it to you."
+### Part 4 — Hands-on: build a bot with AI together (20 min)
 
-### Part 3 — Lecture: Read `greedy.js` line by line (15 min)
+Instructor drives the projector. Open a fresh Claude/ChatGPT chat. Prompt:
 
-Project [`v3-coder/public/bots/greedy.js`](../v3-coder/public/bots/greedy.js) on the screen. Slow walk-through:
+> *"I'm writing a snake bot in JavaScript for a kids' coding camp. The bot is a function `nextMove(state)` that returns 'UP', 'DOWN', 'LEFT', or 'RIGHT'. `state.me.body` is the snake's body, `state.food` is a list of food cells with x,y. The board is 60x60. Write me a bot that avoids walls and goes toward the nearest food. Keep it under 30 lines. Explain it as you go."*
 
-```js
-function nextMove(state) {
-  const head = state.me.body[0];
-```
-> "First we grab my head. That's `state.me.body[0]`."
+Watch the AI write the bot. Paste it into the v3 textarea. Click **+ Create new room**. **It runs.**
 
-```js
-  let nearest = state.food[0];
-  let nearestD = Math.abs(nearest.x - head.x) + Math.abs(nearest.y - head.y);
-  for (const f of state.food) {
-    const d = Math.abs(f.x - head.x) + Math.abs(f.y - head.y);
-    if (d < nearestD) { nearest = f; nearestD = d; }
-  }
-```
-> "Now we look at every food and figure out which is closest. Distance is `|food.x - head.x| + |food.y - head.y|` — how many cells you have to walk left/right plus up/down. That's called **Manhattan distance**."
+If it crashes (it will eventually), copy the error from the bot status box, paste it back to Claude:
+> *"It said `Cannot read property 'x' of undefined`. What does that mean?"*
 
-```js
-  const dx = nearest.x - head.x;
-  const dy = nearest.y - head.y;
-  if (Math.abs(dx) > Math.abs(dy)) {
-    return dx > 0 ? 'RIGHT' : 'LEFT';
-  } else {
-    return dy > 0 ? 'DOWN' : 'UP';
-  }
-}
-```
-> "Now move toward it. Is the food more to the side or more up/down? Pick whichever is further. Go in that direction."
+Claude debugs. Kids see the loop: write → run → break → ask → fix.
 
-**Pause and ask:**
-> *"This bot doesn't check for walls. What happens when food is right next to the wall?"*
+### Part 5 — Kids' first AI conversation (15 min)
 
-Lead them to: it'll keep heading toward the wall, then crash into it.
+Each kid opens Claude.ai or ChatGPT on their iPad/laptop. (For kids without an account, pair them up or share the instructor's session on the projector and rotate kids.)
 
-### Part 4 — Hands-on: build `greedy_safe.js` together (20 min)
+Their assignment: ask the AI to write a bot that does something **silly** —
+- "A bot that always tries to spell my name with its body"
+- "A bot that runs away from food"
+- "A bot that only turns left"
+- "A bot that follows the longest other snake"
 
-Open the lobby. Click **Greedy** to load the code. Instructor shows the projected textarea.
+Then paste, run, see what happens. Iterate.
 
-> "Let's fix the wall-crashing. We need to: pick a direction, then CHECK if it'll kill us. If it will, pick a different one."
+**The AI is the partner**, but kids are still the boss. They decide what the bot should do. They debug what it actually does.
 
-Type the new function together on the projector:
+### Part 6 — Wrap-up: "What does AI do well, what does it not?" (5 min)
 
-```js
-function nextMove(state) {
-  const head = state.me.body[0];
-  const W = state.board.width;
-  const H = state.board.height;
+Round-robin. Each kid says one thing:
+- "AI is good at ____."
+- "AI is bad at ____."
 
-  // Find the closest food (same as before)
-  let nearest = state.food[0];
-  let nearestD = Math.abs(nearest.x - head.x) + Math.abs(nearest.y - head.y);
-  for (const f of state.food) {
-    const d = Math.abs(f.x - head.x) + Math.abs(f.y - head.y);
-    if (d < nearestD) { nearest = f; nearestD = d; }
-  }
+Common answers and the instructor's affirmation:
+- ✅ Good at: explaining code, finding bugs, writing first drafts, suggesting ideas.
+- ❌ Bad at: knowing what YOU want, understanding the game without you describing it, fixing things it can't see (so paste the code).
 
-  // NEW: a helper that asks "is this cell deadly?"
-  function deadly(x, y) {
-    if (x < 0 || x >= W || y < 0 || y >= H) return true;     // wall
-    for (const cell of state.me.body) {
-      if (cell.x === x && cell.y === y) return true;          // myself
-    }
-    for (const other of state.others) {
-      for (const cell of other.body) {
-        if (cell.x === x && cell.y === y) return true;        // any other snake
-      }
-    }
-    return false;
-  }
-
-  // Try each of the 4 directions. Pick the one closest to food and NOT deadly.
-  const moves = {
-    UP:    { x: head.x,     y: head.y - 1 },
-    DOWN:  { x: head.x,     y: head.y + 1 },
-    LEFT:  { x: head.x - 1, y: head.y     },
-    RIGHT: { x: head.x + 1, y: head.y     },
-  };
-  let best = null, bestD = Infinity;
-  for (const [dir, pos] of Object.entries(moves)) {
-    if (deadly(pos.x, pos.y)) continue;
-    const d = Math.abs(pos.x - nearest.x) + Math.abs(pos.y - nearest.y);
-    if (d < bestD) { best = dir; bestD = d; }
-  }
-  return best || state.me.direction;   // if every direction is deadly, accept fate
-}
-```
-
-(This is `safe.js` we already shipped. By building it together kids see it isn't magic.)
-
-**Click Create new room.** The kid's bot — well, the instructor's typed version of it — starts playing live on the projector against the auto-bot. Cheers all around when it eats food without crashing.
-
-### Part 5 — Kids fork it (25 min)
-
-Each kid opens v3 on their iPad, clicks **Safe** to load the working bot, then changes ONE thing. Suggested mods (write on the whiteboard, kids pick or invent):
-
-- **Closer wins** — break ties between two foods by checking which has MORE foods near it (a "rich neighborhood")
-- **Head-on dodge** — never move to a cell that's adjacent to an opponent's head (they might land there)
-- **Tail-chaser** — chase your own tail when no food is close (keeps you in tight circles, safer)
-- **Greedy-but-patient** — only chase food if it's within 10 cells, otherwise sit still in safe loops
-- **Wall-runner** — prefer cells against the wall (smaller risk of being cornered)
-
-Kids paste their bot, click **+ Create new room**, watch it run against the auto-bot. Iterate.
-
-### Part 6 — Wrap-up: "Show me a bot, in one sentence" (5 min)
-
-Go around the room. Each kid finishes:
-> "My bot is the one that ______."
-
-If a kid can't articulate it in one sentence, the bot isn't quite a real strategy yet — that's a great signal for what to fix tomorrow morning.
-
-Tease L6:
-> "Tomorrow we put all your bots in **one room** and see who wins."
+**The takeaway** to write on the board:
+> **Show your AI everything. Then ask the right question.**
 
 ### Instructor notes
-- The big risk in this lesson is JavaScript syntax (missing braces, typos). **Tell kids:** if the bot status shows red "Syntax error" — read the error message, count your braces, ask for help. The lobby textarea is forgiving — they can fix and re-create the room.
-- If a kid asks "can I use `for` loops? `if`? `let`?" — yes to all. It's plain JavaScript. Show the sample bots use them.
-- If a kid asks "can my bot remember things between ticks?" — yes! Declare a variable OUTSIDE `nextMove`, e.g. `let lastMove = 'UP';`. It persists across calls. This is a nice "scope" lesson on the side.
-- Watch for **infinite loops** in kids' code (`while(true)` without break). The browser will freeze. Tell them to refresh and remove the offending code. Web Worker isolation is parked in [IDEAS.md](IDEAS.md) for next year.
-- The "Edit bot" button in the game header lets kids tweak code without re-typing their name. They click it → land back in lobby with code preserved → edit → Create new room.
+- The **biggest skill** this lesson teaches isn't JavaScript — it's how to be a good partner to an AI. Modeling it well matters more than the bot quality.
+- Watch for kids who let the AI do everything ("write me a bot"). Push back: "Cool, what does line 12 do?" Goal: kids understand the code they ship.
+- If a kid says "the AI was wrong" — celebrate it. AIs make mistakes; spotting them is the skill.
+- If parents ask "is this safe?" — show them: the kid pastes code into Claude, copies the answer, runs it locally. No personal info ever leaves the chat. Don't have kids paste *anything* about themselves into the AI.
+- If you don't have Claude / ChatGPT accounts for every kid, the projector + instructor demo gets 80% of the value. Each kid does ONE round at the projector while others watch.
+
+---
+
+## Lesson 4 — Strategy: You Tune the Bot (75 min · v3-coder)
+
+> **Big idea:** A bot isn't just "go to food" — it's a **strategy**. Should you eat or block? Stay safe or take risks? A strategy is just numbers, and you can tune those numbers. **What you're doing right now is what machine learning does — just by hand.**
+
+This is the NEW second new lesson. Heart of the camp's "think like AI" thread.
+
+### What kids will learn
+- The `tunable.js` sample — a strategy bot with four weights.
+- Multi-objective decisions: food vs safety vs blocking vs open space.
+- That **you are the gradient** — tweaking numbers, watching results, tweaking again.
+- The link: "what you just did is what ML does."
+
+### Part 1 — Play the Tunable bot (10 min)
+
+Each kid clicks the **Tunable** sample button in the lobby. The code loads — the four weights are right at the top:
+```js
+const W_FOOD     = 1.0;
+const W_SAFETY   = 5.0;
+const W_BLOCKING = 0.0;
+const W_OPEN     = 0.5;
+```
+
+Don't change anything yet. Just create a room and play. The bot is competent — it survives, eats food.
+
+### Part 2 — Lecture: "Scoring every move" (15 min)
+
+Project `tunable.js`. Show the scoring section:
+```js
+score =
+    W_FOOD     * -foodDistance(pos.x, pos.y)      // closer food = higher
+  + W_SAFETY   *  1                                // staying alive
+  + W_BLOCKING *  nearOpponentHead(pos.x, pos.y)   // crowding enemies
+  + W_OPEN     *  openCount(pos.x, pos.y);         // room to move
+```
+
+> "Every tick, the bot looks at all 4 possible moves. For each, it computes a SCORE using these 4 ingredients. Highest score wins."
+
+**Walk through one example.** Project a paused game (or whiteboard the situation): head at (30, 30), food at (35, 30), wall to the north.
+
+Score each direction by hand. Show how each weight pulls the answer.
+
+> "If I make `W_FOOD = 5` and `W_SAFETY = 1`, the bot will dive at food even when it's a little risky. If I do the opposite, the bot is a coward — it'll circle in open space and ignore food."
+
+### Part 3 — Hands-on: tune your bot (25 min)
+
+Each kid opens the **Edit bot** modal (in-game) and changes the weights. Suggested experiments to write on the whiteboard:
+
+| If you want | Try |
+|---|---|
+| Reckless eater | `W_FOOD = 5`, `W_SAFETY = 1` |
+| Cautious snake | `W_FOOD = 1`, `W_SAFETY = 10` |
+| Bully | `W_BLOCKING = 5`, see if you can corner snakes |
+| Explorer | `W_OPEN = 5`, `W_FOOD = 0.1` (just wanders in open space) |
+| Original | The defaults |
+
+Kids run, watch, **observe**:
+- How long did your bot survive?
+- How many foods did it eat?
+- What was its longest length?
+
+**Pause every 5 minutes** for the room. "Lucas — what's your bot doing? Pickle — yours?"
+
+This is the core loop: **change weights → run → observe → change again.** Kids feel that loop in their fingers.
+
+### Part 4 — Mini-tournament with kids' tuned bots (15 min)
+
+Each kid commits to their best weights. Instructor creates a teacher-mode room. All kids join. Run 3 rounds.
+
+Track on a whiteboard:
+| Kid | W_FOOD | W_SAFETY | W_BLOCKING | W_OPEN | Best round |
+|---|---|---|---|---|---|
+
+Observations to call out:
+- "The kid with extreme weights died fast OR won big — there's no middle. Why?"
+- "Balanced weights mostly survived but rarely won. Why?"
+- "The bot that won — what made its weights special?"
+
+### Part 5 — Land the punchline (10 min)
+
+Project the whiteboard tally. Then say:
+
+> "What you just did — try numbers, watch what happens, pick better numbers, run again — has a name. It's how **machine learning** works. The math version of you adjusts millions of numbers, but the loop is the same. After lunch, we'll show you a bot that does this loop by itself."
+
+Optional: ask the AI in front of the class:
+> *"In 2 sentences, explain to a 10-year-old how a machine learning model gets trained."*
+
+Watch Claude's answer line up with what just happened on the whiteboard.
+
+**Write on the board:**
+> **You are the gradient.**
+
+### Instructor notes
+- The biggest risk is kids tweaking weights too fast and not watching. Force at least 30 seconds of observation between tweaks.
+- If a kid wants to add a 5th weight (`W_TAIL_CHASING`?), let them. Show how to add it to the scoring formula. Bonus points for kids who invent a metric.
+- Don't say "machine learning" in Parts 1–4. Save it for Part 5. The reveal is the lesson.
+- This lesson runs short or long depending on the room. Plan for 60 min minimum, 90 max. Leave time before L5.
+
+---
+
+## Lesson 5 — The Bot Learns by Itself (75 min · v3-coder)
+
+> **Big idea:** Yesterday you tuned weights by hand. Today we hand the tuning over to the bot itself. It plays a game, dies, plays again, and **gets a little better every round**. That's reinforcement learning.
+
+This is the NEW third new lesson — the payoff for L4.
+
+### What kids will learn
+- The `learning.js` bot uses a **Q-table** — for each situation, how good is each action?
+- After every move, the bot **updates the table** based on what happened (reward).
+- The bot **explores** at first (random) and **exploits** what it learned (best move) later.
+- After ~10 rounds, the bot is visibly smarter than it started.
+
+### Part 1 — Watch the bot be bad (10 min)
+
+Each kid clicks the **Learning** sample button. Creates a room. Plays.
+
+The first 30 seconds: **the bot is terrible.** It runs into walls. It does random circles. Kids laugh.
+
+> "Look at this thing. It can't even stay alive. But — keep watching."
+
+After 2–3 minutes (5–10 deaths and restarts), the bot stops crashing into walls. By 5 minutes, it starts eating food on purpose.
+
+**Don't explain yet.** Just have them watch.
+
+### Part 2 — Lecture: "The Q-table" (20 min)
+
+Project `learning.js`. Show the brain:
+```js
+let qTable = {};   // { situationKey: { UP: ?, DOWN: ?, LEFT: ?, RIGHT: ? } }
+```
+
+> "The bot keeps a notebook. For each SITUATION it's seen, the notebook has 4 numbers — one for each direction. The number says 'how good has it been to go that way from here?'"
+
+**Show how a situation is encoded.** The state-key looks like `1,0|2`:
+- `1,0` = food is to the right
+- `|2` = danger is to the left (a wall or body)
+
+> "9 food directions × 16 danger combinations = 144 situations. That's all. Small enough that the bot's whole brain fits on one page."
+
+**The learning rule.** Show the Bellman update:
+```js
+qTable[lastKey][lastAction] =
+  prev + ALPHA * (reward + GAMMA * futureBest - prev);
+```
+
+Don't explain the math. Explain the **intention**:
+
+> "After every move, the bot looks at the situation it ended up in. If it ate food — reward! +10. Mark the move that got us here as 'good.' If it died — -50. Mark that move as 'bad.' Next time we're in a similar situation, the bot remembers."
+
+Whiteboard the loop:
+```
+1. See situation
+2. Pick a move
+3. Make the move
+4. See what happened (got food? died? nothing?)
+5. Update the notebook
+6. Repeat
+```
+
+> "**This is the loop.** Yesterday YOU were the loop — you'd play, observe, tweak weights, replay. The bot does the same thing. It plays, observes, tweaks numbers in its notebook, plays again."
+
+### Part 3 — Explore vs Exploit (10 min)
+
+Project the ε-greedy line:
+```js
+const epsilon = Math.max(0.05, Math.pow(0.92, games));
+if (Math.random() < epsilon) {
+  action = dirs[Math.floor(Math.random() * dirs.length)];
+} else {
+  action = dirs.reduce((best, d) => q[d] > q[best] ? d : best);
+}
+```
+
+> "Two strategies in one bot. **Explore** — pick a random move. **Exploit** — pick the best move I know. Early on (game 1), the bot explores almost 100% of the time. By game 30, it's exploring only 8% of the time. It's settled into 'I know what works.'"
+
+**The tradeoff to teach:** if the bot ONLY exploits, it gets stuck on the first thing that worked. If it ONLY explores, it never uses what it learned. You need both.
+
+> "This is a real life pattern too. Pick the new restaurant or the one you know is good?"
+
+### Part 4 — Hands-on: peek at the bot's notebook (15 min)
+
+In DevTools Console while the Learning bot is playing:
+```js
+// The bot's brain lives in the textarea code, so we have to peek another way:
+// click "Edit bot", scroll down, and the live Q-table is at the top.
+```
+
+(Or — if there's time — instructor adds a tiny "log qTable" line to the bot in the modal, applies, and kids see the table grow in the console.)
+
+For each kid:
+- Count entries: `Object.keys(qTable).length` — how many situations the bot has seen
+- Find the most-confident state: the situation where one direction's Q-value is way higher than the others
+- Watch a new entry appear when you go somewhere new
+
+> "The bot has filled in ~100 of the 144 entries by now. The rest are situations it hasn't seen — it doesn't know what to do there yet."
+
+### Part 5 — Mini-tournament: hand-tuned vs self-learning (15 min)
+
+Instructor creates a teacher-mode room. Kids paste **two bots** in two browser tabs — their best Tunable bot from L4, and the Learning bot.
+
+Run 3 rounds. Who wins?
+
+Honest expectation: the Tunable bots probably beat the Learning bots in a short tournament — Learning needs ~30+ games to really get good, and we've only played a few. **That's a great teaching moment.**
+
+> "Why did the Tunable bots win? Because YOU had already done the learning. You played hundreds of games yesterday tuning your brain. The Learning bot has only had a few minutes."
+
+Ask the room:
+> *"If we left the Learning bot playing overnight — what would happen?"*
+
+Land it: machine learning needs **time** and **data**. The same way kids needed time to tune their weights, the bot needs time to fill in its table.
+
+### Part 6 — Wrap-up (5 min)
+
+Three sentences on the board, fill them in:
+1. "A bot is just _____." (code / a function)
+2. "A strategy is just _____." (numbers / weights)
+3. "Machine learning is just _____." (tuning the numbers by playing)
+
+Then:
+> "Tomorrow's tournament uses any bot you want. Tunable. Learning. The one Claude helped you write. Pick your strongest one — and may the best `nextMove()` win."
+
+### Instructor notes
+- This lesson can land flat if the Learning bot doesn't visibly improve. Make sure rooms have at least 1 other snake to "die against" so deaths happen fast (= more learning per minute). Solo room learns too slow.
+- Don't use the words "reinforcement learning" until late in the lesson if at all. Build the intuition first, name it after.
+- The honest tournament outcome (Tunable beats Learning short-term) IS the lesson — don't oversell. Real ML takes time.
+- If a kid asks "could the bot get smarter than me?" — yes, with enough games. Real game-playing ML (AlphaGo, etc.) beats world champions. That's where they could go in high school / college. Plant the seed.
+- Watch out for kids who refresh the page mid-learning — wipes the qTable. The Q-table lives in the bot's closure; refresh = fresh bot. Tell them: don't refresh during a Learning run!
 
 ---
 
 ## Lesson 6 — Tournament + What's Next (90 min · v3-coder)
 
-> **Big idea:** Your bot vs everyone else's bot. May the best `nextMove()` win.
+> **Big idea:** Your bot vs everyone else's bot. Bring your strongest. Whether it's Tunable, Learning, or one you co-wrote with Claude — may the best `nextMove()` win.
 
 ### What kids will do
-- Polish their bots with everything they learned in L5.
-- Put all bots in **one room** for a head-to-head tournament.
-- Reflect on what worked. Demo to parents.
+- Polish their bots (and pick which one to bring).
+- One head-to-head tournament.
+- Reflect. Demo to parents.
 
-### Part 1 — Final tweaks (15 min)
+### Part 1 — Pick your bot, final tweaks (15 min)
 
-Kids open v3, hit **Edit bot**, polish. Things to tell them to look at:
-- Are you handling the case where `state.others` is empty? (No opponents — just you and the auto-bot)
-- Is your bot ever returning something other than the 4 strings? (Bot status will show "Bad return" if so)
-- Does it crash if `state.food` is somehow short? (Should be 18 always, but defend anyway)
+Kids open v3, click **Edit bot**, decide.
+- **Tunable** with your weights — predictable, reliable.
+- **Learning** — bring whatever brain it built up; play a few warm-up rounds to fill in fresh situations.
+- **Hand-rolled with Claude** — your own strategy, whatever it does.
 
-Encourage testing: each kid creates a fresh room, watches their bot vs the auto-bot. If it dies in <30 seconds, fix it.
+Things to check:
+- Does it return only `'UP' / 'DOWN' / 'LEFT' / 'RIGHT'`? (Bot status will say "Bad return" if not.)
+- Does it handle empty `state.others`? (Solo room — no opponents.)
+- Does it crash? (Status box shows the error message.)
+
+Each kid creates a fresh solo room. If their bot dies in <30 seconds against the auto-bot, fix it before the tournament.
 
 ### Part 2 — Tournament (45 min) — in **teacher mode**
 
-**Instructor creates the room in Teacher mode.** In the v3 lobby: pick **👨‍🏫 Teacher** under Room Mode, click Create. You land in the room with no snake and a Host Controls panel — Pause / Step / Slower / Faster / Reset.
+**Instructor creates the tournament room in Teacher mode** (lobby → Teacher checkbox → Create). Land in the room as host with no snake, Host Controls panel showing.
 
-Share the room name with the kids (e.g. `final`). Each kid joins the room — the server sends a `restartCountdown` (5s) each time someone arrives, so everyone enters cleanly.
+Share the room name (e.g. `final`). Each kid joins — server sends a 5s `restartCountdown` each time, so everyone enters cleanly.
 
-Once all are in, **project the room on the big screen.** Run 5 rounds. The host controls turn this from "watch chaos" into a real teaching session:
+Once all are in, **project the room.** Run 5 rounds with the host controls:
 
-- **Pause** mid-round when something interesting happens — "Wait! Pickle's bot is about to hit a wall. What should it do?"
-- **Step** one tick to see the next move WITHOUT releasing the pause. Great for debugging strategies.
-- **Slower** (🐢) to drop to 200ms/tick so kids can follow what each bot is doing.
-- **Faster** (🐇) when nothing interesting is happening.
-- **Reset** to force the next round whenever you want — no waiting for natural game-over.
+- **Pause** mid-round when something interesting happens — "Pickle's bot is about to hit a wall. What should it do?"
+- **Step** one tick to see the next move without resuming. Great for debugging out loud.
+- **Slower** (🐢) to ~200ms/tick so kids can follow what each bot is doing.
+- **Faster** (🐇) when things drag.
+- **Reset** to force the next round early.
 
-Keep score on a whiteboard (the per-room scoreboard resets each round; you tally cumulative manually):
+Keep score on a whiteboard:
 
 | Round | 🥇 1st (+3) | 🥈 2nd (+2) | 🥉 3rd (+1) |
 |---|---|---|---|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
+| 1–5 | | | |
 
-After all 5, total points = tournament rank.
+After 5 rounds, totals = tournament rank.
 
-**Between rounds** (Pause), call out observations:
-- "Pickle's bot stayed alive 40 seconds — what was it doing?"
-- "Tofu's bot is the only one that turned around when boxed in. Nice."
-- "Sir Hiss is going in circles. What might've happened?"
+**Between rounds**, call out observations:
+- "Pickle's bot — did you see it pause near the wall? That was W_SAFETY pulling it back."
+- "Tofu's Learning bot did NOT crash even once this round. The notebook is paying off."
+- "Sir Hiss is going in circles. What happened to its strategy?"
 
-**During a round**, when you spot a teachable moment, just hit Pause and ask the room — "What's about to happen here?" Step a tick at a time to confirm.
-
-This is the **best teaching moment of camp** — kids' bots are visible, the strategies are visible, the instructor's pause-and-narrate makes everyone learn from every move.
+This is the **best teaching moment of camp** — strategies are visible, bots are tagged with names, pause-and-narrate makes every move a lesson.
 
 ### Part 3 — Discussion (15 min)
 
-Sit kids in a circle. Round-robin questions:
+Round-robin questions:
 1. **Which bot won? Why do you think it won?**
-2. **If you had one more day, what would you add?** (encourage specifics — "I'd make mine avoid opponents' heads")
+2. **If you had one more day, what would you add?**
 3. **What surprised you about your own bot?**
 4. **What was the hardest part of this whole camp?**
 
-Capture answers on a whiteboard photo — feeds the camp retro and parent communication.
+Capture answers on a whiteboard photo — feeds retro and parent communication.
 
 ### Part 4 — Parents arrive (15 min)
 
 Each kid demos their bot **for 30 seconds**. Format:
-> "Hi, I'm Lucas. My bot is called Tofu. It chases food but avoids walls AND opponent heads. It came in 2nd in our tournament. *(start a solo game on parent's phone or the projector)* Watch it eat."
+> "Hi, I'm Lucas. My bot is called Tofu. It's a Tunable bot — I set W_BLOCKING to 3 so it crowds opponents. It came in 2nd in our tournament. *(start a solo game on the projector)* Watch it eat."
 
 Then **one final tournament run** — all bots, one room, in front of parents. Loud cheering encouraged.
 
 **Wrap with the future:**
-> "All of this is on GitHub. Your code is in your iPad's browser memory — if you want to keep your bot, copy-paste it somewhere safe. Snake Coder lives at https://snake-lab-coder.onrender.com so you can keep playing at home."
+> "All of this is on GitHub. Your code is in your iPad's browser memory — if you want to keep your bot, copy-paste it somewhere safe. Snake Coder lives at https://snake-lab-coder.onrender.com so you can keep playing at home. And Saturday — you and your parents are invited back for the bonus day."
 
 ### Instructor notes
-- Project the **server terminal log** during the tournament. The "+player joined" and "round over (winner: Tofu)" lines fly by — kids love seeing their name in the log.
-- The teacher-mode panel's **Slower** button is your friend — at 300–500ms/tick, kids can actually follow what each bot is doing. Speed back up when the action gets slow.
-- **Pause early and often.** The first time a bot does something unexpected — pause. Ask: "What did it see?" then `window.snakeCoder.state` in DevTools shows the exact state the bot was looking at.
-- If a bot is clearly broken (errors in the kid's bot status box), let it ride — the visible failure is its own lesson. Don't pause the game to fix one bot; just note it for the post-round discussion.
-- Have a small token prize for 1st place (sticker, lollipop). Mostly symbolic — the recognition is the prize.
-- For the parent demos, prepare a 1-paragraph card for each kid with: their bot's name, color, one-sentence description, and what they tried that didn't quite work (i.e. a story, not a brag).
+- Project the **server terminal log** during the tournament. The "+player joined" and "round over" lines fly by — kids love seeing their name.
+- **Pause early and often.** First time a bot does something unexpected — pause. Ask: "What did it see?" Then `window.snakeCoder.state` in DevTools shows the exact state the bot was looking at.
+- If a Learning bot looks dumb — it might be because it hasn't seen enough situations yet. Mention this; don't pause to "fix" it.
+- Don't pause the game to fix a visibly broken bot. The visible failure is its own lesson. Note for post-round.
+- Small prize for 1st place (sticker, lollipop). Mostly symbolic — recognition is the prize.
+- For parent demos, prepare a 1-paragraph card for each kid: bot name, color, one-sentence description, one thing they tried that didn't work. A story, not a brag.
 - After parents leave, hand out the feedback form (see [PREP.md](PREP.md)).
 
 ### What's next (for the kids who want to keep going)
-- **Add features to v3** — different food types, walls inside the world, larger world (the obstacles + predators sat in [IDEAS.md](IDEAS.md) — kids can resurrect them!)
-- **Build their own game** using the same pattern: `index.html` + `js/` + a state object + a render loop. Mention `lucasgame` and `snake-lab` as templates.
-- **Read other people's bots** — bot code is just text. Forums and Discord servers exist for snake-bot competitions (Battlesnake, etc.).
+- **Add features to v3** — different food types, walls, larger world. Old IDEAS like obstacles + predators are parked in [IDEAS.md](IDEAS.md).
+- **Build their own game** — same pattern: `index.html` + `js/` + state + render loop. Mention `lucasgame` and `snake-lab` as templates.
+- **Read other people's bots** — Battlesnake.com is the next stop for serious snake-bot programmers. Real tournaments, real prize money.
+- **Train a real ML bot** — what they saw in L5 is a baby version. Real RL uses neural networks and runs for millions of games. Search "OpenAI Gym" or "stable-baselines3" when they're ready for Python.
 
 ---
 
 ## Bonus — Saturday (~3 hours · family play)
 
-> **Vibe:** Camp officially ended Friday. Saturday is the victory lap. Parents are invited, kids show off their bots, and we unlock the two crazier game modes that we held back from the main curriculum.
+> **Vibe:** Camp officially ended Friday. Saturday is the victory lap. Parents are invited, kids show off their bots, and we unlock the two crazier game modes we held back from the main curriculum.
 
-No new lecture. Two new game modes — both are checkboxes in the lobby's **Room Settings** panel, alongside Teacher mode.
+No new lecture. Two new game modes — both are checkboxes in the lobby's **Room Settings** panel.
 
 ### 👑 King snake mode
 
@@ -848,28 +723,28 @@ Strategy shift: don't crash into snakes. Lay out long bodies so others crash int
 
 ### 🌫️ Fog of war mode
 
-Each snake only sees **8 cells around its own head**. The rest of the world is in fog. The minimap reflects fog too — you have to *explore* to know what's out there.
+Each snake only sees **8 cells around its own head**. The rest of the world is fog. The minimap reflects fog too.
 
-Strategy shift: in v3 bot mode, kids' bots now get a filtered `state.others` and `state.food`. Their `safe.js` clone still works, but loses to anyone whose bot ventures into the dark to scout.
+Strategy shift: in v3, kids' bots get a filtered `state.others` and `state.food`. Tunable bots that thrived in full-view fail without exploration; Learning bots see different situations than yesterday and have to re-learn.
 
 ### Suggested running order
 
 | Time | What |
 |------|------|
-| 0:00–0:15 | Parents arrive, kids greet, instructor recaps the week with a 3-slide story (or just hand them a printed "What Lucas built" card) |
-| 0:15–0:45 | **King-mode v2 tournament** — humans only. Kids vs parents. Whoever has the longest snake at the end of 3 rounds wins. Use the host's **Slower** button to make it watchable. |
+| 0:00–0:15 | Parents arrive. Recap the week with a 3-slide story (or hand them a printed "What Lucas built" card). |
+| 0:15–0:45 | **King-mode v2 tournament** — humans only. Kids vs parents. Longest snake at the end of 3 rounds wins. Use **Slower** to make it watchable. |
 | 0:45–1:15 | **King-mode v3 tournament** — kids' bots compete. Parents bet on whose bot wins. |
 | 1:15–1:30 | Snack break ☕ |
-| 1:30–2:15 | **Fog-mode v3 tournament** — same bots, fog enabled. Watch the rankings shuffle as bots that thrived in full-view fail without exploration. Pause and ask: "What would you add to your bot to find food in the fog?" |
-| 2:15–2:45 | **Mixed mode finale** — King + Fog + Teacher, all checkboxes on. Pure chaos. One king emerges from the fog. |
-| 2:45–3:00 | Group photo, "Snake Lab graduate" certificates (optional), reminder that `snake-lab-arena.onrender.com` and `snake-lab-coder.onrender.com` stay live so they can keep playing |
+| 1:30–2:15 | **Fog-mode v3 tournament** — same bots, fog enabled. Watch rankings shuffle. Pause and ask: "How would you add fog-awareness to your bot? Ask Claude!" |
+| 2:15–2:45 | **Mixed mode finale** — King + Fog + Teacher, all on. Pure chaos. |
+| 2:45–3:00 | Group photo, "Snake Lab graduate" certificates (optional), reminder that the games stay live online. |
 
 ### Setup notes for the instructor
 
-- **One room per tournament**, instructor hosts in Teacher mode so they can pause and explain mid-round.
-- For king-mode v2, kids and parents play with their fingers. iPads charged.
-- For v3 tournaments, kids paste their bot code from earlier in the week. Tell them to bring a USB stick / GitHub Gist / screenshot of their bot if they want to use Friday's code (sessionStorage may have cleared).
-- Project the running terminal — Saturday's most fun moment is when "+player joined" lines roll in as parents type their names.
+- **One room per tournament**, instructor hosts in Teacher mode so they can pause and explain.
+- For king-mode v2, kids and parents play with fingers. iPads charged.
+- For v3 tournaments, kids paste their bot code from earlier in the week. Tell them to bring a USB stick, GitHub Gist, or screenshot of their bot — sessionStorage may have cleared.
+- Project the running terminal — Saturday's most fun moment is "+player joined" lines rolling in as parents type their names.
 - Have a leaderboard whiteboard ready (same format as L6).
 
 ### Parent FAQ (be ready for these)
@@ -877,12 +752,13 @@ Strategy shift: in v3 bot mode, kids' bots now get a filtered `state.others` and
 - **"How does my kid keep their bot?"** — Copy-paste the code from the Edit-bot modal into Notes or email it to themselves.
 - **"Can they play this at home?"** — Yes. v1 at https://yancyqin.github.io/snake-lab/, v2 at https://snake-lab-arena.onrender.com, v3 at https://snake-lab-coder.onrender.com.
 - **"How did they build this?"** — Show them README.md + LESSONS.md. Mention `lucasgame` as the precursor.
+- **"Was this actually AI? Or just coding?"** — Honest answer: kids used AI (Claude/ChatGPT) as a coding partner, built bots that range from hand-tuned strategies to a tiny self-learning Q-learning bot. Foundations of AI, all real. Not "they used ChatGPT to do their homework."
 
 ### Why this day is worth doing
 
-- **Kids ship a bot in front of their parents.** This is the moment that turns "summer activity" into "I am someone who codes."
-- **Fog mode is the strategy unlock** — bots that just chase food die; bots that explore win. Kids see *why* their L5 work matters.
-- **King mode is the chaos unlock** — it's just plain fun and parents get it instantly ("oh, like Slither.io!").
+- **Kids ship a bot in front of their parents.** Turns "summer activity" into "I am someone who codes."
+- **Fog mode is the strategy unlock** — bots that just chase food die; bots that explore win. Kids see *why* their strategy work matters.
+- **King mode is the chaos unlock** — pure fun, parents get it instantly ("oh, like Slither.io!").
 - **The two modes together** turn the same game we learned all week into something the kids haven't quite seen before. Camp ends on "there's still more to discover" instead of "we're done."
 
 ---
@@ -894,9 +770,13 @@ Strategy shift: in v3 bot mode, kids' bots now get a filtered `state.others` and
 - **Head** — the first cell of the snake (`body[0]`).
 - **Camera** — the top-left world cell that's currently shown on screen.
 - **World vs View** — the world is everything (60×60). The view is what fits on screen (24×24).
-- **pendingDirection** — the direction we'll apply on the next tick. Lets us buffer player input.
-- **Client** — your iPad. Runs `public/main.js`. Draws the screen, sends inputs.
-- **Server** — Mr. Yancy's laptop. Runs `server.js`. Holds the truth. Tells all clients what to draw.
+- **Client** — your iPad. Runs `public/main.js`.
+- **Server** — Mr. Yancy's laptop. Runs `server.js`. Holds the truth.
 - **WebSocket** — the "phone line" between client and server. Stays open all game.
-- **Bot** — code that decides moves instead of a human. Lives in `bot.js` (v2) or in your textarea (v3).
-- **Smartness** — a number from 0 to 1. 1 = always picks the best move. 0 = pure random.
+- **Bot** — code that decides moves instead of a human.
+- **State** — the snapshot of the world the server sends every tick: snakes, foods, scores.
+- **AI as partner** — using Claude / ChatGPT to help write code, debug, and learn. NOT to do the work for you.
+- **Weight** — a number you tune to change how the bot behaves (L4).
+- **Q-table** — a notebook the Learning bot keeps: situation → how good each move is (L5).
+- **Reward** — the bot gets +10 for food, -50 for dying. Shapes what it learns.
+- **Explore vs Exploit** — try something new vs use what you know. The Learning bot mixes both.

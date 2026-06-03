@@ -47,13 +47,30 @@ Record state snapshots during a round, replay them at 0.25× speed when round en
 ### Mobile-friendly D-pad fallback
 Some kids swipe inconsistently. An optional on-screen D-pad overlay (toggled in lobby) might help.
 
-## Long-shot ideas
+## Done — moved out of "long-shot" because we shipped them
 
-### Hot-reload kids' code in v3 without leaving the round
-Currently the kid would deploy, the bot would join, etc. A "reload bot" button that swaps the function in-place would let kids iterate faster.
+### ✅ Hot-reload kids' code in v3 without leaving the round
+Shipped — the in-game **Edit bot** modal swaps the `nextMove` function in place. Game keeps running, no ws disconnect, no lobby trip. Also persists module-level state via the factory pattern (so a learning bot's `qTable` survives the swap).
+
+### ✅ Tunable strategy bot
+Shipped as `tunable.js` sample. 4 weights (food, safety, blocking, open) right at the top. L4 is built around this — kids tune by hand.
+
+### ✅ Self-learning bot
+Shipped as `learning.js` sample. Q-learning, 144-state × 4-action table, ε-greedy with decay, persists across ticks via closure. L5 lesson explains the loop. Foundation for the "watch AI learn" claim on the flyer.
+
+## Long-shot ideas — not yet tried
 
 ### Bot vs bot benchmarking (v3)
-Standalone mode: pit two bots against each other 100 times, report win rate. Useful for kids to test their bot deterministically without humans in the loop.
+Standalone mode: pit two bots against each other 100 times, report win rate. Especially useful with `learning.js` — train it overnight, then benchmark against `safe.js` to quantify "how much did it learn?" Useful for kids to test deterministically without humans in the loop.
+
+### Q-table live visualizer
+A side panel during a Learning-bot run that shows the actual Q-table — situation grid colored by which action is best, updating live. Would turn the abstract "bot's brain" idea into a thing kids can *see* fill in. Mentioned in L5 as a future demo.
+
+### Persist Q-table to localStorage between sessions
+Right now the Learning bot's brain lives in the textarea closure — refresh = fresh bot. Could save `qTable` to `localStorage` so a kid's bot "remembers" across days. Tradeoff: harder to teach "this is the bot's only memory" if the memory is invisible to them.
 
 ### AI opponent variants in v3
-Pre-built opponent bots at different difficulty levels ("Easy Eric", "Medium Maya", "Hard Hannah") so kids can practice against named characters before going head-to-head.
+Pre-built opponent bots at different difficulty levels ("Easy Eric", "Medium Maya", "Hard Hannah") so kids can practice against named characters before going head-to-head. Now partly covered by sample bots (random / greedy / safe / tunable / learning), but a clearer ladder would be nice.
+
+### "Train your bot overnight" mode
+Headless mode that runs `learning.js` against itself at high tick rate (no rendering, no 130ms wait) for thousands of rounds. Kid wakes up to a trained Q-table they can deploy. Real ML pipeline in a kid-sized package.

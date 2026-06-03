@@ -49,7 +49,8 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 - **Two modes:**
   - **Regular** — open room. New joiners trigger a brief countdown so existing players aren't ambushed.
   - **Teacher** — teacher hosts. Can **pause / resume / step one tick / change tick rate / reset / pick opponent visibility (full bodies vs. heads-only)**. Lets the teacher freeze the game mid-action and ask "what should your bot do here?"
-- Ships with 3 sample bots: `random`, `greedy` (chase nearest food), `safe` (avoid walls + self). Students copy and tweak.
+- Ships with 5 sample bots: `random`, `greedy` (chase nearest food), `safe` (avoid walls + self), **`tunable`** (4 weights — food / safety / blocking / open — kids tune them by hand; this is L4's bot), **`learning`** (a Q-learning bot that keeps a tiny in-memory brain and improves over rounds; this is L5's bot). Students copy and tweak.
+- **Persistent bot state.** The harness runs a kid's code once inside a factory function, captures `nextMove`, and calls *that* every tick — so any `let`/`const` declared at module scope (e.g. the Learning bot's `qTable`) persists across ticks via closure. Click **Apply** in the editor to compile a fresh closure.
 
 ## Stack (locked)
 
@@ -69,23 +70,33 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 - [x] **Teacher mode** (v2 + v3) — host has no snake, controls pause/step/slower/faster/reset. Used in L6 tournament.
 - [x] **King-snake mode** (v2 + v3) — orthogonal checkbox. Aggressor (head-into-body) eats: absorbs the victim's length, victim dies. Head-on-head still kills both.
 - [x] **Fog of war** (v2 + v3) — orthogonal checkbox. Per-player state filtering: each client only sees cells within FOG_RADIUS of their head. v3 bots' `nextMove(state)` gets filtered `state.others` and `state.food`.
-- [x] [docs/LESSONS.md](docs/LESSONS.md) — full 3-day camp curriculum (L1–L6)
+- [x] **Tunable bot** (v3) — `tunable.js` sample. 4 weights kids set by hand. The "you are the gradient" bot for L4.
+- [x] **Learning bot** (v3) — `learning.js` sample. Q-learning, 144 states, ε-greedy. Persists across ticks via closure. The "the bot tunes itself" bot for L5.
+- [x] **Persistent bot harness** (v3) — code runs once in a factory, `nextMove` captured in closure. Module-level `let`/`const` survives between ticks (required for Q-learning).
+- [x] [docs/LESSONS.md](docs/LESSONS.md) — full 3-day camp curriculum (L1–L6 in the new structure)
 - [x] [docs/PREP.md](docs/PREP.md) — instructor pre-camp checklist
-- [x] [docs/PROTOCOL.md](docs/PROTOCOL.md) — WebSocket message reference (used in L3)
+- [x] [docs/PROTOCOL.md](docs/PROTOCOL.md) — WebSocket message reference (used in L2)
+- [x] [docs/flyer/](docs/flyer/) — 1-page printable camp ad PDF + reportlab source
 - [ ] `COMMON_MISTAKES.md` — retro-fit after first camp run
 
 ## Camp
 
-A 3-day camp curriculum is built around these games. **Play + lecture** format — kids play the running game on their iPads; the instructor uses the game as a live demo to teach concepts. No free-form tuning — every code interaction is instructor-led.
+A 3-day camp curriculum is built around these games. **Play + lecture** format — kids play the running game on their iPads; the instructor uses the game as a live demo to teach concepts.
 
 ```
-Day 1  Hello Snake     AM: L1 + L2 (v1 walk-through)       PM: try v2
-Day 2  Snake Arena     AM: L3 + L4 (server + bot)          PM: try v3
-Day 3  Code Your Snake AM: L5 (write your bot)             PM: L6 tournament + parents demo
+Day 1  Hello Snake     AM: L1 (v1 in one go)               PM: try v2 (free play)
+Day 2  Snake Arena     AM: L2 (v2 + bot brain, one go)     PM: L3 — Hello, AI (Claude as partner)
+Day 3  Code Your Snake AM: L4 — Strategy (you tune)        AM: L5 — Learning (it tunes itself)
+                       PM: L6 tournament + parents demo
 Sat    Bonus day       All day: 👑 King + 🌫️ Fog play, families welcome
 ```
 
-See [docs/LESSONS.md](docs/LESSONS.md) for the full curriculum and [docs/PREP.md](docs/PREP.md) for the instructor checklist.
+**Three threads** running through the week:
+- **Build with AI** — Claude/ChatGPT as a coding partner from L3 onward (real AI literacy, not magic-button)
+- **Think like AI** — designing a strategy as numbers you tune (L4)
+- **Watch AI learn** — a Q-learning bot that improves over rounds (L5)
+
+See [docs/LESSONS.md](docs/LESSONS.md) for the full curriculum and [docs/PREP.md](docs/PREP.md) for the instructor checklist. For a printable camp advertisement, see [docs/flyer/](docs/flyer/).
 
 ## Open issues to revisit
 

@@ -68,12 +68,14 @@ body_style = ParagraphStyle('body', parent=styles['Normal'],
 hero = Paragraph(
     "In one week, kids go from playing a classic single-player snake "
     "to writing a JavaScript bot that competes head-to-head against "
-    "their friends' bots in a tournament. Real code. Real servers. "
-    "Real games they can keep playing at home.",
+    "their friends' bots in a tournament. They <b>build with AI</b> "
+    "(Claude as a coding partner), <b>think like AI</b> (design strategies as "
+    "tunable numbers), and <b>watch AI learn</b> (a tiny bot that gets smarter "
+    "every round). Real code. Real servers. Real games they can keep playing at home.",
     body_style)
-hero.wrapOn(c, PAGE_W - 1.2*inch, 1*inch)
-hero.drawOn(c, 0.6*inch, y - 0.55*inch)
-y -= 0.85*inch
+hero.wrapOn(c, PAGE_W - 1.2*inch, 1.4*inch)
+hero.drawOn(c, 0.6*inch, y - 0.95*inch)
+y -= 1.20*inch
 
 # ---- Curriculum table ----
 c.setFillColor(INK)
@@ -87,13 +89,15 @@ y -= 0.20*inch
 curriculum = [
     ("Day 1 — Hello Snake",
      "Build a classic snake game. Discover that 'the snake' is just a list in memory; "
-     "what a game loop is; how code becomes pixels on screen."),
-    ("Day 2 — Snake Arena",
+     "what a game loop is; how code becomes pixels on screen. Fast warm-up day."),
+    ("Day 2 — Snake Arena + Hello, AI",
      "Multiplayer. See what a server is and what a WebSocket carries. "
-     "Watch kids' join messages roll in on the instructor's terminal live."),
-    ("Day 3 — Code Your Snake",
-     "Each kid writes a JavaScript function that controls a snake. "
-     "Afternoon: tournament. The bot that survives longest wins."),
+     "Then meet your AI coding partner — kids ask Claude to read and explain "
+     "bot code, find bugs, and write a first draft together."),
+    ("Day 3 — Code Your Snake (with strategy & learning)",
+     "Morning: tune a strategy bot by hand — food vs safety vs blocking — "
+     "and meet the bot that learns by itself (Q-learning, the same idea behind real ML). "
+     "Afternoon: tournament. Best bot wins. Parents invited."),
     ("Saturday (bonus) — Family Day",
      "King-mode (snake eats snake) and fog-of-war tournaments. "
      "Parents play too. Kids show off the code they wrote on Day 3."),
@@ -130,8 +134,9 @@ y -= 0.22*inch
 
 takeaways = [
     "Three games they helped build, live online so they can keep playing at home",
-    "A working JavaScript bot they wrote themselves",
-    "A real understanding of arrays, loops, servers, and how to start their own projects",
+    "A working JavaScript bot they wrote themselves — and one a Q-learning bot 'trained'",
+    "Hands-on experience using AI (Claude / ChatGPT) as a coding partner — not as a magic-answer button",
+    "Intuition for how AI learns: state, action, reward, repeat. The real loop, demystified.",
     "Confidence that 'code' is something they can write — not just consume",
 ]
 c.setFont("Helvetica", 10.5)

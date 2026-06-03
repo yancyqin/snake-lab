@@ -14,7 +14,9 @@ Open `make_flyer.py` and look for these strings:
 | `"To be announced (first trial run)"` | Actual dates (e.g. `"July 15 – 17, 2026"`) |
 | `"$120 – $150 · lunch included"` | Final price |
 | `"TBA"` (location) | Actual address |
-| `"yqin@paciolan.com"` | Whatever email parents should write to |
+| `"yancyqin@gmail.com"` | Whatever email parents should write to |
+| The `curriculum` list | What each day teaches — keep the AI thread visible |
+| The `takeaways` list | What each kid leaves with |
 
 Then regenerate:
 

@@ -6,14 +6,16 @@ For the actual lesson content see [LESSONS.md](LESSONS.md). For the broader proj
 
 ## A week before
 
-- [ ] **Print the hex code reference sheet** — 1-page handout. Used in **L2** when kids pick their snake color.
+- [ ] **Print the hex code reference sheet** — 1-page handout. Used in **L1** when kids pick their snake color.
   ```
   red    #ef4444    purple #a855f7    teal  #34d399
   blue   #3b82f6    pink   #ec4899    green #4ade80
   yellow #eab308    orange #f97316
   ```
-- [ ] **Print the client/server diagram poster** (for L3) — the "iPads → Mr. Yancy's laptop" picture. Faster than redrawing it live.
-- [ ] **Print the smartness curve poster** (for L4) — `length` vs `smartness`: flat at 1.0 until length 10, linear drop to 0 by length 30. Reusable for v3 later.
+- [ ] **Print the client/server diagram poster** (for L2) — the "iPads → Mr. Yancy's laptop" picture. Faster than redrawing it live.
+- [ ] **Print the `state` shape poster** (for L3) — the `{ me, food, others, board, tick }` block. Kids look at it constantly while writing bots.
+- [ ] **Print the strategy-weights poster** (for L4) — table of the 4 weights (`W_FOOD`, `W_SAFETY`, `W_BLOCKING`, `W_OPEN`) with what each one does. Used during the "tune your bot" hands-on.
+- [ ] **Have AI-partner accounts ready** (for L3 onward) — Claude.ai or ChatGPT, signed in on the projector. If kids will use AI on their own devices, decide ahead: shared instructor session on the projector (rotate kids) or individual accounts (need parent signoff).
 - [ ] **Decide the DevTools strategy** for Lesson 1's hands-on. Two paths:
   - **Set up Safari Web Inspector on every iPad** ahead of time (Settings → Safari → Advanced → Web Inspector). Then USB-attach each iPad to a Mac during the lesson and kids drive their own DevTools.
   - **Instructor drives DevTools on the projector**, kids call out commands. Simpler, less hardware coordination.
@@ -42,11 +44,17 @@ For the actual lesson content see [LESSONS.md](LESSONS.md). For the broader proj
 - [ ] **Find the Mac's local IP** — `System Settings → Network → Wi-Fi → Details → IP Address`. Write it on the whiteboard. Kids type `http://<that-ip>:<port>` to join.
 - [ ] **Start the right server(s)**:
   - Day 1 AM/PM: v1 on 8080, v2 on 8081
-  - Day 2 AM/PM: v2 on 8081, (v3 on 8082 if available)
+  - Day 2 AM/PM: v2 on 8081, v3 on 8082 (PM lesson needs v3)
   - Day 3 AM/PM: v3 on 8082
-- [ ] **Open the editor on the projector** with the lesson's target file(s) ready (`Snake.js` for L1, `Game.js` for L2, `server.js`+`bot.js` for L3/L4, etc.).
-- [ ] **Open a fresh terminal** in the projected window so kids can see "+player joined" log lines fly by (L3's killer demo).
-- [ ] **Have [PROTOCOL.md](PROTOCOL.md) open in a tab** for L3 — the JSON examples land harder when you can also project the raw doc.
+- [ ] **Open the editor on the projector** with the lesson's target file(s) ready:
+  - L1 — `v1-classic/js/Snake.js`, `Game.js`, `constants.js`
+  - L2 — `v2-arena/server.js`, `bot.js` (especially `botMove` + `smartMove`)
+  - L3 — Claude.ai or ChatGPT tab + the v3 lobby with `greedy.js` loaded
+  - L4 — `v3-coder/public/bots/tunable.js` open, with the 4 weights highlighted at the top
+  - L5 — `v3-coder/public/bots/learning.js` open, scrolled to the `qTable` and Bellman update
+- [ ] **Open a fresh terminal** in the projected window so kids can see "+player joined" log lines fly by (L2's killer demo).
+- [ ] **Have [PROTOCOL.md](PROTOCOL.md) open in a tab** for L2 — the JSON examples land harder when you can also project the raw doc.
+- [ ] **Sign into Claude.ai / ChatGPT on the projector** before L3. New chat ready. Have one warm-up prompt typed but not sent (e.g. "Explain this code as if I'm 10 years old") so the demo lands smoothly.
 
 ## During camp
 

@@ -237,8 +237,15 @@ function startGame(room) {
   function deployBot() {
     try {
       // The user code must contain `function nextMove(state) { ... }`.
-      // We append a return that invokes it, then build the Function.
-      userBotFn = new Function('state', code + '\nreturn nextMove(state);');
+      // We run the user code ONCE inside a fresh factory function and
+      // capture `nextMove`. This way any `let`/`const` the kid declares
+      // at the top of their file (e.g. a Q-table for a learning bot)
+      // persists across calls via closure, instead of resetting every tick.
+      const factory = new Function(code + '\n;return nextMove;');
+      userBotFn = factory();
+      if (typeof userBotFn !== 'function') {
+        throw new Error('No function nextMove(state) defined');
+      }
       setBotStatus('ok', 'Bot ready', '');
     } catch (e) {
       userBotFn = null;
@@ -452,7 +459,13 @@ function startGame(room) {
   document.getElementById('modalApplyBtn').addEventListener('click', () => {
     const newCode = editBotCode.value;
     try {
-      const newFn = new Function('state', newCode + '\nreturn nextMove(state);');
+      // Same factory pattern as deployBot — run user code once, capture
+      // nextMove. Closure preserves any module-level state the bot keeps.
+      const factory = new Function(newCode + '\n;return nextMove;');
+      const newFn = factory();
+      if (typeof newFn !== 'function') {
+        throw new Error('No function nextMove(state) defined');
+      }
       // Hot-swap — game keeps running, next tick uses the new function
       userBotFn = newFn;
       sessionStorage.setItem('botCode', newCode);

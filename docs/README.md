@@ -6,10 +6,10 @@ This folder collects everything that isn't code or deploy config. Code lives in 
 
 | File | What it's for | Who reads it |
 |---|---|---|
-| [LESSONS.md](LESSONS.md) | The full 3-day camp curriculum (L1–L6) | Instructor, week before camp |
-| [PREP.md](PREP.md) | Pre-camp checklist — posters, hex codes, port table, feedback form | Instructor, day before camp |
-| [PROTOCOL.md](PROTOCOL.md) | WebSocket message reference — every message that flows between client and server | Instructor for L3; v3 designers |
-| [IDEAS.md](IDEAS.md) | Future tune-ups — things tried and removed, things not yet tried | Whoever's looking for "what's next" |
+| [LESSONS.md](LESSONS.md) | The full 3-day + bonus-Saturday camp curriculum (L1–L6, new "AI thread" structure) | Instructor, week before camp |
+| [PREP.md](PREP.md) | Pre-camp checklist — posters, hex codes, port table, AI accounts, feedback form | Instructor, day before camp |
+| [PROTOCOL.md](PROTOCOL.md) | WebSocket message reference — every message that flows between client and server | Instructor for L2; v3 designers |
+| [IDEAS.md](IDEAS.md) | Future tune-ups — things tried and removed, things shipped, things not yet tried | Whoever's looking for "what's next" |
 | [flyer/](flyer/) | 1-page camp advertisement (PDF + editable Python source) | For recruiting / parent-facing |
 
 ## Conventions
