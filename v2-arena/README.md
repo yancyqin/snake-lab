@@ -38,16 +38,6 @@ The repo has a `render.yaml` at the root. On render.com → **New +** → **Blue
 - Subsequent connections within the session are fast
 - WebSockets just work
 
-### Alternative: fly.io (paid, ~pennies/month with auto-stop)
-
-The repo also has `fly.toml` + `Dockerfile` ready for fly.io if you prefer their faster cold start (~3s). Requires a credit card and a one-time $5 trial credit. With our `auto_stop_machines = "stop"` config, actual usage is well under $1/month.
-
-```bash
-cd v2-arena
-flyctl launch --copy-config
-flyctl deploy
-```
-
 ## Architecture
 
 ```
