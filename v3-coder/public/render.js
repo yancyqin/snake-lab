@@ -39,7 +39,7 @@ export class Renderer {
     if (opts.fullWorld) {
       this.viewCols = WORLD_COLS;
       this.viewRows = WORLD_ROWS;
-      this.cellSize = 14;                       // 60×14 = 840px — fits laptops
+      this.cellSize = 18;                       // 60×18 = 1080px — the whole map, big enough to read across the room
       if (this.minimap) this.minimap.style.display = 'none';
     } else {
       this.viewCols = BASE_VIEW_COLS;

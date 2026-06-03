@@ -195,7 +195,7 @@ function startGame(room) {
 
   const kingBadge = document.getElementById('kingBadge');
   const fogBadge  = document.getElementById('fogBadge');
-  const dpad      = document.getElementById('dpad');
+  const canvasWrap = canvas.parentElement;     // the .canvas-wrap div
   function applyModeUI() {
     hostPanel.classList.toggle('hidden', !isHost);
     pausedBanner.classList.toggle('hidden', !paused || isHost);
@@ -203,8 +203,8 @@ function startGame(room) {
     tickRateLabel.textContent = `${tickRate}ms`;
     if (kingBadge) kingBadge.classList.toggle('hidden', !kingMode);
     if (fogBadge)  fogBadge.classList.toggle('hidden',  !fogMode);
-    // Host has no snake → no D-pad. Players always get it.
-    dpad.classList.toggle('hidden', isHost);
+    // Teacher has no snake → disable joystick + show grab cursor for navigation.
+    canvasWrap.dataset.host = isHost ? '1' : '';
   }
 
   function sendHostMsg(type, extra = {}) {
@@ -340,35 +340,66 @@ function startGame(room) {
     e.preventDefault();
     sendDirection(d);
   });
-  let touchStartX = 0, touchStartY = 0;
+  // ---- Virtual joystick ----
+  // Touch anywhere on the canvas → joystick appears at the touch point.
+  // Drag in a direction → bot turns that way. Release → stick disappears,
+  // snake keeps going in its current direction (just like swiping).
+  // Keyboard input (arrows / WASD) still works in parallel.
+  const joystick = document.getElementById('joystick');
+  const stick    = joystick.querySelector('.joystick-stick');
+  const RING_R   = 50;   // how far the inner stick can travel from center (px)
+  const DEAD_R   = 12;   // pull this far before we count it as a direction (px)
+  let joyActive  = false;
+  let joyOriginX = 0, joyOriginY = 0;
+  let lastJoyDir = null;
+
+  function showJoystick(x, y) {
+    joystick.style.left = x + 'px';
+    joystick.style.top  = y + 'px';
+    stick.style.transform = 'translate(-50%, -50%)';
+    joystick.classList.remove('hidden');
+  }
+  function hideJoystick() {
+    joystick.classList.add('hidden');
+    joyActive = false;
+    lastJoyDir = null;
+  }
+
   canvas.addEventListener('touchstart', (e) => {
+    if (isHost) return;             // teacher has no snake — leave touch alone
     e.preventDefault();
     const t = e.changedTouches[0];
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-  }, { passive: false });
-  canvas.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
-    if (Math.abs(dx) > Math.abs(dy)) sendDirection(dx > 0 ? 'RIGHT' : 'LEFT');
-    else                              sendDirection(dy > 0 ? 'DOWN' : 'UP');
+    const rect = canvas.getBoundingClientRect();
+    joyOriginX = t.clientX - rect.left;
+    joyOriginY = t.clientY - rect.top;
+    joyActive = true;
+    showJoystick(joyOriginX, joyOriginY);
   }, { passive: false });
 
-  // D-pad — fire on both touchstart (no 300ms delay on iOS) and click (mouse/keyboard).
-  // A small `.pressed` flash gives visual feedback even when CSS :active is finicky.
-  dpad.querySelectorAll('.dpad-btn').forEach(btn => {
-    const fire = (e) => {
-      e.preventDefault();
-      sendDirection(btn.dataset.dir);
-      btn.classList.add('pressed');
-      setTimeout(() => btn.classList.remove('pressed'), 120);
-    };
-    btn.addEventListener('touchstart', fire, { passive: false });
-    btn.addEventListener('click', fire);
-  });
+  canvas.addEventListener('touchmove', (e) => {
+    if (!joyActive) return;
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    const rect = canvas.getBoundingClientRect();
+    let dx = (t.clientX - rect.left) - joyOriginX;
+    let dy = (t.clientY - rect.top)  - joyOriginY;
+    const dist = Math.hypot(dx, dy);
+    // Clamp the visible stick to the outer ring
+    if (dist > RING_R) { dx = dx / dist * RING_R; dy = dy / dist * RING_R; }
+    stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+    if (dist < DEAD_R) return;       // tiny wobbles don't count
+    const dir = Math.abs(dx) > Math.abs(dy)
+      ? (dx > 0 ? 'RIGHT' : 'LEFT')
+      : (dy > 0 ? 'DOWN'  : 'UP');
+    if (dir !== lastJoyDir) {
+      lastJoyDir = dir;
+      sendDirection(dir);
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend',   (e) => { e.preventDefault(); hideJoystick(); }, { passive: false });
+  canvas.addEventListener('touchcancel', () => hideJoystick());
 
   document.getElementById('leaveBtn').addEventListener('click', () => {
     ws.close();
