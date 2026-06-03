@@ -68,7 +68,11 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 - [x] v2-arena — playable, deployed to Render
 - [x] v3-coder — playable, deployed to Render
 - [x] **Teacher mode** (v2 + v3) — host has no snake, controls pause/step/slower/faster/reset. Used in L6 tournament.
-- [x] **King-snake mode** (v2 + v3) — orthogonal checkbox. Aggressor (head-into-body) eats the victim **only if aggressor.length >= victim.length** — absorbs the victim's length, victim dies. Shorter aggressor dies (classic snake rule). Head-on-head still kills both. Mutual aggressions kill both regardless of length.
+- [x] **King-snake mode** (v2 + v3) — orthogonal checkbox. The bigger snake always wins:
+  - **Head-on-head:** bigger eats smaller (absorbs length). Multi-way tie at top length → all die.
+  - **Head-on-body:** aggressor eats victim if `aggressor.length >= victim.length`; otherwise *passes through* the body (no death). Mutual head-on-body with equal lengths → both die.
+  - **Self-collision disabled:** snake passes through its own body.
+  - Wall is still always fatal in both modes.
 - [x] **Fog of war** (v2 + v3) — orthogonal checkbox. Per-player state filtering: each client only sees cells within FOG_RADIUS of their head. v3 bots' `nextMove(state)` gets filtered `state.others` and `state.food`.
 - [x] **Tunable bot** (v3) — `tunable.js` sample. 4 weights kids set by hand. The "you are the gradient" bot for L4.
 - [x] **Learning bot** (v3) — `learning.js` sample. Q-learning, 144 states, ε-greedy. Persists across ticks via closure. The "the bot tunes itself" bot for L5.

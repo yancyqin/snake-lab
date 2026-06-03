@@ -713,12 +713,13 @@ No new lecture. Two new game modes — both are checkboxes in the lobby's **Room
 
 ### 👑 King snake mode
 
-When your head hits another snake's body, the **longer snake wins**:
-- If you're at least as long as them → **you absorb their length**, they die.
-- If you're shorter → you die (just like classic snake).
-- Head-on-head still kills both regardless of length.
+Slither.io-style. The **bigger snake always wins**:
+- **Head-on-head:** bigger eats smaller and absorbs their length. Equal length → both die.
+- **Head-on-body:** if you're at least as long, you eat them. If you're smaller, **you pass through** — no death.
+- **Self pass-through:** you can also pass through your own body. No more dying because you turned into your own tail.
+- Wall is still always fatal.
 
-Strategy shift: don't crash into snakes who are bigger than you. Lay out long bodies so smaller snakes can't risk crashing into YOU. Big snakes get bigger; small snakes have to stay nimble or grow before picking a fight.
+Strategy shift: small snakes can dart through bigger snakes' bodies safely, but should NEVER head-butt a bigger one. Big snakes can hunt smaller ones — block them into walls, charge their heads. Equal-length face-offs are pure mutual destruction, so timing matters when two giants meet.
 
 ### 🌫️ Fog of war mode
 
