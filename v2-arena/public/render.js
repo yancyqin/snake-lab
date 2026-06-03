@@ -1,5 +1,8 @@
 import {
-  CELL_SIZE, WORLD_COLS, WORLD_ROWS, VIEW_COLS, VIEW_ROWS, COLORS, FOG_RADIUS,
+  CELL_SIZE as BASE_CELL_SIZE,
+  VIEW_COLS as BASE_VIEW_COLS,
+  VIEW_ROWS as BASE_VIEW_ROWS,
+  WORLD_COLS, WORLD_ROWS, COLORS, FOG_RADIUS,
 } from './constants.js';
 
 // --- tiny color helpers (so we don't add a dependency) ---
@@ -21,18 +24,38 @@ function withAlpha(hex, a) {
 }
 
 export class Renderer {
-  constructor(canvas, minimap) {
+  constructor(canvas, minimap, opts = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.minimap = minimap;
     this.miniCtx = minimap.getContext('2d');
-    canvas.width = VIEW_COLS * CELL_SIZE;
-    canvas.height = VIEW_ROWS * CELL_SIZE;
-    minimap.width = WORLD_COLS * 3;
-    minimap.height = WORLD_ROWS * 3;
-
-    // Cached background gradient (regenerated if canvas resizes — but it doesn't)
     this._bgGrad = null;
+    this._applyView(opts);
+  }
+
+  // Pick the visible area + cell size. Player view follows the head;
+  // teacher view ("fullWorld") shows the whole 60×60 map at once.
+  _applyView(opts = {}) {
+    if (opts.fullWorld) {
+      this.viewCols = WORLD_COLS;
+      this.viewRows = WORLD_ROWS;
+      this.cellSize = 14;                       // 60×14 = 840px — fits laptops
+      if (this.minimap) this.minimap.style.display = 'none';
+    } else {
+      this.viewCols = BASE_VIEW_COLS;
+      this.viewRows = BASE_VIEW_ROWS;
+      this.cellSize = BASE_CELL_SIZE;
+      if (this.minimap) this.minimap.style.display = '';
+    }
+    this.canvas.width  = this.viewCols * this.cellSize;
+    this.canvas.height = this.viewRows * this.cellSize;
+    this.minimap.width  = WORLD_COLS * 3;
+    this.minimap.height = WORLD_ROWS * 3;
+    this._bgGrad = null;                        // canvas resized → regenerate gradient
+  }
+
+  setFullWorld(fullWorld) {
+    this._applyView({ fullWorld });
   }
 
   // `popups` is an array of { cellX, cellY, text, color, startTime } (ms)
@@ -40,8 +63,8 @@ export class Renderer {
   draw(state, myId, popups, now, opts = {}) {
     const mySnake = state.snakes.find(s => s.id === myId);
     const focus = mySnake ? mySnake.body[0] : { x: WORLD_COLS / 2, y: WORLD_ROWS / 2 };
-    const camX = Math.max(0, Math.min(WORLD_COLS - VIEW_COLS, focus.x - Math.floor(VIEW_COLS / 2)));
-    const camY = Math.max(0, Math.min(WORLD_ROWS - VIEW_ROWS, focus.y - Math.floor(VIEW_ROWS / 2)));
+    const camX = Math.max(0, Math.min(WORLD_COLS - this.viewCols, focus.x - Math.floor(this.viewCols / 2)));
+    const camY = Math.max(0, Math.min(WORLD_ROWS - this.viewRows, focus.y - Math.floor(this.viewRows / 2)));
 
     this._drawWorld(state, camX, camY, myId, popups, now);
     // Fog overlay — applied AFTER drawing the world so visible cells stay sharp.
@@ -54,12 +77,12 @@ export class Renderer {
 
   _drawFog(head, camX, camY, radiusCells) {
     const ctx = this.ctx;
-    const W = VIEW_COLS * CELL_SIZE;
-    const H = VIEW_ROWS * CELL_SIZE;
-    const cx = (head.x - camX) * CELL_SIZE + CELL_SIZE / 2;
-    const cy = (head.y - camY) * CELL_SIZE + CELL_SIZE / 2;
-    const inner = radiusCells * CELL_SIZE * 0.78;
-    const outer = radiusCells * CELL_SIZE * 1.05;
+    const W = this.viewCols * this.cellSize;
+    const H = this.viewRows * this.cellSize;
+    const cx = (head.x - camX) * this.cellSize + this.cellSize / 2;
+    const cy = (head.y - camY) * this.cellSize + this.cellSize / 2;
+    const inner = radiusCells * this.cellSize * 0.78;
+    const outer = radiusCells * this.cellSize * 1.05;
     const grad = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
     grad.addColorStop(0, 'rgba(7, 7, 14, 0)');
     grad.addColorStop(1, 'rgba(7, 7, 14, 0.95)');
@@ -69,8 +92,8 @@ export class Renderer {
 
   _drawWorld(state, camX, camY, myId, popups, now) {
     const ctx = this.ctx;
-    const W = VIEW_COLS * CELL_SIZE;
-    const H = VIEW_ROWS * CELL_SIZE;
+    const W = this.viewCols * this.cellSize;
+    const H = this.viewRows * this.cellSize;
 
     // Background — radial gradient (warmer in center, darker at edges)
     if (!this._bgGrad) {
@@ -85,12 +108,12 @@ export class Renderer {
     // Subtle grid — much less prominent than v2.1
     ctx.strokeStyle = COLORS.grid;
     ctx.lineWidth = 1;
-    for (let i = 0; i <= VIEW_COLS; i++) {
-      const x = i * CELL_SIZE + 0.5;
+    for (let i = 0; i <= this.viewCols; i++) {
+      const x = i * this.cellSize + 0.5;
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
-    for (let j = 0; j <= VIEW_ROWS; j++) {
-      const y = j * CELL_SIZE + 0.5;
+    for (let j = 0; j <= this.viewRows; j++) {
+      const y = j * this.cellSize + 0.5;
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     }
 
@@ -98,20 +121,20 @@ export class Renderer {
     ctx.strokeStyle = COLORS.worldEdge;
     ctx.lineWidth = 4;
     if (camX === 0)                       { ctx.beginPath(); ctx.moveTo(2, 0);     ctx.lineTo(2, H);     ctx.stroke(); }
-    if (camX === WORLD_COLS - VIEW_COLS)  { ctx.beginPath(); ctx.moveTo(W - 2, 0); ctx.lineTo(W - 2, H); ctx.stroke(); }
+    if (camX === WORLD_COLS - this.viewCols)  { ctx.beginPath(); ctx.moveTo(W - 2, 0); ctx.lineTo(W - 2, H); ctx.stroke(); }
     if (camY === 0)                       { ctx.beginPath(); ctx.moveTo(0, 2);     ctx.lineTo(W, 2);     ctx.stroke(); }
-    if (camY === WORLD_ROWS - VIEW_ROWS)  { ctx.beginPath(); ctx.moveTo(0, H - 2); ctx.lineTo(W, H - 2); ctx.stroke(); }
+    if (camY === WORLD_ROWS - this.viewRows)  { ctx.beginPath(); ctx.moveTo(0, H - 2); ctx.lineTo(W, H - 2); ctx.stroke(); }
 
     // Food — pulsing circles with a soft glow halo
     const t = now / 1000;
     for (const f of state.foods) {
       if (!this._inView(f.x, f.y, camX, camY)) continue;
-      const cx = (f.x - camX) * CELL_SIZE + CELL_SIZE / 2;
-      const cy = (f.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+      const cx = (f.x - camX) * this.cellSize + this.cellSize / 2;
+      const cy = (f.y - camY) * this.cellSize + this.cellSize / 2;
       // Per-food phase offset so they don't all pulse in lockstep
       const phase = t * 2.5 + (f.x * 0.7 + f.y * 0.5);
       const pulse = 0.85 + 0.15 * Math.sin(phase);
-      const baseR = CELL_SIZE * 0.32;
+      const baseR = this.cellSize * 0.32;
       const r = baseR * pulse;
 
       // Glow halo
@@ -146,7 +169,7 @@ export class Renderer {
     if (s.body.length >= 2) {
       // Outer stroke (dark outline)
       ctx.strokeStyle = COLORS.bodyOutline;
-      ctx.lineWidth = CELL_SIZE * 0.92;
+      ctx.lineWidth = this.cellSize * 0.92;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       this._tracePath(s.body, camX, camY);
@@ -154,18 +177,18 @@ export class Renderer {
 
       // Inner stroke (snake color)
       ctx.strokeStyle = s.color;
-      ctx.lineWidth = CELL_SIZE * 0.78;
+      ctx.lineWidth = this.cellSize * 0.78;
       this._tracePath(s.body, camX, camY);
       ctx.stroke();
     } else {
       // Single-cell snake — draw a dot
       const c = s.body[0];
       if (this._inView(c.x, c.y, camX, camY)) {
-        const cx = (c.x - camX) * CELL_SIZE + CELL_SIZE / 2;
-        const cy = (c.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+        const cx = (c.x - camX) * this.cellSize + this.cellSize / 2;
+        const cy = (c.y - camY) * this.cellSize + this.cellSize / 2;
         ctx.fillStyle = s.color;
         ctx.beginPath();
-        ctx.arc(cx, cy, CELL_SIZE * 0.42, 0, Math.PI * 2);
+        ctx.arc(cx, cy, this.cellSize * 0.42, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -182,7 +205,7 @@ export class Renderer {
     if (hasHead && labelName && s.body.length > 1) {
       const padded = labelName + ' ';
       ctx.fillStyle = COLORS.bodyText;
-      ctx.font = `bold ${Math.floor(CELL_SIZE * 0.5)}px -apple-system, system-ui, monospace`;
+      ctx.font = `bold ${Math.floor(this.cellSize * 0.5)}px -apple-system, system-ui, monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (let i = 1; i < s.body.length; i++) {
@@ -190,8 +213,8 @@ export class Renderer {
         if (!this._inView(cell.x, cell.y, camX, camY)) continue;
         const char = padded[(i - 1) % padded.length];
         if (char === ' ') continue;
-        const cx = (cell.x - camX) * CELL_SIZE + CELL_SIZE / 2;
-        const cy = (cell.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+        const cx = (cell.x - camX) * this.cellSize + this.cellSize / 2;
+        const cy = (cell.y - camY) * this.cellSize + this.cellSize / 2;
         ctx.fillText(char, cx, cy + 1);
       }
     }
@@ -210,8 +233,8 @@ export class Renderer {
     ctx.beginPath();
     for (let i = 0; i < body.length; i++) {
       const c = body[i];
-      const x = (c.x - camX) * CELL_SIZE + CELL_SIZE / 2;
-      const y = (c.y - camY) * CELL_SIZE + CELL_SIZE / 2;
+      const x = (c.x - camX) * this.cellSize + this.cellSize / 2;
+      const y = (c.y - camY) * this.cellSize + this.cellSize / 2;
       if (i === 0) ctx.moveTo(x, y);
       else         ctx.lineTo(x, y);
     }
@@ -219,9 +242,9 @@ export class Renderer {
 
   _drawHead(head, snake, camX, camY, isMe) {
     const ctx = this.ctx;
-    const cx = (head.x - camX) * CELL_SIZE + CELL_SIZE / 2;
-    const cy = (head.y - camY) * CELL_SIZE + CELL_SIZE / 2;
-    const r = CELL_SIZE * 0.48;
+    const cx = (head.x - camX) * this.cellSize + this.cellSize / 2;
+    const cy = (head.y - camY) * this.cellSize + this.cellSize / 2;
+    const r = this.cellSize * 0.48;
 
     // Outer outline
     ctx.fillStyle = darken(snake.color, 0.35);
@@ -254,7 +277,7 @@ export class Renderer {
 
   _drawLiveEyes(cx, cy, dir, r) {
     const ctx = this.ctx;
-    const E = Math.max(3, Math.floor(CELL_SIZE / 7));   // eye size
+    const E = Math.max(3, Math.floor(this.cellSize / 7));   // eye size
     const fwd = r * 0.45;                                // distance from center toward facing edge
     const side = r * 0.45;                               // perpendicular spread
 
@@ -283,7 +306,7 @@ export class Renderer {
     const ctx = this.ctx;
     const fwd = r * 0.45;
     const side = r * 0.45;
-    const E = Math.max(3, Math.floor(CELL_SIZE / 7));
+    const E = Math.max(3, Math.floor(this.cellSize / 7));
 
     let e1, e2;
     if (dir === 'RIGHT') { e1 = [cx + fwd, cy - side]; e2 = [cx + fwd, cy + side]; }
@@ -315,8 +338,8 @@ export class Renderer {
       const progress = age / LIFETIME;
       const alpha = Math.max(0, 1 - progress);
       const drift = progress * 36;     // pixels upward over the lifetime
-      const sx = (p.cellX - camX) * CELL_SIZE + CELL_SIZE / 2;
-      const sy = (p.cellY - camY) * CELL_SIZE + CELL_SIZE / 2 - drift;
+      const sx = (p.cellX - camX) * this.cellSize + this.cellSize / 2;
+      const sy = (p.cellY - camY) * this.cellSize + this.cellSize / 2 - drift;
       ctx.font = `bold 18px -apple-system, system-ui, sans-serif`;
       // Shadow then text for legibility on bright body cells
       ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.6})`;
@@ -352,10 +375,10 @@ export class Renderer {
 
     ctx.strokeStyle = COLORS.minimapView;
     ctx.lineWidth = 1;
-    ctx.strokeRect(camX * sx + 0.5, camY * sy + 0.5, VIEW_COLS * sx, VIEW_ROWS * sy);
+    ctx.strokeRect(camX * sx + 0.5, camY * sy + 0.5, this.viewCols * sx, this.viewRows * sy);
   }
 
   _inView(x, y, camX, camY) {
-    return x >= camX && x < camX + VIEW_COLS && y >= camY && y < camY + VIEW_ROWS;
+    return x >= camX && x < camX + this.viewCols && y >= camY && y < camY + this.viewRows;
   }
 }

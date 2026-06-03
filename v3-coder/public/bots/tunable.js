@@ -1,23 +1,30 @@
 // tunable.js — a strategy bot you tune by hand.
 //
+// !! These starting weights are DELIBERATELY BAD. !!
+// Run it as-is and watch the snake dive straight at food until it
+// smashes into a wall. Your job: change the four WEIGHTS below until
+// the snake actually survives.
+//
 // Every tick, this bot scores all 4 possible moves and picks the highest.
-// The four WEIGHTS below decide what "highest" means. Try changing them!
+// The four WEIGHTS decide what "highest" means.
 //
 //   W_FOOD     — how badly do I want to chase food?
-//   W_SAFETY   — how badly do I want to NOT die?
+//   W_SAFETY   — how badly do I want to NOT die?  ← currently ZERO!
 //   W_BLOCKING — how much do I want to sit next to an enemy head?
 //   W_OPEN     — how much do I prefer a spot with room to maneuver?
 //
-// Higher number = "I care more about this." Try W_FOOD = 5 and watch it
-// dive at food. Try W_SAFETY = 0 and watch it run into a wall.
+// Higher number = "I care more about this." A few experiments to try:
+//   • Set W_SAFETY = 10   → bot stops crashing into walls
+//   • Set W_OPEN   = 2    → bot avoids corners
+//   • Set W_BLOCKING = 3  → bot tries to cut off opponents (king mode!)
 //
 // What you're doing right now — picking better numbers based on what
 // works — is exactly what machine learning does. We just do it by hand.
 
-const W_FOOD     = 1.0;
-const W_SAFETY   = 5.0;
+const W_FOOD     = 1.0;    // greedy: chase food
+const W_SAFETY   = 0.0;    // BAD: doesn't care about dying!
 const W_BLOCKING = 0.0;
-const W_OPEN     = 0.5;
+const W_OPEN     = 0.0;
 
 function nextMove(state) {
   const head = state.me.body[0];

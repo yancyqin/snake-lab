@@ -272,6 +272,36 @@
     .scoreItem strong { color: #4ade80; }
     .scoreItem .label { color: #64748b; font-size: 10px; letter-spacing: 0.05em; }
 
+    /* On-screen D-pad — primary input for kids on iPads.
+       Big finger targets, 3×3 grid with empty corners. Hidden for the teacher. */
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 56px);
+      grid-template-rows: repeat(3, 56px);
+      gap: 6px;
+      justify-content: center;
+      align-self: center;
+      touch-action: manipulation;        /* kill the 300ms tap delay */
+    }
+    .dpad-btn {
+      font-size: 22px;
+      font-weight: 700;
+      background: #1f2937;
+      color: #f1f5f9;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 80ms, transform 80ms;
+    }
+    .dpad-btn:active,
+    .dpad-btn.pressed { background: #4ade80; color: #0f0f1a; transform: scale(0.96); }
+    .dpad-up    { grid-column: 2; grid-row: 1; }
+    .dpad-left  { grid-column: 1; grid-row: 2; }
+    .dpad-right { grid-column: 3; grid-row: 2; }
+    .dpad-down  { grid-column: 2; grid-row: 3; }
+
     .minimap-block { display: flex; flex-direction: column; gap: 6px; align-items: center; }
     canvas#minimap {
       border: 1px solid #334155;
@@ -391,6 +421,13 @@
           <div class="meta">Tick: <span id="tickRateLabel">130ms</span></div>
         </div>
         <div id="pausedBanner" class="paused-banner hidden">⏸ PAUSED BY HOST</div>
+        <!-- Touch D-pad for kids on iPads. Hidden in teacher mode (host has no snake). -->
+        <div id="dpad" class="dpad" role="group" aria-label="Direction controls">
+          <button class="dpad-btn dpad-up"    data-dir="UP"    aria-label="Up">▲</button>
+          <button class="dpad-btn dpad-left"  data-dir="LEFT"  aria-label="Left">◀</button>
+          <button class="dpad-btn dpad-right" data-dir="RIGHT" aria-label="Right">▶</button>
+          <button class="dpad-btn dpad-down"  data-dir="DOWN"  aria-label="Down">▼</button>
+        </div>
         <div id="scoreboard"></div>
         <div class="minimap-block">
           <canvas id="minimap"></canvas>

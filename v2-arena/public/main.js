@@ -195,6 +195,7 @@ function startGame(room) {
 
   const kingBadge = document.getElementById('kingBadge');
   const fogBadge  = document.getElementById('fogBadge');
+  const dpad      = document.getElementById('dpad');
   function applyModeUI() {
     hostPanel.classList.toggle('hidden', !isHost);
     pausedBanner.classList.toggle('hidden', !paused || isHost);
@@ -202,6 +203,8 @@ function startGame(room) {
     tickRateLabel.textContent = `${tickRate}ms`;
     if (kingBadge) kingBadge.classList.toggle('hidden', !kingMode);
     if (fogBadge)  fogBadge.classList.toggle('hidden',  !fogMode);
+    // Host has no snake → no D-pad. Players always get it.
+    dpad.classList.toggle('hidden', isHost);
   }
 
   function sendHostMsg(type, extra = {}) {
@@ -227,6 +230,8 @@ function startGame(room) {
       fogRadius =  msg.fogRadius || 8;
       paused    = !!msg.paused;
       tickRate  =  msg.tickRate || 130;
+      // Teacher view: show the whole 60×60 world; player view: 24×24 follow-cam.
+      renderer.setFullWorld(isHost);
       applyModeUI();
       setStatus('', '');
     } else if (msg.type === 'modeChange') {
@@ -351,6 +356,19 @@ function startGame(room) {
     if (Math.abs(dx) > Math.abs(dy)) sendDirection(dx > 0 ? 'RIGHT' : 'LEFT');
     else                              sendDirection(dy > 0 ? 'DOWN' : 'UP');
   }, { passive: false });
+
+  // D-pad — fire on both touchstart (no 300ms delay on iOS) and click (mouse/keyboard).
+  // A small `.pressed` flash gives visual feedback even when CSS :active is finicky.
+  dpad.querySelectorAll('.dpad-btn').forEach(btn => {
+    const fire = (e) => {
+      e.preventDefault();
+      sendDirection(btn.dataset.dir);
+      btn.classList.add('pressed');
+      setTimeout(() => btn.classList.remove('pressed'), 120);
+    };
+    btn.addEventListener('touchstart', fire, { passive: false });
+    btn.addEventListener('click', fire);
+  });
 
   document.getElementById('leaveBtn').addEventListener('click', () => {
     ws.close();

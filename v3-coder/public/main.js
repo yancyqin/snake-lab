@@ -342,6 +342,8 @@ function startGame(room) {
       fogRadius =  msg.fogRadius || 8;
       paused    = !!msg.paused;
       tickRate  =  msg.tickRate || 130;
+      // Teacher view: show the whole 60×60 world; player view: 24×24 follow-cam.
+      renderer.setFullWorld(isHost);
       applyModeUI();
       setStatus('', '');
     } else if (msg.type === 'modeChange') {
