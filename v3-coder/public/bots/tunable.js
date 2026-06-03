@@ -40,9 +40,9 @@ function nextMove(state) {
   }
   // Manhattan distance from (x,y) to the closest food.
   function foodDistance(x, y) {
-    if (state.food.length === 0) return 999;
+    if (state.foods.length === 0) return 999;
     let best = 999;
-    for (const f of state.food) {
+    for (const f of state.foods) {
       const d = Math.abs(f.x - x) + Math.abs(f.y - y);
       if (d < best) best = d;
     }

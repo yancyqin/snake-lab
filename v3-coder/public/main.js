@@ -2,11 +2,11 @@ import { PLAYER_COLORS, POINTS_PER_FOOD, FUNNY_NAMES, WORLD_COLS, WORLD_ROWS } f
 import { Renderer } from './render.js';
 
 const DEFAULT_BOT_CODE = `// Your bot. Edit me!
-// state.me   = { body: [{x,y}, ...], direction: 'UP', alive: true }
-// state.food = [{x,y}, ...]
+// state.me     = { body: [{x,y}, ...], direction: 'UP', alive: true }
+// state.foods  = [{x,y}, ...]
 // state.others = [ { body, direction, alive }, ... ]
-// state.board = { width: 60, height: 60 }
-// state.tick  = number
+// state.board  = { width: 60, height: 60 }
+// state.tick   = number
 // Return one of: 'UP', 'DOWN', 'LEFT', 'RIGHT'
 
 function nextMove(state) {
@@ -260,11 +260,15 @@ function startGame(room) {
     const me = state.snakes.find(s => s.id === myId);
     if (!me || !me.alive) return;
     const botState = {
+      // me: this player's snake, peeled out of the wire `snakes` array
       me: { body: me.body, direction: me.direction, alive: me.alive },
-      food: state.foods,
+      // foods: passed through from wire `state.foods` (same name, fog-filtered if fog mode)
+      foods: state.foods,
+      // others: wire `snakes` minus me, with scoreboard fields (id/name/color/isBot) stripped
       others: state.snakes
         .filter(s => s.id !== myId)
         .map(s => ({ body: s.body, direction: s.direction, alive: s.alive })),
+      // board: injected from constants so the bot doesn't have to import them
       board: { width: WORLD_COLS, height: WORLD_ROWS },
       tick: state.tick,
     };

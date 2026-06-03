@@ -7,9 +7,9 @@ function nextMove(state) {
   const H = state.board.height;
 
   // Find the closest food
-  let nearest = state.food[0];
+  let nearest = state.foods[0];
   let nearestD = Math.abs(nearest.x - head.x) + Math.abs(nearest.y - head.y);
-  for (const f of state.food) {
+  for (const f of state.foods) {
     const d = Math.abs(f.x - head.x) + Math.abs(f.y - head.y);
     if (d < nearestD) { nearest = f; nearestD = d; }
   }

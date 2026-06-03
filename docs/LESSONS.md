@@ -337,11 +337,11 @@ function nextMove(state) {
 Project the `state` shape as a poster:
 ```js
 state = {
-  me:   { body: [{x, y}, ...], direction: 'UP', alive: true },
-  food: [ {x, y}, ... ],
+  me:     { body: [{x, y}, ...], direction: 'UP', alive: true },
+  foods:  [ {x, y}, ... ],
   others: [ { body, direction, alive }, ... ],
-  board: { width: 60, height: 60 },
-  tick:  42
+  board:  { width: 60, height: 60 },
+  tick:   42
 }
 ```
 
@@ -351,7 +351,7 @@ state = {
 
 Instructor drives the projector. Open a fresh Claude/ChatGPT chat. Prompt:
 
-> *"I'm writing a snake bot in JavaScript for a kids' coding camp. The bot is a function `nextMove(state)` that returns 'UP', 'DOWN', 'LEFT', or 'RIGHT'. `state.me.body` is the snake's body, `state.food` is a list of food cells with x,y. The board is 60x60. Write me a bot that avoids walls and goes toward the nearest food. Keep it under 30 lines. Explain it as you go."*
+> *"I'm writing a snake bot in JavaScript for a kids' coding camp. The bot is a function `nextMove(state)` that returns 'UP', 'DOWN', 'LEFT', or 'RIGHT'. `state.me.body` is the snake's body, `state.foods` is a list of food cells with x,y. The board is 60x60. Write me a bot that avoids walls and goes toward the nearest food. Keep it under 30 lines. Explain it as you go."*
 
 Watch the AI write the bot. Paste it into the v3 textarea. Click **+ Create new room**. **It runs.**
 
@@ -734,7 +734,7 @@ Strategy shift: small snakes can dart through bigger snakes' bodies safely, but 
 
 Each snake only sees **8 cells around its own head**. The rest of the world is fog. The minimap reflects fog too.
 
-Strategy shift: in v3, kids' bots get a filtered `state.others` and `state.food`. Tunable bots that thrived in full-view fail without exploration; Learning bots see different situations than yesterday and have to re-learn.
+Strategy shift: in v3, kids' bots get a filtered `state.others` and `state.foods`. Tunable bots that thrived in full-view fail without exploration; Learning bots see different situations than yesterday and have to re-learn.
 
 ### Suggested running order
 

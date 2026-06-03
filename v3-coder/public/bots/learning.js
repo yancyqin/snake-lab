@@ -43,11 +43,11 @@ function nextMove(state) {
     for (const o of state.others) for (const c of o.body) if (c.x === x && c.y === y) return true;
     return false;
   }
-  let nearest = state.food[0];
+  let nearest = state.foods[0];
   if (nearest) {
     let bd = Math.abs(nearest.x - head.x) + Math.abs(nearest.y - head.y);
-    for (let i = 1; i < state.food.length; i++) {
-      const f = state.food[i];
+    for (let i = 1; i < state.foods.length; i++) {
+      const f = state.foods[i];
       const d = Math.abs(f.x - head.x) + Math.abs(f.y - head.y);
       if (d < bd) { nearest = f; bd = d; }
     }

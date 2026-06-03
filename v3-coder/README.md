@@ -10,11 +10,11 @@ Paste a function into the textarea in the lobby:
 
 ```js
 function nextMove(state) {
-  // state.me      = { body: [{x,y}, ...], direction: 'UP', alive: true }
-  // state.food    = [{x,y}, ...]
-  // state.others  = [ { body, direction, alive }, ... ]
-  // state.board   = { width: 60, height: 60 }
-  // state.tick    = number
+  // state.me     = { body: [{x,y}, ...], direction: 'UP', alive: true }
+  // state.foods  = [{x,y}, ...]
+  // state.others = [ { body, direction, alive }, ... ]
+  // state.board  = { width: 60, height: 60 }
+  // state.tick   = number
   return 'UP';   // or 'DOWN' | 'LEFT' | 'RIGHT'
 }
 ```

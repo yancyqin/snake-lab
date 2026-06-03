@@ -38,7 +38,7 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
   ```js
   function nextMove(state) {
     // state.me = { body: [{x,y}, ...], direction }
-    // state.food = [{x,y}, ...]
+    // state.foods = [{x,y}, ...]
     // state.others = [...]   // visibility configured per room
     // state.board = { width, height }
     // state.tick = number
@@ -73,7 +73,7 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
   - **Head-on-body:** aggressor eats victim if `aggressor.length >= victim.length`; otherwise *passes through* the body (no death). Mutual head-on-body with equal lengths → both die.
   - **Self-collision disabled:** snake passes through its own body.
   - Wall is still always fatal in both modes.
-- [x] **Fog of war** (v2 + v3) — orthogonal checkbox. Per-player state filtering: each client only sees cells within FOG_RADIUS of their head. v3 bots' `nextMove(state)` gets filtered `state.others` and `state.food`.
+- [x] **Fog of war** (v2 + v3) — orthogonal checkbox. Per-player state filtering: each client only sees cells within FOG_RADIUS of their head. v3 bots' `nextMove(state)` gets filtered `state.others` and `state.foods`.
 - [x] **Tunable bot** (v3) — `tunable.js` sample. 4 weights kids set by hand. The "you are the gradient" bot for L4.
 - [x] **Learning bot** (v3) — `learning.js` sample. Q-learning, 144 states, ε-greedy. Persists across ticks via closure. The "the bot tunes itself" bot for L5.
 - [x] **Persistent bot harness** (v3) — code runs once in a factory, `nextMove` captured in closure. Module-level `let`/`const` survives between ticks (required for Q-learning).
