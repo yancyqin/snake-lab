@@ -205,9 +205,18 @@ Whiteboard:
 
 **Server → iPad (the big one, every 130ms):**
 ```json
-{ "type": "state", "tick": 42, "snakes": [...], "foods": [...] }
+{ "type": "state", "tick": 42, "snakes": [...], "foods": [...], "scores": {...} }
 ```
-> "This is the truth. Your iPad's only job is to draw what's in here. Every snake's body, every food — it all comes from this."
+> "This is the truth. Your iPad's only job is to draw what's in here. Every snake's body, every food, every score — it all comes from this."
+
+Each snake in `snakes` looks like:
+```json
+{ "id": "p1", "name": "Curly", "color": "#4ade80",
+  "body": [{"x":23,"y":33},{"x":23,"y":32}, ...],
+  "direction": "DOWN", "alive": true, "isBot": false }
+```
+
+(`body[0]` is the head. `isBot: true` flags the auto-bot, and its entry in `scores` carries an extra `smartness` field.)
 
 Other messages (join, end, restart) — list in [PROTOCOL.md](PROTOCOL.md), don't dwell.
 
