@@ -713,9 +713,12 @@ No new lecture. Two new game modes — both are checkboxes in the lobby's **Room
 
 ### 👑 King snake mode
 
-When your head hits another snake's BODY, **you absorb their length** — you grow by whatever they were. They die. (Head-on-head still kills both.)
+When your head hits another snake's body, the **longer snake wins**:
+- If you're at least as long as them → **you absorb their length**, they die.
+- If you're shorter → you die (just like classic snake).
+- Head-on-head still kills both regardless of length.
 
-Strategy shift: don't crash into snakes. Lay out long bodies so others crash into YOU. Big snakes get bigger.
+Strategy shift: don't crash into snakes who are bigger than you. Lay out long bodies so smaller snakes can't risk crashing into YOU. Big snakes get bigger; small snakes have to stay nimble or grow before picking a fight.
 
 ### 🌫️ Fog of war mode
 

@@ -57,7 +57,7 @@ export class Game {
     // Orthogonal room flags. Locked at room creation (set by the first connection).
     this.hostId = null;              // set when the first connection claims host=1
     this.hostLocked = false;         // after first connect, host slot is closed
-    this.kingMode = !!options.king;  // snake-eat-snake: killer absorbs victim's length
+    this.kingMode = !!options.king;  // snake-eat-snake: killer absorbs victim — but only if killer.length >= victim.length
     this.fogMode  = !!options.fog;   // fog of war: per-player visibility radius
     this.paused = false;
     this.tickRate = TICK_MS;
@@ -351,8 +351,10 @@ export class Game {
     //   wall/self       → just die
     //   head-on-head    → both die (no absorption, even in king mode)
     //   head-on-body    → AGGRESSOR (the one whose head crashed) is at stake:
-    //                       regular: aggressor dies, defender unhurt
-    //                       king:    DEFENDER dies, aggressor lives and absorbs defender's length
+    //                       regular: aggressor dies, defender unhurt (classic snake rule)
+    //                       king:    if aggressor.length >= victim.length → DEFENDER dies,
+    //                                  aggressor LIVES and absorbs defender's length
+    //                                else → aggressor dies (you can't eat someone bigger than you)
     //
     // (a) Detect head-on-head: group by NEW head position.
     const headAt = new Map();
@@ -383,8 +385,15 @@ export class Game {
     }
     // (c) Apply outcomes based on mode.
     if (this.kingMode) {
-      // King mode: aggressor LIVES, defender DIES, aggressor absorbs defender's length.
-      // Edge case: mutual aggression (A's head on B's body AND B's head on A's body) — both die.
+      // King mode: head-into-body usually kills the aggressor (classic snake) — UNLESS
+      // the aggressor is at least as long as the victim, in which case the aggressor
+      // EATS the victim (absorbs their length).
+      //
+      // Edge cases:
+      //   - mutual aggression (A's head on B's body AND B's head on A's body) → both die,
+      //     regardless of length. King mode doesn't reward symmetric collisions.
+      //   - equal length is a TIE that favors the aggressor (>= is the eat threshold).
+      //   - chain (A→B→C): snapshot lengths FIRST so growth doesn't compound mid-tick.
       const aggressorOf = new Map();
       for (const a of aggressions) aggressorOf.set(a.aggressor, a);
       const mutual = new Set();
@@ -397,14 +406,20 @@ export class Game {
         }
       }
       for (const s of mutual) s.alive = false;
-      // Non-mutual: aggressor eats victim. Snapshot lengths FIRST so chain reactions
-      // don't double-count (e.g., A→B→C: A grows by len(B), not len(B)+len(C)).
+      // Resolve non-mutual aggressions. Snapshot lengths upfront so chain reactions
+      // use pre-tick sizes consistently.
       const growths = [];
       for (const a of aggressions) {
         if (mutual.has(a.aggressor)) continue;
         if (!a.aggressor.alive) continue;             // aggressor killed by something else
-        growths.push({ aggressor: a.aggressor, victim: a.victim, growBy: a.victim.body.length });
-        a.victim.alive = false;
+        if (a.aggressor.body.length >= a.victim.body.length) {
+          // Big-enough aggressor eats victim.
+          growths.push({ aggressor: a.aggressor, victim: a.victim, growBy: a.victim.body.length });
+          a.victim.alive = false;
+        } else {
+          // Aggressor is smaller — classic outcome: aggressor dies, victim unhurt.
+          a.aggressor.alive = false;
+        }
       }
       for (const g of growths) {
         if (!g.aggressor.alive) continue;
