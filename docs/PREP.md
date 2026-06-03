@@ -42,10 +42,10 @@ For the actual lesson content see [LESSONS.md](LESSONS.md). For the broader proj
 ## Morning of each day
 
 - [ ] **Find the Mac's local IP** — `System Settings → Network → Wi-Fi → Details → IP Address`. Write it on the whiteboard. Kids type `http://<that-ip>:<port>` to join.
-- [ ] **Start the right server(s)**:
-  - Day 1 AM/PM: v1 on 8080, v2 on 8081
-  - Day 2 AM/PM: v2 on 8081, v3 on 8082 (PM lesson needs v3)
-  - Day 3 AM/PM: v3 on 8082
+- [ ] **Start the right server(s)** — easiest path is "start all three on Day 1, leave them up all week":
+  - Day 1 AM (L1): v1 on 8080
+  - Day 1 PM (L2): v2 on 8081
+  - Day 2 AM (L3) + Day 2 PM (L4) + Day 3 (L5, L6): v3 on 8082
 - [ ] **Open the editor on the projector** with the lesson's target file(s) ready:
   - L1 — `v1-classic/js/Snake.js`, `Game.js`, `constants.js`
   - L2 — `v2-arena/server.js`, `bot.js` (especially `botMove` + `smartMove`)

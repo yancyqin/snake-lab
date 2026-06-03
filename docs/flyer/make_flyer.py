@@ -87,17 +87,17 @@ c.line(0.6*inch, y, 3.2*inch, y)
 y -= 0.20*inch
 
 curriculum = [
-    ("Day 1 — Hello Snake",
-     "Build a classic snake game. Discover that 'the snake' is just a list in memory; "
-     "what a game loop is; how code becomes pixels on screen. Fast warm-up day."),
-    ("Day 2 — Snake Arena + Hello, AI",
-     "Multiplayer. See what a server is and what a WebSocket carries. "
-     "Then meet your AI coding partner — kids ask Claude to read and explain "
-     "bot code, find bugs, and write a first draft together."),
-    ("Day 3 — Code Your Snake (with strategy & learning)",
-     "Morning: tune a strategy bot by hand — food vs safety vs blocking — "
-     "and meet the bot that learns by itself (Q-learning, the same idea behind real ML). "
-     "Afternoon: tournament. Best bot wins. Parents invited."),
+    ("Day 1 — Foundations",
+     "Morning: build a classic snake. Discover that 'the snake' is just a list in memory; "
+     "what a game loop is. Afternoon: multiplayer — meet servers, WebSockets, and the bot's brain. "
+     "Watch kids' join messages roll in live on the instructor's terminal."),
+    ("Day 2 — Bots + AI",
+     "Morning — Hello, AI: meet your coding partner (Claude / ChatGPT). Kids ask AI to "
+     "explain code, find bugs, and write a first draft together. Afternoon — Strategy: "
+     "tune a real bot by hand using four weights (food, safety, blocking, open space)."),
+    ("Day 3 — Learning + Compete",
+     "Morning: watch a self-learning bot improve over rounds (Q-learning — the real idea "
+     "behind reinforcement learning). Afternoon: tournament. Best bot wins. Parents invited."),
     ("Saturday (bonus) — Family Day",
      "King-mode (snake eats snake) and fog-of-war tournaments. "
      "Parents play too. Kids show off the code they wrote on Day 3."),

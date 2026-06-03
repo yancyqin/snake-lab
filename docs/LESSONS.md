@@ -22,13 +22,15 @@ The bots kids build are not magic. They are normal code — that's the point. We
 
 ## Camp agenda (3 days + bonus Saturday)
 
-| Day | Session | Topic | Time | Lessons |
-|-----|---------|-------|------|---------|
-| **1 — Hello Snake** | AM | The snake is data, code is a map | ~1.5 h | **L1** |
-| | PM | Try v2 — multiplayer chaos | ~1.5 h | (free play) |
-| **2 — Snake Arena** | AM | Two computers talk, the bot's brain | ~1.5 h | **L2** |
-| | PM | Hello, AI — meet your coding partner | ~1.5 h | **L3** |
-| **3 — Code Your Snake** | AM | Strategy (you tune), then learning (it tunes itself) | ~2.5 h | **L4, L5** |
+Two lessons per day, no filler. Every session is structured.
+
+| Day | Session | Topic | Time | Lesson |
+|-----|---------|-------|------|--------|
+| **1 — Foundations** | AM | The snake is data, code is a map | ~1.5 h | **L1** |
+| | PM | Two computers talk, the bot's brain | ~1.5 h | **L2** |
+| **2 — Bots + AI** | AM | Hello, AI — meet your coding partner | ~1.5 h | **L3** |
+| | PM | Strategy — you tune the bot by hand | ~1.5 h | **L4** |
+| **3 — Learn + Compete** | AM | The bot tunes itself (Q-learning) | ~1.5 h | **L5** |
 | | PM | Tournament + parents demo | ~1.5 h | **L6** |
 | **Bonus — Saturday** | All day | 👑 King + 🌫️ Fog play, **parents welcome** | ~3 h | (family play) |
 
@@ -150,25 +152,9 @@ isDead() { return this.hitWall() || this.hitSelf(); }
 
 ---
 
-## Day 1 PM — Try v2 (free play, ~60–90 min)
-
-No new lesson. **Exposure** — kids see multiplayer snake before we explain it.
-
-**Suggested flow:**
-1. Instructor projects v2 lobby. Picks a funny default name. Picks a color.
-2. Hits **+ Create new room** → lands in `cosmic-viper` or whatever.
-3. "Who wants to join my room?" Kids open the URL, see the room in the list, click Join.
-4. **Chaos.** 6–8 snakes per room. Round restarts whenever a new kid joins.
-5. After 20–30 min: "Notice anything weird? When I die, you can still see me. How does my iPad know what's happening on yours?"
-6. **Don't answer.** Park the question for tomorrow.
-
-The **mystery is the lesson** — kids leave Day 1 wondering "how do iPads stay in sync?"
-
----
-
 ## Lesson 2 — Two Computers + the Bot's Brain (60–75 min · v2-arena)
 
-> **Big idea:** When you played v2 yesterday, every iPad was talking to **one server** in the middle. The server holds the truth. Same server, by the way, is running the bot you played against — and the bot is just code we can read.
+> **Big idea:** v1 was all on your iPad. Now we add a **server** — one computer in the middle that everyone connects to. That server holds the truth, syncs every player, and runs the bot you play against. The bot is just code we can read.
 
 Compressed from old L3+L4. We blow through the server concept quickly because everyone today knows the internet exists; we spend the saved time on **reading actual bot code** because that's the bridge to L3.
 
@@ -178,8 +164,18 @@ Compressed from old L3+L4. We blow through the server concept quickly because ev
 - **What messages fly between them** — they can see them in DevTools (or [PROTOCOL.md](PROTOCOL.md)).
 - **The bot is one function** — `botMove` — and they can read it.
 
-### Part 1 — Play (5 min) + the dangling question
-Quick warm-up. Remind them of yesterday's mystery.
+### Part 1 — Play v2 (5 min)
+
+Instructor projects the v2 lobby. Picks a funny default name + color. Hits **+ Create new room** → lands in `cosmic-viper` or whatever.
+
+> "Who wants to join my room?"
+
+Kids open the URL, see the room in the list, click Join. **Chaos.** 6–8 snakes in one room. Round restarts whenever a new kid joins.
+
+After ~5 min — pause. Ask:
+> *"When I die, you can still see me. When you eat food, MY iPad knows. How does your iPad know what's happening on mine?"*
+
+Hold the question. The rest of the lesson answers it.
 
 ### Part 2 — Lecture: "The phone call" (15 min)
 

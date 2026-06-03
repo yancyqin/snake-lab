@@ -84,12 +84,16 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 A 3-day camp curriculum is built around these games. **Play + lecture** format — kids play the running game on their iPads; the instructor uses the game as a live demo to teach concepts.
 
 ```
-Day 1  Hello Snake     AM: L1 (v1 in one go)               PM: try v2 (free play)
-Day 2  Snake Arena     AM: L2 (v2 + bot brain, one go)     PM: L3 — Hello, AI (Claude as partner)
-Day 3  Code Your Snake AM: L4 — Strategy (you tune)        AM: L5 — Learning (it tunes itself)
-                       PM: L6 tournament + parents demo
+Day 1  Foundations     AM: L1 — Snake is data, code is a map
+                       PM: L2 — Two computers + the bot's brain
+Day 2  Bots + AI       AM: L3 — Hello, AI (Claude as coding partner)
+                       PM: L4 — Strategy (you tune the bot by hand)
+Day 3  Learn + Compete AM: L5 — Learning (the bot tunes itself)
+                       PM: L6 — Tournament + parents demo
 Sat    Bonus day       All day: 👑 King + 🌫️ Fog play, families welcome
 ```
+
+Two lessons per day, no filler — every session is structured.
 
 **Three threads** running through the week:
 - **Build with AI** — Claude/ChatGPT as a coding partner from L3 onward (real AI literacy, not magic-button)
