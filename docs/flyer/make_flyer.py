@@ -66,16 +66,15 @@ body_style = ParagraphStyle('body', parent=styles['Normal'],
     alignment=TA_LEFT, leftIndent=0)
 
 hero = Paragraph(
-    "In one week, kids go from playing a classic single-player snake "
-    "to writing a JavaScript bot that competes head-to-head against "
-    "their friends' bots in a tournament. They <b>build with AI</b> "
-    "(Claude as a coding partner), <b>think like AI</b> (design strategies as "
-    "tunable numbers), and <b>watch AI learn</b> (a tiny bot that gets smarter "
-    "every round). Real code. Real servers. Real games they can keep playing at home.",
+    "In one week, kids go from playing classic snake to writing a JavaScript "
+    "bot that battles their friends' bots in a tournament. Along the way they "
+    "<b>build with AI</b> (Claude as a coding partner), <b>think like AI</b> "
+    "(design strategies as tunable numbers), and <b>watch AI learn</b> "
+    "(a bot that gets smarter every round). Real code. Real games to keep playing at home.",
     body_style)
-hero.wrapOn(c, PAGE_W - 1.2*inch, 1.4*inch)
-hero.drawOn(c, 0.6*inch, y - 0.95*inch)
-y -= 1.20*inch
+hero.wrapOn(c, PAGE_W - 1.2*inch, 1.1*inch)
+hero.drawOn(c, 0.6*inch, y - 0.80*inch)
+y -= 1.00*inch
 
 # ---- Curriculum table ----
 c.setFillColor(INK)
@@ -146,9 +145,7 @@ for t in takeaways:
     c.circle(0.72*inch, y + 3, 3, fill=1, stroke=0)
     c.setFillColor(INK_MID)
     c.drawString(0.85*inch, y, t)
-    y -= 0.20*inch
-
-y -= 0.05*inch
+    y -= 0.18*inch
 
 # ---- Logistics box ----
 box_top = y
@@ -180,11 +177,11 @@ row_y -= 0.42*inch
 field(col1_x, row_y, "Bring",     "Just an iPad or laptop")
 field(col2_x, row_y, "Location",  "Yancy's home")
 
-y = box_top - box_height - 0.20*inch
+y = box_top - box_height - 0.16*inch
 
 # ---- "Please note" box ----
 note_top = y
-note_height = 0.95*inch
+note_height = 0.90*inch
 NOTE_BG = HexColor("#fefce8")     # very light yellow
 NOTE_BORDER = HexColor("#fde68a")
 c.setFillColor(NOTE_BG)
@@ -213,7 +210,7 @@ for n in notes:
     p.drawOn(c, 0.98*inch, ny - h + 0.10*inch)
     ny -= 0.20*inch
 
-y = note_top - note_height - 0.18*inch
+y = note_top - note_height - 0.14*inch
 
 # ---- Sign-up / Footer ----
 c.setFillColor(INK)
@@ -221,9 +218,12 @@ c.setFont("Helvetica-Bold", 11)
 c.drawString(0.6*inch, y, "Interested?")
 c.setFont("Helvetica", 10.5)
 c.setFillColor(INK_MID)
-c.drawString(0.6*inch, y - 0.18*inch, "Email yancyqin@gmail.com to hold a spot or ask questions.")
+c.drawString(0.6*inch, y - 0.18*inch, "Email yancyqin@gmail.com to hold a spot or ask about future dates.")
+c.setFont("Helvetica-Oblique", 9.5)
+c.setFillColor(INK_LIGHT)
+c.drawString(0.6*inch, y - 0.34*inch, "This is our first trial run — more sessions / pricing may open later, just reach out.")
 
-y -= 0.50*inch
+y -= 0.55*inch
 
 # Footer with URLs
 c.setStrokeColor(BORDER)

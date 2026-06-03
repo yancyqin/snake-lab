@@ -76,16 +76,16 @@ body_style = ParagraphStyle('body', parent=styles['Normal'],
     alignment=TA_LEFT, leftIndent=0, wordWrap='CJK')
 
 hero = Paragraph(
-    '一周时间,孩子们从玩经典单人贪吃蛇,到亲手用 JavaScript 编写自己的机器人,'
-    '在赛场上与小伙伴的机器人正面对战。他们会 '
-    f'<font color="#15803d">用 AI 共同编程</font>(把 Claude 当成编程伙伴)、'
-    f'<font color="#15803d">像 AI 一样思考</font>(用可调参数设计游戏策略)、'
-    f'<font color="#15803d">看 AI 自主学习</font>(一个每局都会变聪明的小机器人)。'
-    '真代码、真服务器、真比赛 —— 回家之后还能继续玩。',
+    '一周时间,孩子们从玩经典贪吃蛇,到亲手用 JavaScript 编写机器人,'
+    '在赛场上与小伙伴的机器人对战。一路上他们会 '
+    f'<font color="#15803d">用 AI 共同编程</font>(把 Claude 当编程伙伴)、'
+    f'<font color="#15803d">像 AI 一样思考</font>(用可调参数设计策略)、'
+    f'<font color="#15803d">看 AI 自主学习</font>(每局都更聪明的小机器人)。'
+    '真代码、真比赛,回家也能继续玩。',
     body_style)
-hero.wrapOn(c, PAGE_W - 1.2*inch, 1.6*inch)
-hero.drawOn(c, 0.6*inch, y - 1.20*inch)
-y -= 1.40*inch
+hero.wrapOn(c, PAGE_W - 1.2*inch, 1.3*inch)
+hero.drawOn(c, 0.6*inch, y - 1.00*inch)
+y -= 1.18*inch
 
 # ---- 课程表 ----
 c.setFillColor(INK)
@@ -155,9 +155,7 @@ for t in takeaways:
     c.setFillColor(INK_MID)
     c.setFont(CN, 10.5)
     c.drawString(0.85*inch, y, t)
-    y -= 0.20*inch
-
-y -= 0.05*inch
+    y -= 0.18*inch
 
 # ---- 营地信息(浅绿色框) ----
 box_top = y
@@ -189,11 +187,11 @@ row_y -= 0.42*inch
 field(col1_x, row_y, "需要携带",   "一台 iPad 或笔记本即可")
 field(col2_x, row_y, "地点",       "Yancy 家")
 
-y = box_top - box_height - 0.20*inch
+y = box_top - box_height - 0.16*inch
 
 # ---- 「请留意」提示框 ----
 note_top = y
-note_height = 1.00*inch
+note_height = 0.92*inch
 NOTE_BG = HexColor("#fefce8")
 NOTE_BORDER = HexColor("#fde68a")
 c.setFillColor(NOTE_BG)
@@ -222,7 +220,7 @@ for n in notes:
     p.drawOn(c, 0.98*inch, ny - h + 0.10*inch)
     ny -= 0.20*inch
 
-y = note_top - note_height - 0.18*inch
+y = note_top - note_height - 0.14*inch
 
 # ---- 报名 / 页脚 ----
 c.setFillColor(INK)
@@ -230,9 +228,12 @@ c.setFont(CN, 11)
 c.drawString(0.6*inch, y, "感兴趣?")
 c.setFont(CN, 10.5)
 c.setFillColor(INK_MID)
-c.drawString(0.6*inch, y - 0.18*inch, "发邮件到 yancyqin@gmail.com 预约名额或咨询。")
+c.drawString(0.6*inch, y - 0.18*inch, "发邮件到 yancyqin@gmail.com 预约名额或咨询未来场次。")
+c.setFont(CN, 9.5)
+c.setFillColor(INK_LIGHT)
+c.drawString(0.6*inch, y - 0.34*inch, "这是首次试运营 —— 未来可能开设更多场次或推出新价格,欢迎随时联系。")
 
-y -= 0.50*inch
+y -= 0.55*inch
 
 # 页脚分隔线
 c.setStrokeColor(BORDER)
