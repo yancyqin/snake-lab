@@ -39,7 +39,7 @@ export class Renderer {
     if (opts.fullWorld) {
       this.viewCols = WORLD_COLS;
       this.viewRows = WORLD_ROWS;
-      this.cellSize = 18;                       // 60×18 = 1080px — the whole map, big enough to read across the room
+      this.cellSize = 24;                       // 60×24 = 1440px — the whole map at projector size, readable across the room
       if (this.minimap) this.minimap.style.display = 'none';
     } else {
       this.viewCols = BASE_VIEW_COLS;
