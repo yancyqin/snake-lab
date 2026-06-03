@@ -174,11 +174,11 @@ def field(x, y, label, value, value_bold=False):
 field(col1_x, row_y, "Ages", "9 and up")
 field(col2_x, row_y, "Class size", "Up to 8 kids")
 row_y -= 0.42*inch
-field(col1_x, row_y, "Dates",     "To be announced (first trial run)")
+field(col1_x, row_y, "Dates",     "Jun 24–26, 2026 · Wed–Fri", value_bold=True)
 field(col2_x, row_y, "Price",     "$120 – $150 · lunch included", value_bold=True)
 row_y -= 0.42*inch
 field(col1_x, row_y, "Bring",     "Just an iPad or laptop")
-field(col2_x, row_y, "Location",  "TBA")
+field(col2_x, row_y, "Location",  "Yancy's home")
 
 y = box_top - box_height - 0.20*inch
 
