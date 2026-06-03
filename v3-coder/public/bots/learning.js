@@ -103,3 +103,21 @@ function nextMove(state) {
   lastLen    = state.me.body.length;
   return action;
 }
+
+// ---- Debug: peek at the bot's brain from DevTools Console ----
+// `window.botBrain` is the live Q-table. Try these in DevTools Console
+// after letting the bot play for a minute or two:
+//
+//   window.botBrain                       — the whole Q-table object
+//   Object.keys(window.botBrain).length   — how many situations seen so far
+//   window.botGames                       — rounds the bot has played
+//   window.botBrain['1,0|0']              — Q-values when food is RIGHT, no danger
+//                                            (UP/DOWN/LEFT/RIGHT scores)
+//
+// The bot does the assignment ONCE when the factory runs, so window.botBrain
+// is the SAME object the bot keeps mutating — refreshing your view doesn't
+// require re-querying anything fancy.
+if (typeof window !== 'undefined') {
+  window.botBrain = qTable;
+  Object.defineProperty(window, 'botGames', { get: () => games, configurable: true });
+}
