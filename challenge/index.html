@@ -73,6 +73,7 @@
       color: #cbd5e1; cursor: pointer; font-size: 14px;
     }
     .modes button.active { background: #4ade80; color: #0f0f1a; border-color: #4ade80; font-weight: 600; }
+    .hand-note { font-size: 13px; color: #94a3b8; background: #0f0f1a; border: 1px solid #334155; border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; text-align: center; }
 
     #codePanel textarea {
       width: 100%; height: 220px; background: #0f0f1a; color: #e2e8f0; border: 1px solid #334155;
@@ -131,16 +132,17 @@
       <div id="levelBlurb" class="blurb"></div>
       <div class="tally"><span class="lab">BEST OF 3</span><span id="tally">· vs ·</span></div>
 
-      <div class="modes">
+      <div id="modesRow" class="modes">
         <button id="modeManual" class="active">🎮 Play yourself</button>
         <button id="modeCode">🤖 Run my bot</button>
       </div>
+      <div id="handOnly" class="hand-note hidden">🎮 Play by hand. Coding unlocks at Level 5.</div>
 
       <div id="codePanel" class="hidden">
         <div class="samples">
           <span>Start from:</span>
           <button class="sample" data-sample="greedy">Greedy+Safe</button>
-          <button class="sample" data-sample="flood">Flood-fill starter</button>
+          <button class="sample" data-sample="flood" id="floodSample">Flood-fill starter</button>
         </div>
         <textarea id="botCode" spellcheck="false"></textarea>
         <button class="mini" id="copyBtn">📋 Copy my bot</button>

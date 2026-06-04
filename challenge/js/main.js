@@ -98,13 +98,19 @@ const modeManualBtn = $('modeManual'), modeCodeBtn = $('modeCode');
 const codePanel = $('codePanel'), botCodeEl = $('botCode'), botStatus = $('botStatus');
 const playBtn = $('playBtn'), stopBtn = $('stopBtn');
 const nudge = $('nudge'), nudgeBtn = $('nudgeBtn');
+const modesRow = $('modesRow'), handOnly = $('handOnly'), floodSample = $('floodSample');
 const joystick = $('joystick'), stick = joystick.querySelector('.joystick-stick');
 
 const renderer = new Renderer(canvas);
 
+// ---------- level gates ----------
+const CODE_UNLOCK = 5;          // levels below this are hand-play ONLY (code mode hidden)
+const FLOOD_SAMPLE_UNLOCK = 8;  // the Flood-fill starter is too strong to hand out before this
+
 // ---------- state ----------
 let level = Math.min(LS.beaten + 1, 10);
-let mode = LS.mode;
+let userMode = LS.mode;   // the mode the kid CHOSE (manual/code)
+let mode = 'manual';      // the mode actually in effect this level (game loop reads this)
 let game = new DuelGame();
 let running = false, tickTimer = null;
 let youWins = 0, foeWins = 0, gameNo = 0;
@@ -134,10 +140,24 @@ function selectLevel(n) {
   const L = LEVELS[n - 1];
   levelTitle.textContent = `Level ${n} — ${L.emoji} ${L.name}`;
   levelBlurb.textContent = L.blurb;
+  renderModeUI();
   updateTally();
   game.reset();
   showBanner('', `Best of 3 — press ▶ Play`, '');
   buildLadder();
+}
+
+// Show/hide code mode + the strong starter depending on the level.
+function renderModeUI() {
+  const codeAllowed = level >= CODE_UNLOCK;
+  mode = codeAllowed ? userMode : 'manual';        // forced to manual on early levels
+  modesRow.classList.toggle('hidden', !codeAllowed);
+  handOnly.classList.toggle('hidden', codeAllowed);
+  modeManualBtn.classList.toggle('active', mode === 'manual');
+  modeCodeBtn.classList.toggle('active', mode === 'code');
+  codePanel.classList.toggle('hidden', mode !== 'code');
+  floodSample.classList.toggle('hidden', level < FLOOD_SAMPLE_UNLOCK);
+  if (mode !== 'manual') nudge.classList.add('hidden');
 }
 
 function updateTally() {
@@ -246,7 +266,8 @@ function matchLost() {
   running = false;
   playBtn.classList.remove('hidden'); stopBtn.classList.add('hidden');
   showBanner('lose', 'Foe wins the match', 'press ▶ Play to try again');
-  if (mode === 'manual') {
+  // Only nudge toward code mode if it's actually available at this level.
+  if (mode === 'manual' && level >= CODE_UNLOCK) {
     manualLosses++;
     if (manualLosses >= 2) nudge.classList.remove('hidden');
   }
@@ -286,16 +307,13 @@ function showSecret(lv) {
 }
 
 // ---------- mode toggle ----------
-function setMode(m) {
-  mode = m; LS.mode = m;
-  modeManualBtn.classList.toggle('active', m === 'manual');
-  modeCodeBtn.classList.toggle('active', m === 'code');
-  codePanel.classList.toggle('hidden', m !== 'code');
-  nudge.classList.add('hidden');
+function chooseMode(m) {
+  userMode = m; LS.mode = m;
+  renderModeUI();
 }
-modeManualBtn.addEventListener('click', () => setMode('manual'));
-modeCodeBtn.addEventListener('click', () => setMode('code'));
-nudgeBtn.addEventListener('click', () => { setMode('code'); codePanel.scrollIntoView({ behavior: 'smooth' }); });
+modeManualBtn.addEventListener('click', () => chooseMode('manual'));
+modeCodeBtn.addEventListener('click', () => chooseMode('code'));
+nudgeBtn.addEventListener('click', () => { chooseMode('code'); codePanel.scrollIntoView({ behavior: 'smooth' }); });
 
 // ---------- code panel wiring ----------
 botCodeEl.value = LS.code;
@@ -362,5 +380,4 @@ function frame(now) { renderer.draw(game, now); requestAnimationFrame(frame); }
 requestAnimationFrame(frame);
 
 // ---------- boot ----------
-setMode(mode);
-selectLevel(level);
+selectLevel(level);   // calls renderModeUI(), which sets the effective mode for this level

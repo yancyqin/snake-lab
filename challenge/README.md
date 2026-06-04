@@ -15,10 +15,17 @@ loaded. Progress saves in `localStorage` on the device.
 - 1v1 duel on a 24×24 board. Classic snake rules (wall / any body / head-on-head
   all kill). Last snake alive wins a game; first to 2 games wins the level.
 - **Manual mode** (🎮): floating joystick (touch) + arrow keys / WASD.
-- **Code mode** (🤖): same `nextMove(state)` API as v3-coder. Two starter bots
-  built in — "Greedy+Safe" and "Flood-fill starter."
+- **Code mode** (🤖): same `nextMove(state)` API as v3-coder. **Unlocks at
+  Level 5** — levels 1–4 are hand-play only, so you actually learn to drive a
+  snake before you automate it.
+- **Starter bots, gated by level:** "Greedy+Safe" is always offered once code
+  unlocks. The much stronger **"Flood-fill starter" only appears at Level 8** —
+  it's powerful enough to trivialize the mid levels, so you don't get it until
+  you've reached the boss.
 - The arc on purpose: you can win the early levels by hand, but **The Boss
   (L8)** is the wall where reflexes stop working and you have to write a bot.
+  After two manual losses on a level where code is available, a nudge offers to
+  switch you to code mode.
 
 ## The 10 opponents
 
