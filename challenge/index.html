@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Snake Lab — Homework Challenge 🐍</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #0f0f1a; color: #f1f5f9;
+      font-family: -apple-system, system-ui, sans-serif;
+      margin: 0; padding: 16px; display: flex; flex-direction: column; align-items: center;
+    }
+    h1 { font-size: 22px; margin: 0 0 2px; }
+    .sub { color: #94a3b8; font-size: 13px; margin-bottom: 14px; text-align: center; }
+    .hidden { display: none !important; }
+
+    /* Ladder */
+    .ladder { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 720px; margin-bottom: 14px; }
+    .chip {
+      border: 1px solid #334155; border-radius: 8px; background: #1a1a2e; color: #cbd5e1;
+      padding: 6px 9px; font-size: 13px; cursor: pointer; display: flex; gap: 5px; align-items: center;
+      transition: all 0.12s;
+    }
+    .chip .lv { color: #64748b; font-size: 11px; }
+    .chip.beaten { border-color: #15803d; }
+    .chip.beaten::after { content: '★'; color: #4ade80; }
+    .chip.current { border-color: #4ade80; box-shadow: 0 0 0 1px #4ade80; }
+    .chip.locked { opacity: 0.4; cursor: not-allowed; }
+    .chip:not(.locked):hover { border-color: #94a3b8; }
+
+    .arena { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-start; }
+    .canvas-wrap { position: relative; display: inline-block; line-height: 0; touch-action: none; }
+    canvas#game {
+      border: 2px solid #334155; border-radius: 6px; background: #14142a;
+      display: block; max-width: 100%; max-height: calc(100vh - 220px); height: auto; width: auto;
+    }
+    /* result banner over the canvas */
+    #banner {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      background: rgba(15, 15, 26, 0.92); border: 1px solid #334155; border-radius: 10px;
+      padding: 16px 22px; text-align: center; min-width: 220px; pointer-events: none;
+    }
+    #banner .big { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    #banner .small { font-size: 13px; color: #94a3b8; }
+    #banner.win .big { color: #4ade80; }
+    #banner.lose .big { color: #f97316; }
+
+    /* Virtual joystick */
+    .joystick {
+      position: absolute; width: 110px; height: 110px; border-radius: 50%;
+      background: rgba(31,41,55,0.5); border: 2px solid rgba(74,222,128,0.75);
+      pointer-events: none; transform: translate(-50%, -50%); transition: opacity 100ms;
+    }
+    .joystick.hidden { opacity: 0; }
+    .joystick-stick {
+      position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; border-radius: 50%;
+      background: rgba(74,222,128,0.95); transform: translate(-50%, -50%);
+    }
+
+    .panel { background: #1a1a2e; border: 1px solid #334155; border-radius: 8px; padding: 14px; width: 320px; max-width: 100%; }
+    .panel h2 { margin: 0 0 4px; font-size: 17px; }
+    .blurb { color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 10px; }
+    .tally { font-size: 26px; letter-spacing: 4px; margin-bottom: 10px; }
+    .tally .lab { font-size: 11px; color: #64748b; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+
+    .modes { display: flex; gap: 6px; margin-bottom: 10px; }
+    .modes button {
+      flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #0f0f1a;
+      color: #cbd5e1; cursor: pointer; font-size: 14px;
+    }
+    .modes button.active { background: #4ade80; color: #0f0f1a; border-color: #4ade80; font-weight: 600; }
+
+    #codePanel textarea {
+      width: 100%; height: 220px; background: #0f0f1a; color: #e2e8f0; border: 1px solid #334155;
+      border-radius: 6px; padding: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+      resize: vertical; white-space: pre; tab-size: 2;
+    }
+    .samples { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; align-items: center; }
+    .samples span { font-size: 11px; color: #64748b; }
+    .samples button, .mini {
+      font-size: 12px; padding: 4px 8px; border-radius: 5px; border: 1px solid #334155;
+      background: #1f2937; color: #cbd5e1; cursor: pointer;
+    }
+    .bot-status { font-size: 12px; margin-top: 6px; min-height: 16px; }
+    .bot-status.ok { color: #4ade80; }
+    .bot-status.err { color: #f87171; }
+
+    .controls { display: flex; gap: 8px; margin-top: 12px; }
+    .controls button { flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: 600; font-size: 15px; cursor: pointer; }
+    .primary { background: #4ade80; color: #0f0f1a; }
+    .secondary { background: #334155; color: #f1f5f9; }
+
+    #nudge { margin-top: 10px; padding: 10px; border: 1px dashed #f97316; border-radius: 8px; background: rgba(249,115,22,0.08); }
+    #nudge p { margin: 0 0 8px; font-size: 13px; color: #fdba74; }
+    #nudgeBtn { width: 100%; padding: 8px; border: none; border-radius: 6px; background: #f97316; color: #0f0f1a; font-weight: 600; cursor: pointer; }
+
+    /* Secret modal */
+    .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+    .modal { background: #16162c; border: 2px solid #4ade80; border-radius: 14px; padding: 28px; max-width: 480px; text-align: center; box-shadow: 0 0 40px rgba(74,222,128,0.25); }
+    .modal .trophy { font-size: 44px; }
+    .modal h2 { margin: 8px 0 4px; }
+    .modal .verse { font-size: 18px; line-height: 1.55; color: #f1f5f9; margin: 16px 0 6px; font-style: italic; }
+    .modal .ref { color: #4ade80; font-weight: 600; margin-bottom: 16px; }
+    .modal .claim { background: #0f0f1a; border: 1px solid #334155; border-radius: 8px; padding: 12px; font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+    .modal .claim b { color: #fbbf24; }
+    .modal button { margin-top: 16px; padding: 10px 18px; border: none; border-radius: 6px; background: #4ade80; color: #0f0f1a; font-weight: 600; cursor: pointer; }
+
+    footer { color: #64748b; font-size: 12px; margin-top: 18px; text-align: center; }
+    footer a { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>🐍 Homework Challenge</h1>
+  <div class="sub">Beat all 10 bots. Win each level <b>best&nbsp;of&nbsp;3</b>. Play by hand… or write a bot that does it for you.</div>
+
+  <div id="ladder" class="ladder"></div>
+
+  <div class="arena">
+    <div class="canvas-wrap">
+      <canvas id="game"></canvas>
+      <div id="joystick" class="joystick hidden"><div class="joystick-stick"></div></div>
+      <div id="banner" class="hidden"><div class="big"></div><div class="small"></div></div>
+    </div>
+
+    <div class="panel">
+      <h2 id="levelTitle">Level 1 — 🎲 Random Randy</h2>
+      <div id="levelBlurb" class="blurb"></div>
+      <div class="tally"><span class="lab">BEST OF 3</span><span id="tally">· vs ·</span></div>
+
+      <div class="modes">
+        <button id="modeManual" class="active">🎮 Play yourself</button>
+        <button id="modeCode">🤖 Run my bot</button>
+      </div>
+
+      <div id="codePanel" class="hidden">
+        <div class="samples">
+          <span>Start from:</span>
+          <button class="sample" data-sample="greedy">Greedy+Safe</button>
+          <button class="sample" data-sample="flood">Flood-fill starter</button>
+        </div>
+        <textarea id="botCode" spellcheck="false"></textarea>
+        <button class="mini" id="copyBtn">📋 Copy my bot</button>
+        <div id="botStatus" class="bot-status"></div>
+      </div>
+
+      <div class="controls">
+        <button id="playBtn" class="primary">▶ Play</button>
+        <button id="stopBtn" class="secondary hidden">■ Stop</button>
+      </div>
+
+      <div id="nudge" class="hidden">
+        <p>Losing by hand? Bots don't blink. Write one and let it play for you →</p>
+        <button id="nudgeBtn">Switch to 🤖 Run my bot</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Part of <a href="../">Snake Lab</a>. Your progress saves on this device. Stuck? Read the opponents' code on
+    <a href="https://github.com/yancyqin/snake-lab/tree/main/challenge/js">GitHub</a> — scouting is allowed. 🔎
+  </footer>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
