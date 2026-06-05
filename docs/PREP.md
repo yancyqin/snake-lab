@@ -83,4 +83,7 @@ The week ends with **L6 tournament Friday PM**. Then there's a **bonus Saturday*
 ## After camp
 
 - [ ] Send parents a recap email with photos + the feedback form
+- [ ] **Share the 🏆 Homework Challenge link** — [yancyqin.github.io/snake-lab/challenge/](https://yancyqin.github.io/snake-lab/challenge/). Self-paced, saves progress on the device. Kids keep climbing the bot ladder at home.
+- [ ] **Verse rewards (claim verification).** Clearing levels **4, 6, 8, 10, 11** each reveals a Bible verse on the kid's screen; they show it to claim a prize. The level→verse list is the instructor's **private answer key** in the `snake-lab-ml` repo (`REWARDS.md`) — *not* in the public repo, so it isn't spoiled. To verify a claim, either match it against that list or just confirm the win screen (it shows a timestamp + how it was beaten).
+- [ ] **🎓 Secret Lesson** — when a kid clears **Level 10**, they've earned the [Secret Lesson](SECRET_LESSON.md) (how to beat Apex: space control + ML tuning). Offer it as a bonus 1-on-1. Don't show the answer bot (private in `snake-lab-ml`); guide with questions.
 - [ ] Open a fresh GitHub issue or note for "what to change in next year's curriculum" — feeds back into [IDEAS.md](../IDEAS.md)

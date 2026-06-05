@@ -17,23 +17,25 @@ function unscramble(b64, key) {
   return out;
 }
 
-// Level 10 reward — one scrambled blob.
+// Milestone rewards. Each blob is one scrambled "verse|reference" string.
+// L4/L6/L8 are early walls (single-key scramble); L10/L11 are the hard gates
+// (L11 split into two halves with separate keys).
+const L4_BLOB = 'MQkNAAAAAAAADVUdCA0QGwcdDwBIWwYfA1MwHU8ACFkUEQkNEhIADgcDFhQXAw0dGwZPDAINUBofThwBAA4JAkkYUwpCAVQGBwtHYVsBCA0KGwcdTiBCUFMbRB8YUg0LR1pdBwQNChsHTxkPSEYWGkgBVAsAG0dKW10QZxwHGhoPRxwOSg==';
+const L6_BLOB = 'OkxOEhpSAQFHFQRBFgcERABUBg0cCAEPRRYbBUBTAxoKTgAdHkhFUwFIUwcGFwsJExxFGA88RRoYGxUeDhUGXhZHVhxA';
+const L8_BLOB = 'Jx5YBwZVGhoNTBsJDTgdBxdUWlEHBA0VHhlTDUJNAUxFERMHB1gNWR0IDRAdVR0bWRgXCV0RHBFTG0MYCgNYBlIaBBoNTR0ISAYBARIaSVEdCwMIIgccAkhKER8NR0hA';
 const PROVERBS_BLOB = 'GB0GQRVIMhxBBAMNOAkHDX5fQFJsHBBBB0U2TgMOAkQiDwtDVRBdUGwCChIXQj5CQQoLSWwKDEJFXFdSKxBDDhUNJwYESy1CIBhCYlxVEl8/VRYPF0ghHRUKC0klDwUDTmBAWToQEQMADWpUUFs=';
-
-// Level 11 reward — split into two halves, each with its own key, joined only at reveal.
 const PSALMS_A_BLOB = 'PwYHAVRaBxMIRkQLFxBGBRMeBA0ODh5GQAEXFwMMBl9U';
 const PSALMS_B_BLOB = 'EkUPBgkMWUgOAkZAFBMKEhELQRI0XgkNARUNXAJDSVRTWg==';
 
 // Returns { verse, ref } — the verse text and its reference, unscrambled now.
 export function revealSecret(level) {
   let raw = '';
-  if (level === 10) {
-    raw = unscramble(PROVERBS_BLOB, 'Lucas-Snake-Lab-2026');
-  } else if (level === 11) {
-    raw = unscramble(PSALMS_A_BLOB, 'first-half-x7q') + unscramble(PSALMS_B_BLOB, 'second-half-m3z');
-  } else {
-    return null;
-  }
+  if      (level === 4)  raw = unscramble(L4_BLOB, 'sl-strong-4');
+  else if (level === 6)  raw = unscramble(L6_BLOB, 'sl-strength-6');
+  else if (level === 8)  raw = unscramble(L8_BLOB, 'sl-trust-8');
+  else if (level === 10) raw = unscramble(PROVERBS_BLOB, 'Lucas-Snake-Lab-2026');
+  else if (level === 11) raw = unscramble(PSALMS_A_BLOB, 'first-half-x7q') + unscramble(PSALMS_B_BLOB, 'second-half-m3z');
+  else return null;
   const [verse, ref] = raw.split('|');
   return { verse, ref };
 }

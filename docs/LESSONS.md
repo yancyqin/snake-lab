@@ -33,6 +33,7 @@ Two lessons per day, no filler. Every session is structured.
 | **3 — Learn + Compete** | AM | The bot tunes itself (Q-learning) | ~1.5 h | **L5** |
 | | PM | Tournament + parents demo | ~1.5 h | **L6** |
 | **Bonus — Saturday** | All day | 👑 King + 🌫️ Fog play, **parents welcome** | ~3 h | (family play) |
+| **Take-home** | anytime | 🏆 Homework Challenge (10-level bot ladder) → 🎓 Secret Lesson | — | (self-paced) |
 
 ## Instructor setup (do once before camp)
 
@@ -771,6 +772,44 @@ Strategy shift: in v3, kids' bots get a filtered `state.others` and `state.foods
 - **The two modes together** turn the same game we learned all week into something the kids haven't quite seen before. Camp ends on "there's still more to discover" instead of "we're done."
 
 ---
+
+## After Camp — Homework Challenge & Secret Lesson
+
+The camp doesn't have to end on Saturday. Two take-home pieces keep the
+motivated kids going, self-paced, at home.
+
+### 🏆 Homework Challenge
+
+A static single-player site (no server, loads instantly, progress saved on the
+device): **[yancyqin.github.io/snake-lab/challenge/](https://yancyqin.github.io/snake-lab/challenge/)**.
+
+- A ladder of **10 bots** (Random Randy → Grandmaster) plus an expert level
+  (**Apex**). Beat each level **best of 3** to unlock the next.
+- **Play by hand** (joystick/keyboard) on the early levels, or **write a bot**
+  (same `nextMove(state)` API as v3). Coding unlocks at Level 2; the
+  Greedy+Safe starter at Level 4; the Flood-fill starter at Level 7.
+- The arc on purpose: hand-play works early, but **Level 8 (The Boss)** is the
+  wall where reflexes stop working and you have to code.
+- **Level 11 (Apex)** is bot-only with a copy-proof gate: win one game, then
+  your bot plays Apex 100 headless games and must win **at least 10% more than
+  it loses** — copying Apex only ties, so you have to genuinely out-think it.
+
+**Milestone rewards.** Clearing certain levels reveals a hidden **Bible-verse
+reward** on screen (the kid shows it to the instructor to claim a prize):
+levels **4, 6, 8, 10, and 11** each have one. (The verse list is in the
+instructor's private reference, not in the public repo — see PREP.)
+
+### 🎓 Secret Lesson — *earned, not scheduled*
+
+Clearing **Level 10** unlocks the **[Secret Lesson](SECRET_LESSON.md)** — an
+advanced, outside-the-camp session on how to beat **Apex (Level 11)**. It
+teaches the ideas (the draw-fortress ceiling, reading an aggressive opponent,
+**space control**) and the method (**machine-learning tuning** — random search
++ hill climbing, i.e. "you are the gradient," automated). It teaches the *how*,
+not the answer bot — the kid still builds and tunes their own.
+
+This is the real payoff of the whole AI thread: a kid who reaches it has gone
+from "playing snake" to "training an AI to beat another AI."
 
 ## Glossary
 

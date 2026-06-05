@@ -13,6 +13,7 @@ A three-version snake game built as a vibe-coding learning journey for kids. Eac
 | **v1-classic** | Single-player snake | Static HTML + vanilla JS | https://yancyqin.github.io/snake-lab/ |
 | **v2-arena** | Multiplayer snake (humans) | Node.js + `ws` | https://snake-lab-arena.onrender.com |
 | **v3-coder** | Programmable bots | Node.js + `ws` | https://snake-lab-coder.onrender.com |
+| **🏆 challenge** | After-camp 10-bot ladder + Apex | Static HTML + vanilla JS | https://yancyqin.github.io/snake-lab/challenge/ |
 
 ## The three versions
 
@@ -77,7 +78,9 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 - [x] **Tunable bot** (v3) — `tunable.js` sample. 4 weights kids set by hand. The "you are the gradient" bot for L4.
 - [x] **Learning bot** (v3) — `learning.js` sample. Q-learning, 144 states, ε-greedy. Persists across ticks via closure. The "the bot tunes itself" bot for L5.
 - [x] **Persistent bot harness** (v3) — code runs once in a factory, `nextMove` captured in closure. Module-level `let`/`const` survives between ticks (required for Q-learning).
-- [x] [docs/LESSONS.md](docs/LESSONS.md) — full 3-day camp curriculum (L1–L6 in the new structure)
+- [x] **🏆 Homework Challenge** ([challenge/](challenge/)) — after-camp static site: 10-bot ladder (Randy → Grandmaster) + the **Apex** expert level. Play by hand or write a bot. Milestone **verse rewards** at levels 4/6/8/10/11. Apex (L11) is bot-only with a copy-proof win-rate gate.
+- [x] **🎓 Secret Lesson** ([docs/SECRET_LESSON.md](docs/SECRET_LESSON.md)) — earned by clearing Challenge L10; advanced lesson on beating Apex (space control + ML tuning).
+- [x] [docs/LESSONS.md](docs/LESSONS.md) — full 3-day camp curriculum (L1–L6) + the take-home challenge & secret lesson
 - [x] [docs/PREP.md](docs/PREP.md) — instructor pre-camp checklist
 - [x] [docs/PROTOCOL.md](docs/PROTOCOL.md) — WebSocket message reference (used in L2)
 - [x] [docs/flyer/](docs/flyer/) — 1-page printable camp ad PDF + reportlab source
