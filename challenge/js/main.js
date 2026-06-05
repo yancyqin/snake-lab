@@ -119,7 +119,8 @@ const joystick = $('joystick'), stick = joystick.querySelector('.joystick-stick'
 const renderer = new Renderer(canvas);
 
 // ---------- level gates ----------
-const MAX_LEVEL = LEVELS.length;
+// "Coming soon" slots have no bot — the playable ladder is everything before them.
+const MAX_LEVEL = LEVELS.filter(L => !L.comingSoon).length;
 const CODE_UNLOCK = 2;            // L1 is hand-play only; code mode appears at L2
 const GREEDY_SAMPLE_UNLOCK = 4;   // the Greedy+Safe starter button appears at L4
 const FLOOD_SAMPLE_UNLOCK = 7;    // the (strong) Flood-fill starter appears at L7
@@ -139,17 +140,20 @@ let kidBot = null;
 function buildLadder() {
   ladderEl.innerHTML = '';
   for (const L of LEVELS) {
-    const beaten = L.n <= LS.beaten;
-    const unlocked = L.n <= LS.beaten + 1;
+    const beaten = !L.comingSoon && L.n <= LS.beaten;
+    const unlocked = !L.comingSoon && L.n <= LS.beaten + 1;
     const chip = document.createElement('button');
     chip.className = 'chip' + (beaten ? ' beaten' : '') + (L.n === level ? ' current' : '') + (unlocked ? '' : ' locked');
-    chip.innerHTML = `<span class="lv">L${L.n}</span> ${L.emoji} ${L.name}`;
+    chip.innerHTML = L.comingSoon
+      ? `<span class="lv">L${L.n}</span> 🚧 soon`
+      : `<span class="lv">L${L.n}</span> ${L.emoji} ${L.name}`;
     if (unlocked) chip.addEventListener('click', () => selectLevel(L.n));
     ladderEl.appendChild(chip);
   }
 }
 
 function selectLevel(n) {
+  if (LEVELS[n - 1] && LEVELS[n - 1].comingSoon) return;   // not playable yet
   stopMatch();
   level = n;
   youWins = foeWins = gameNo = 0;

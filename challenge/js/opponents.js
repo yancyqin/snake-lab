@@ -58,6 +58,55 @@ function foeHead(state) {
 }
 function foeLen(state) { const o = state.others[0]; return o ? o.body.length : 0; }
 
+// Voronoi territory: flood from BOTH heads at once; each cell goes to whoever
+// reaches it first. Returns how many cells are "mine" vs "theirs". A fast
+// multi-source BFS (unit distances) — same result as a distance-sorted version.
+function voronoiCells(myHead, foeHead2, dead, W, H) {
+  if (!foeHead2) return { mine: W * H, theirs: 0 };
+  const owner = new Map();
+  const q = [];
+  let qi = 0;
+  const enq = (x, y, o) => {
+    if (x < 0 || x >= W || y < 0 || y >= H || dead(x, y)) return;
+    const k = y * W + x;
+    if (owner.has(k)) return;
+    owner.set(k, o);
+    q.push([x, y, o]);
+  };
+  enq(myHead.x, myHead.y, 1);
+  enq(foeHead2.x, foeHead2.y, 2);
+  let mine = 0, theirs = 0;
+  while (qi < q.length) {
+    const [x, y, o] = q[qi++];
+    if (o === 1) mine++; else theirs++;
+    for (const [dx, dy] of [[0,-1],[0,1],[-1,0],[1,0]]) enq(x + dx, y + dy, o);
+  }
+  return { mine, theirs };
+}
+
+// BFS to the nearest REACHABLE food (routes around obstacles, unlike Manhattan).
+// Returns the distance and the first step's direction to head that way.
+function bfsFoodDir(head, foods, dead, W, H) {
+  if (!foods.length) return { dist: 999, dir: null };
+  const foodSet = new Set(foods.map(f => f.y * W + f.x));
+  const seen = new Set([head.y * W + head.x]);
+  const q = [[head.x, head.y, 0, null]];
+  let qi = 0;
+  while (qi < q.length) {
+    const [x, y, d, first] = q[qi++];
+    for (const dir of DIRS) {
+      const [dx, dy] = STEP[dir];
+      const nx = x + dx, ny = y + dy, k = ny * W + nx;
+      if (nx < 0 || nx >= W || ny < 0 || ny >= H || dead(nx, ny) || seen.has(k)) continue;
+      const fd = first || dir;
+      seen.add(k);
+      if (foodSet.has(k)) return { dist: d + 1, dir: fd };
+      q.push([nx, ny, d + 1, fd]);
+    }
+  }
+  return { dist: 999, dir: null };
+}
+
 // ===================================================================
 // LEVEL 1 — Random Randy: flails. Walks into walls. Free win.
 // ===================================================================
@@ -202,6 +251,50 @@ function hunter(state)     { return survivalMove(state, { cap: 300, foodW: 0.6, 
 //   match it. Winning here (best of 3) means you've truly mastered the bot.
 function grandmaster(state){ return survivalMove(state, { cap: 600, foodW: 0.3, dodge: true  }); }
 
+// LEVEL 11 — Apex (contributed bot). The first one that doesn't just survive —
+//   it fights for TERRITORY using Voronoi space control, and routes to food
+//   with real pathfinding. Stronger than the Grandmaster.
+//   Classic-rules note: head-on-head kills BOTH snakes regardless of size, so
+//   this AVOIDS every cell next to the foe's head (never tries to "win" one).
+function apex(state) {
+  const head = state.me.body[0];
+  const myLen = state.me.body.length;
+  const W = state.board.width, H = state.board.height;
+  const blocked = blockedSet(state);
+  const dead = makeDead(state, blocked);
+  const fh = foeHead(state);
+  const fl = foeLen(state);
+
+  const headRisk = new Map();
+  if (fh) {
+    const pen = fl >= myLen ? 1200 : 200;          // always a penalty (never a lure)
+    for (const dir of DIRS) {
+      const p = cellAfter(fh, dir);
+      headRisk.set(p.y * W + p.x, pen);
+    }
+  }
+
+  const { dist: foodDist, dir: foodDir } = bfsFoodDir(head, state.foods, dead, W, H);
+
+  let best = null, bs = -Infinity;
+  for (const dir of DIRS) {
+    const p = cellAfter(head, dir);
+    if (dead(p.x, p.y)) continue;
+    const room = floodSpace(p.x, p.y, dead, W, W * H);
+    if (room < myLen * 0.9) continue;              // don't enter a near-pocket
+
+    const { mine, theirs } = voronoiCells(p, fh, dead, W, H);
+    let score = room * 8 + (mine - theirs) * 4;     // survive + own the most territory
+    const hungry = myLen < fl + 3;
+    if (dir === foodDir) score += (50 - foodDist) * (hungry ? 2.5 : 0.6) * 3;
+    score -= headRisk.get(p.y * W + p.x) || 0;
+    score += Math.min(p.x, W - 1 - p.x, p.y, H - 1 - p.y) * 0.8;   // prefer the open middle
+
+    if (score > bs) { bs = score; best = dir; }
+  }
+  return best || state.me.direction;
+}
+
 // ---------- the ladder ----------
 export const LEVELS = [
   { n: 1,  name: 'Random Randy',  emoji: '🎲', fn: randy,
@@ -223,14 +316,13 @@ export const LEVELS = [
   { n: 9,  name: 'Hunter',        emoji: '🎯', fn: hunter,
     blurb: 'The Boss, but it wins food races and crowds you when it is bigger.' },
   { n: 10, name: 'Grandmaster',   emoji: '🏆', fn: grandmaster,
-    blurb: 'Floods the whole board and never overreaches. The 1v1 skill ceiling.' },
+    blurb: 'Floods the whole board and never overreaches. The pure-survival ceiling.' },
 
-  // --- Expert Gauntlet: beyond the trophy. You can't out-think one perfect
-  //     survivor, so now you face SEVERAL at once. Last snake alive wins. ---
-  { n: 11, name: 'The Duo',   emoji: '👥', foes: [boss, hunter],
-    blurb: 'TWO bots at once. You’re outnumbered — last snake alive wins. Let them crash; stay clear of pile-ups.' },
-  { n: 12, name: 'The Trio',  emoji: '👨‍👩‍👦', foes: [hunter, hunter, boss],
-    blurb: 'THREE opponents. The board gets crowded fast. Find the open space and hold it.' },
-  { n: 13, name: 'The Swarm', emoji: '🐝', foes: [grandmaster, grandmaster, grandmaster],
-    blurb: 'Three Grandmasters. The ultimate test. Outlast all three and you have truly mastered snake.' },
+  // --- Beyond the trophy: expert bots that go past pure survival (still 1v1). ---
+  { n: 11, name: 'Apex', emoji: '🦅', fn: apex,
+    blurb: 'Doesn’t just survive — it fights for territory (Voronoi space control) and paths to food around obstacles. The strongest bot yet.' },
+
+  // --- Slots for bots still being built. ---
+  { n: 12, comingSoon: true },
+  { n: 13, comingSoon: true },
 ];
