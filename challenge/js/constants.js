@@ -17,6 +17,8 @@ export const COLORS = {
   foodGlow: 'rgba(239, 68, 68, 0.35)',
   you:      '#4ade80',   // your snake — green
   foe:      '#f97316',   // the opponent — orange
+  // when there are multiple opponents (expert levels), they take these in order
+  foes:     ['#f97316', '#a855f7', '#06b6d4', '#ec4899'],
   eye:      '#0f0f1a',
   bodyText: '#0f0f1a',
   outline:  'rgba(0, 0, 0, 0.35)',

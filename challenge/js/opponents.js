@@ -195,10 +195,12 @@ function pathfinder(state) { return survivalMove(state, { cap: 35,  foodW: 1.1, 
 // LEVEL 8 — The Boss: deep flood, careful eater. *** The wall. Code or lose. ***
 function boss(state)       { return survivalMove(state, { cap: 90,  foodW: 0.9, dodge: true  }); }
 // LEVEL 9 — Hunter: very deep — barely misses a trap.
-function hunter(state)     { return survivalMove(state, { cap: 200, foodW: 0.7, dodge: true  }); }
-// LEVEL 10 — Grandmaster: looks the furthest ahead and never overreaches for
-//   food. The most patient, deepest survivor — it just refuses to die.
-function grandmaster(state){ return survivalMove(state, { cap: 350, foodW: 0.45, dodge: true }); }
+function hunter(state)     { return survivalMove(state, { cap: 300, foodW: 0.6, dodge: true  }); }
+// LEVEL 10 — Grandmaster: floods the WHOLE board (cap 600 > the 576 cells), so
+//   it never misjudges space, and it's patient — it just refuses to die. This
+//   is the skill ceiling for a 1v1: you can't reliably out-survive it, only
+//   match it. Winning here (best of 3) means you've truly mastered the bot.
+function grandmaster(state){ return survivalMove(state, { cap: 600, foodW: 0.3, dodge: true  }); }
 
 // ---------- the ladder ----------
 export const LEVELS = [
@@ -221,5 +223,14 @@ export const LEVELS = [
   { n: 9,  name: 'Hunter',        emoji: '🎯', fn: hunter,
     blurb: 'The Boss, but it wins food races and crowds you when it is bigger.' },
   { n: 10, name: 'Grandmaster',   emoji: '🏆', fn: grandmaster,
-    blurb: 'Boss + space denial: it squeezes your room while keeping its own.' },
+    blurb: 'Floods the whole board and never overreaches. The 1v1 skill ceiling.' },
+
+  // --- Expert Gauntlet: beyond the trophy. You can't out-think one perfect
+  //     survivor, so now you face SEVERAL at once. Last snake alive wins. ---
+  { n: 11, name: 'The Duo',   emoji: '👥', foes: [boss, hunter],
+    blurb: 'TWO bots at once. You’re outnumbered — last snake alive wins. Let them crash; stay clear of pile-ups.' },
+  { n: 12, name: 'The Trio',  emoji: '👨‍👩‍👦', foes: [hunter, hunter, boss],
+    blurb: 'THREE opponents. The board gets crowded fast. Find the open space and hold it.' },
+  { n: 13, name: 'The Swarm', emoji: '🐝', foes: [grandmaster, grandmaster, grandmaster],
+    blurb: 'Three Grandmasters. The ultimate test. Outlast all three and you have truly mastered snake.' },
 ];

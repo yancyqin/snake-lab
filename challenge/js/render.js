@@ -53,12 +53,13 @@ export class Renderer {
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Snakes — dead first so the survivor draws on top
-    const snakes = [
-      { s: game.foe, color: COLORS.foe },
-      { s: game.you, color: COLORS.you },
-    ].sort((a, b) => (a.s.alive === b.s.alive ? 0 : a.s.alive ? 1 : -1));
-    for (const { s, color } of snakes) this._snake(s, color);
+    // Snakes — dead first so survivors draw on top; YOU last so you're always visible.
+    const order = [...game.snakes].sort((a, b) => {
+      if (a.alive !== b.alive) return a.alive ? 1 : -1;
+      if (a.isYou !== b.isYou) return a.isYou ? 1 : -1;
+      return 0;
+    });
+    for (const s of order) this._snake(s, s.color);
   }
 
   _snake(s, color) {

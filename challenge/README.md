@@ -1,8 +1,9 @@
 # Homework Challenge 🏆
 
-An after-camp, single-player **ladder of 10 bots**. Beat each level (best of 3)
-to unlock the next. Play by hand with the joystick/keyboard, **or** write a
-JavaScript bot that plays for you. Two hidden rewards wait at Levels 8 and 10.
+An after-camp, single-player **ladder of 13 bots** (10 main + a 3-level expert
+gauntlet). Beat each level (best of 3) to unlock the next. Play by hand with the
+joystick/keyboard, **or** write a JavaScript bot that plays for you. Two hidden
+rewards wait at Levels 8 and 10.
 
 **Static, client-side, no server.** Lives under the same GitHub Pages site as
 v1, so it loads instantly (no Render cold-start) and even works offline once
@@ -16,16 +17,20 @@ loaded. Progress saves in `localStorage` on the device.
   all kill). Last snake alive wins a game; first to 2 games wins the level.
 - **Manual mode** (🎮): floating joystick (touch) + arrow keys / WASD.
 - **Code mode** (🤖): same `nextMove(state)` API as v3-coder. **Unlocks at
-  Level 5** — levels 1–4 are hand-play only, so you actually learn to drive a
-  snake before you automate it.
-- **Starter bots, gated by level:** "Greedy+Safe" is always offered once code
-  unlocks. The much stronger **"Flood-fill starter" only appears at Level 8** —
-  it's powerful enough to trivialize the mid levels, so you don't get it until
-  you've reached the boss.
+  Level 2** — Level 1 is hand-play only, just to learn the controls.
+- **Starter bots unlock progressively:** Levels 2–3 start from a blank skeleton
+  (write a tiny bot vs a weak foe). **Greedy+Safe** appears at **Level 4**. The
+  much stronger **Flood-fill starter** appears at **Level 7** — it's powerful
+  enough to trivialize the mid levels, so you don't get it for free early.
 - The arc on purpose: you can win the early levels by hand, but **The Boss
   (L8)** is the wall where reflexes stop working and you have to write a bot.
   After two manual losses on a level where code is available, a nudge offers to
   switch you to code mode.
+- **Why levels 11–13 add opponents instead of "smarter" bots:** a single
+  full-board flood-fill survivor is the skill ceiling — you can't reliably
+  out-think one, only match it (that's the L10 trophy). So the expert gauntlet
+  raises the bar the only way that genuinely works: **more snakes at once.**
+  Last snake alive wins; being outnumbered is the real test.
 
 ## The 10 opponents
 
@@ -40,7 +45,10 @@ loaded. Progress saves in `localStorage` on the device.
 | 7 | 🧭 Pathfinder | Deeper flood fill + dodges your head. |
 | 8 | 👑 The Boss | Deep flood fill. **The wall — code or lose.** |
 | 9 | 🎯 Hunter | Very deep look; barely misses a trap. |
-| 10 | 🏆 Grandmaster | Deepest + most patient survivor. |
+| 10 | 🏆 Grandmaster | Floods the whole board — the 1v1 skill ceiling. |
+| 11 | 👥 The Duo | **1 v 2.** Two strong bots at once. |
+| 12 | 👨‍👩‍👦 The Trio | **1 v 3.** Three opponents; the board crowds fast. |
+| 13 | 🐝 The Swarm | **1 v 3 Grandmasters.** The ultimate test. |
 
 The opponents live in [`js/opponents.js`](js/opponents.js) — all written with the
 **same `nextMove(state)` API kids use**. Reading them to figure out how to beat

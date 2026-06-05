@@ -136,12 +136,12 @@
         <button id="modeManual" class="active">🎮 Play yourself</button>
         <button id="modeCode">🤖 Run my bot</button>
       </div>
-      <div id="handOnly" class="hand-note hidden">🎮 Play by hand. Coding unlocks at Level 5.</div>
+      <div id="handOnly" class="hand-note hidden">🎮 Level 1: play by hand. Coding unlocks at Level 2.</div>
 
       <div id="codePanel" class="hidden">
-        <div class="samples">
+        <div class="samples" id="samplesRow">
           <span>Start from:</span>
-          <button class="sample" data-sample="greedy">Greedy+Safe</button>
+          <button class="sample" data-sample="greedy" id="greedySample">Greedy+Safe</button>
           <button class="sample" data-sample="flood" id="floodSample">Flood-fill starter</button>
         </div>
         <textarea id="botCode" spellcheck="false"></textarea>

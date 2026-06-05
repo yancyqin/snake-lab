@@ -10,7 +10,7 @@ import { TICK_MS } from './constants.js';
 const LS = {
   get beaten() { return parseInt(localStorage.getItem('sl_ch_beaten') || '0', 10); },
   set beaten(v) { localStorage.setItem('sl_ch_beaten', String(v)); },
-  get code() { return localStorage.getItem('sl_ch_code') || SAMPLES.greedy; },
+  get code() { return localStorage.getItem('sl_ch_code') || SAMPLES.blank; },
   set code(v) { localStorage.setItem('sl_ch_code', v); },
   get mode() { return localStorage.getItem('sl_ch_mode') || 'manual'; },
   set mode(v) { localStorage.setItem('sl_ch_mode', v); },
@@ -18,6 +18,21 @@ const LS = {
 
 // ---------- starter bots kids can load ----------
 const SAMPLES = {
+  blank:
+`// Write your snake's brain! Return 'UP', 'DOWN', 'LEFT' or 'RIGHT'.
+//   state.me.body[0]  = your head  {x, y}
+//   state.foods       = list of food {x, y}
+//   state.others      = the rival snakes
+//   state.board       = { width, height }
+// This starter just heads toward the first food. Make it smarter!
+function nextMove(state) {
+  const head = state.me.body[0];
+  const food = state.foods[0];
+  if (food.x > head.x) return 'RIGHT';
+  if (food.x < head.x) return 'LEFT';
+  if (food.y > head.y) return 'DOWN';
+  return 'UP';
+}`,
   greedy:
 `// Chases the nearest food but never steps somewhere deadly.
 // Good for the early levels — but the Boss will trap you.
@@ -104,13 +119,16 @@ const joystick = $('joystick'), stick = joystick.querySelector('.joystick-stick'
 const renderer = new Renderer(canvas);
 
 // ---------- level gates ----------
-const CODE_UNLOCK = 5;          // levels below this are hand-play ONLY (code mode hidden)
-const FLOOD_SAMPLE_UNLOCK = 8;  // the Flood-fill starter is too strong to hand out before this
+const MAX_LEVEL = LEVELS.length;
+const CODE_UNLOCK = 2;            // L1 is hand-play only; code mode appears at L2
+const GREEDY_SAMPLE_UNLOCK = 4;   // the Greedy+Safe starter button appears at L4
+const FLOOD_SAMPLE_UNLOCK = 7;    // the (strong) Flood-fill starter appears at L7
 
 // ---------- state ----------
-let level = Math.min(LS.beaten + 1, 10);
+let level = Math.min(LS.beaten + 1, MAX_LEVEL);
 let userMode = LS.mode;   // the mode the kid CHOSE (manual/code)
 let mode = 'manual';      // the mode actually in effect this level (game loop reads this)
+let foeBots = [];         // the opponent bot fn(s) for the current level
 let game = new DuelGame();
 let running = false, tickTimer = null;
 let youWins = 0, foeWins = 0, gameNo = 0;
@@ -138,31 +156,38 @@ function selectLevel(n) {
   manualLosses = 0;
   nudge.classList.add('hidden');
   const L = LEVELS[n - 1];
+  foeBots = L.foes || [L.fn];                 // 1 opponent normally, several on expert levels
+  game = new DuelGame(foeBots.length);        // rebuild the arena with the right snake count
   levelTitle.textContent = `Level ${n} — ${L.emoji} ${L.name}`;
   levelBlurb.textContent = L.blurb;
   renderModeUI();
   updateTally();
-  game.reset();
   showBanner('', `Best of 3 — press ▶ Play`, '');
   buildLadder();
 }
 
-// Show/hide code mode + the strong starter depending on the level.
+// Show/hide code mode + the starter buttons depending on the level.
 function renderModeUI() {
   const codeAllowed = level >= CODE_UNLOCK;
-  mode = codeAllowed ? userMode : 'manual';        // forced to manual on early levels
+  mode = codeAllowed ? userMode : 'manual';        // forced to manual on Level 1
   modesRow.classList.toggle('hidden', !codeAllowed);
   handOnly.classList.toggle('hidden', codeAllowed);
   modeManualBtn.classList.toggle('active', mode === 'manual');
   modeCodeBtn.classList.toggle('active', mode === 'code');
   codePanel.classList.toggle('hidden', mode !== 'code');
-  floodSample.classList.toggle('hidden', level < FLOOD_SAMPLE_UNLOCK);
+  // starter buttons unlock progressively; the "Start from:" row hides if neither is available
+  const greedyOK = level >= GREEDY_SAMPLE_UNLOCK;
+  const floodOK  = level >= FLOOD_SAMPLE_UNLOCK;
+  greedySample.classList.toggle('hidden', !greedyOK);
+  floodSample.classList.toggle('hidden', !floodOK);
+  samplesRow.classList.toggle('hidden', !(greedyOK || floodOK));
   if (mode !== 'manual') nudge.classList.add('hidden');
 }
 
 function updateTally() {
   const hearts = (w) => '🟢'.repeat(w) + '⚪'.repeat(2 - w);
-  tallyEl.textContent = `You ${hearts(youWins)}  vs  ${hearts(foeWins)} Foe`;
+  const foeLabel = foeBots.length > 1 ? `${foeBots.length} Foes` : 'Foe';
+  tallyEl.textContent = `You ${hearts(youWins)}  vs  ${hearts(foeWins)} ${foeLabel}`;
 }
 
 // ---------- banner ----------
@@ -216,12 +241,17 @@ function scheduleTick() { clearTimeout(tickTimer); tickTimer = setTimeout(tickOn
 
 function tickOnce() {
   if (!running) return;
-  const oppBot = LEVELS[level - 1].fn;
-  const youDir = mode === 'manual'
-    ? (manualDir || game.you.direction)
-    : (kidBot ? safeDir(kidBot, game.viewFor('you'), game.you.direction) : game.you.direction);
-  const foeDir = safeDir(oppBot, game.viewFor('foe'), game.foe.direction);
-  game.step(youDir, foeDir);
+  const moves = new Array(game.snakes.length);
+  // YOU are snake 0 — manual input or your bot.
+  moves[0] = mode === 'manual'
+    ? (manualDir || game.snakes[0].direction)
+    : (kidBot ? safeDir(kidBot, game.viewFor(0), game.snakes[0].direction) : game.snakes[0].direction);
+  // Opponents are snakes 1..N — each driven by its level bot.
+  for (let i = 1; i < game.snakes.length; i++) {
+    const s = game.snakes[i];
+    moves[i] = s.alive ? safeDir(foeBots[i - 1], game.viewFor(i), s.direction) : s.direction;
+  }
+  game.step(moves);
   if (game.over) return endGame();
   scheduleTick();
 }
@@ -257,8 +287,8 @@ function matchWon() {
     showBanner('win', 'YOU BEAT ' + LEVELS[level - 1].name.toUpperCase() + '!', 'unlocking a secret…');
     setTimeout(() => showSecret(level), 900);
   } else {
-    showBanner('win', 'Level cleared! ★', level < 10 ? 'Level ' + (level + 1) + ' unlocked' : 'You did it!');
-    if (level < 10) setTimeout(() => selectLevel(level + 1), 1600);
+    showBanner('win', 'Level cleared! ★', level < MAX_LEVEL ? 'Level ' + (level + 1) + ' unlocked' : 'You beat them all! 🐍👑');
+    if (level < MAX_LEVEL) setTimeout(() => selectLevel(level + 1), 1600);
   }
 }
 
@@ -302,7 +332,7 @@ function showSecret(lv) {
   document.body.appendChild(back);
   back.querySelector('#secretClose').addEventListener('click', () => {
     back.remove();
-    if (lv < 10) selectLevel(level + 1); else selectLevel(10);
+    selectLevel(Math.min(level + 1, MAX_LEVEL));
   });
 }
 
