@@ -113,6 +113,7 @@ const modeManualBtn = $('modeManual'), modeCodeBtn = $('modeCode');
 const codePanel = $('codePanel'), botCodeEl = $('botCode'), botStatus = $('botStatus');
 const playBtn = $('playBtn'), stopBtn = $('stopBtn');
 const nudge = $('nudge'), nudgeBtn = $('nudgeBtn');
+const tallyLab = $('tallyLab');
 const modesRow = $('modesRow'), handOnly = $('handOnly'), verifyNote = $('verifyNote');
 const samplesRow = $('samplesRow'), greedySample = $('greedySample'), floodSample = $('floodSample');
 const joystick = $('joystick'), stick = joystick.querySelector('.joystick-stick');
@@ -192,9 +193,15 @@ function renderModeUI() {
   if (mode !== 'manual') nudge.classList.add('hidden');
 }
 
+// Wins needed to settle the match. Bot-only "verify" levels (Apex) need just
+// ONE win to trigger the real test (the 100-game gate); everything else is best-of-3.
+function winTarget() { return LEVELS[level - 1] && LEVELS[level - 1].verifyWinRate ? 1 : 2; }
+
 function updateTally() {
-  const hearts = (w) => '🟢'.repeat(w) + '⚪'.repeat(2 - w);
+  const T = winTarget();
+  const hearts = (w) => '🟢'.repeat(w) + '⚪'.repeat(Math.max(0, T - w));
   const foeLabel = foeBots.length > 1 ? `${foeBots.length} Foes` : 'Foe';
+  tallyLab.textContent = T === 1 ? 'WIN 1 → 100-GAME TEST' : 'BEST OF 3';
   tallyEl.textContent = `You ${hearts(youWins)}  vs  ${hearts(foeWins)} ${foeLabel}`;
 }
 
@@ -275,8 +282,9 @@ function endGame() {
   if (w === 'you') youWins++; else foeWins++;
   updateTally();
 
-  if (youWins === 2) return matchWon();
-  if (foeWins === 2) return matchLost();
+  const T = winTarget();
+  if (youWins === T) return matchWon();
+  if (foeWins === T) return matchLost();
 
   showBanner(w === 'you' ? 'win' : 'lose', w === 'you' ? 'You win the round!' : 'Foe takes it', 'next game…');
   setTimeout(() => { if (!running) startGame(); }, 1200);
@@ -296,9 +304,10 @@ function matchWon() {
   if (level > LS.beaten) LS.beaten = level;
   buildLadder();
 
-  if (level === 10) {
+  // Any level that has a reward verse (see secret.js) auto-reveals it.
+  if (revealSecret(level)) {
     showBanner('win', 'YOU BEAT ' + L.name.toUpperCase() + '!', 'unlocking a secret…');
-    setTimeout(() => showSecret(10), 900);
+    setTimeout(() => showSecret(level), 900);
   } else {
     showBanner('win', 'Level cleared! ★', level < MAX_LEVEL ? 'Level ' + (level + 1) + ' unlocked' : 'You beat them all! 🐍👑');
     if (level < MAX_LEVEL) setTimeout(() => selectLevel(level + 1), 1600);
@@ -384,6 +393,7 @@ function showSecret(lv) {
       <div class="claim">
         Show this screen to <b>Mr. Yancy</b> to claim your award.<br>
         Beaten by: <b>${who}</b> · ${when}
+        ${lv === 10 ? '<br><br>🎓 <b>You\'ve unlocked the Secret Lesson!</b> Ask Mr. Yancy to teach you how to out-think Apex (Level 11).' : ''}
       </div>
       <button id="secretClose">Got it!</button>
     </div>`;

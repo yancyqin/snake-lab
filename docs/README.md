@@ -10,6 +10,7 @@ This folder collects everything that isn't code or deploy config. Code lives in 
 | [PREP.md](PREP.md) | Pre-camp checklist — posters, hex codes, port table, AI accounts, feedback form | Instructor, day before camp |
 | [PROTOCOL.md](PROTOCOL.md) | WebSocket message reference — every message that flows between client and server | Instructor for L2; v3 designers |
 | [IDEAS.md](IDEAS.md) | Future tune-ups — things tried and removed, things shipped, things not yet tried | Whoever's looking for "what's next" |
+| [SECRET_LESSON.md](SECRET_LESSON.md) | 🎓 Bonus/advanced lesson — beating the Apex hunter (space control + ML tuning). Earned by clearing Challenge Level 10 | Instructor, for the kid who clears L10 |
 | [flyer/](flyer/) | 1-page camp advertisement (PDF + editable Python source) | For recruiting / parent-facing |
 
 ## Conventions
