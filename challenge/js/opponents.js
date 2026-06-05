@@ -267,8 +267,8 @@ export const LEVELS = [
     blurb: 'Floods the whole board and never overreaches. The pure-survival ceiling.' },
 
   // --- Beyond the trophy: expert bots that go past pure survival (still 1v1). ---
-  { n: 11, name: 'Apex', emoji: '🦅', fn: apex,
-    blurb: 'It hunts. Survives first, then presses in and cuts off your escape — herding you into a corner. The strongest bot yet.' },
+  { n: 11, name: 'Apex', emoji: '🦅', fn: apex, verifyWinRate: true,
+    blurb: 'It hunts — survives first, then presses in and cuts off your escape. Bot-only: winning best-of-3 isn’t enough — your bot must beat Apex in MORE than half of 100 games to truly win.' },
 
   // --- Slots for bots still being built. ---
   { n: 12, comingSoon: true },

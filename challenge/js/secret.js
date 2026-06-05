@@ -1,4 +1,4 @@
-// Secret reveals for Level 8 and Level 10.
+// Secret reveals for Level 10 and Level 11.
 //
 // Heads up, code reader 👋 — yes, the secret is in here. It's NOT stored as
 // plain text: it's XOR-scrambled and base64'd, and only un-scrambled the
@@ -17,20 +17,20 @@ function unscramble(b64, key) {
   return out;
 }
 
-// Level 8 — one scrambled blob.
-const L8_BLOB = 'GB0GQRVIMhxBBAMNOAkHDX5fQFJsHBBBB0U2TgMOAkQiDwtDVRBdUGwCChIXQj5CQQoLSWwKDEJFXFdSKxBDDhUNJwYESy1CIBhCYlxVEl8/VRYPF0ghHRUKC0klDwUDTmBAWToQEQMADWpUUFs=';
+// Level 10 reward — one scrambled blob.
+const PROVERBS_BLOB = 'GB0GQRVIMhxBBAMNOAkHDX5fQFJsHBBBB0U2TgMOAkQiDwtDVRBdUGwCChIXQj5CQQoLSWwKDEJFXFdSKxBDDhUNJwYESy1CIBhCYlxVEl8/VRYPF0ghHRUKC0klDwUDTmBAWToQEQMADWpUUFs=';
 
-// Level 10 — split into two halves, each with its own key, joined only at reveal.
-const L10A_BLOB = 'PwYHAVRaBxMIRkQLFxBGBRMeBA0ODh5GQAEXFwMMBl9U';
-const L10B_BLOB = 'EkUPBgkMWUgOAkZAFBMKEhELQRI0XgkNARUNXAJDSVRTWg==';
+// Level 11 reward — split into two halves, each with its own key, joined only at reveal.
+const PSALMS_A_BLOB = 'PwYHAVRaBxMIRkQLFxBGBRMeBA0ODh5GQAEXFwMMBl9U';
+const PSALMS_B_BLOB = 'EkUPBgkMWUgOAkZAFBMKEhELQRI0XgkNARUNXAJDSVRTWg==';
 
 // Returns { verse, ref } — the verse text and its reference, unscrambled now.
 export function revealSecret(level) {
   let raw = '';
-  if (level === 8) {
-    raw = unscramble(L8_BLOB, 'Lucas-Snake-Lab-2026');
-  } else if (level === 10) {
-    raw = unscramble(L10A_BLOB, 'first-half-x7q') + unscramble(L10B_BLOB, 'second-half-m3z');
+  if (level === 10) {
+    raw = unscramble(PROVERBS_BLOB, 'Lucas-Snake-Lab-2026');
+  } else if (level === 11) {
+    raw = unscramble(PSALMS_A_BLOB, 'first-half-x7q') + unscramble(PSALMS_B_BLOB, 'second-half-m3z');
   } else {
     return null;
   }

@@ -1,9 +1,9 @@
 # Homework Challenge 🏆
 
-An after-camp, single-player **ladder of 13 bots** (10 main + a 3-level expert
-gauntlet). Beat each level (best of 3) to unlock the next. Play by hand with the
-joystick/keyboard, **or** write a JavaScript bot that plays for you. Two hidden
-rewards wait at Levels 8 and 10.
+An after-camp, single-player ladder. **10 main levels** + **expert bots (L11+,
+still being added)**. Beat each level (best of 3) to unlock the next. Play by
+hand with the joystick/keyboard, **or** write a JavaScript bot that plays for
+you. Two hidden rewards wait at **Levels 10 and 11**.
 
 **Static, client-side, no server.** Lives under the same GitHub Pages site as
 v1, so it loads instantly (no Render cold-start) and even works offline once
@@ -26,13 +26,13 @@ loaded. Progress saves in `localStorage` on the device.
   (L8)** is the wall where reflexes stop working and you have to write a bot.
   After two manual losses on a level where code is available, a nudge offers to
   switch you to code mode.
-- **Why levels 11–13 add opponents instead of "smarter" bots:** a single
-  full-board flood-fill survivor is the skill ceiling — you can't reliably
-  out-think one, only match it (that's the L10 trophy). So the expert gauntlet
-  raises the bar the only way that genuinely works: **more snakes at once.**
-  Last snake alive wins; being outnumbered is the real test.
+- **L11 Apex is bot-only with a win-rate gate:** a single full-board survivor
+  is the 1v1 skill ceiling (L10), so Apex goes a step past it (pursuit + cutoff).
+  Winning best-of-3 isn't enough — after you win the match, your bot is run
+  against Apex **100 times headlessly**, and you only claim the reward if it
+  wins **more than half**. Statistical dominance, not a lucky three games.
 
-## The 10 opponents
+## The opponents
 
 | # | Name | What it does |
 |---|------|--------------|
@@ -45,10 +45,9 @@ loaded. Progress saves in `localStorage` on the device.
 | 7 | 🧭 Pathfinder | Deeper flood fill + dodges your head. |
 | 8 | 👑 The Boss | Deep flood fill. **The wall — code or lose.** |
 | 9 | 🎯 Hunter | Very deep look; barely misses a trap. |
-| 10 | 🏆 Grandmaster | Floods the whole board — the 1v1 skill ceiling. |
-| 11 | 👥 The Duo | **1 v 2.** Two strong bots at once. |
-| 12 | 👨‍👩‍👦 The Trio | **1 v 3.** Three opponents; the board crowds fast. |
-| 13 | 🐝 The Swarm | **1 v 3 Grandmasters.** The ultimate test. |
+| 10 | 🏆 Grandmaster | Floods the whole board — the 1v1 survival ceiling. **(reward)** |
+| 11 | 🦅 Apex | Hunts: survives, then presses + cuts you off. Bot-only, win-rate gated. **(reward)** |
+| 12–13 | 🚧 | Coming soon — bots still being built. |
 
 The opponents live in [`js/opponents.js`](js/opponents.js) — all written with the
 **same `nextMove(state)` API kids use**. Reading them to figure out how to beat
@@ -61,10 +60,10 @@ challenge/
   index.html        page, styles, layout
   js/
     constants.js    board / cell / tick / colors
-    game.js         DuelGame — 2-snake local match + collision rules
-    opponents.js    the 10 bots (weak → strong)
+    game.js         DuelGame — local match (N snakes) + collision rules
+    opponents.js    the ladder bots (weak → strong) + the Apex hunter
     render.js       full-board canvas drawing (no camera)
-    secret.js       the two reward reveals (scrambled, not plaintext)
+    secret.js       the two reward reveals (L10, L11; scrambled, not plaintext)
     main.js         ladder UI, best-of-3, manual + code input, localStorage
 ```
 

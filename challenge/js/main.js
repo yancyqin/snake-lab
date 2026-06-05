@@ -113,7 +113,8 @@ const modeManualBtn = $('modeManual'), modeCodeBtn = $('modeCode');
 const codePanel = $('codePanel'), botCodeEl = $('botCode'), botStatus = $('botStatus');
 const playBtn = $('playBtn'), stopBtn = $('stopBtn');
 const nudge = $('nudge'), nudgeBtn = $('nudgeBtn');
-const modesRow = $('modesRow'), handOnly = $('handOnly'), floodSample = $('floodSample');
+const modesRow = $('modesRow'), handOnly = $('handOnly'), verifyNote = $('verifyNote');
+const samplesRow = $('samplesRow'), greedySample = $('greedySample'), floodSample = $('floodSample');
 const joystick = $('joystick'), stick = joystick.querySelector('.joystick-stick');
 
 const renderer = new Renderer(canvas);
@@ -172,10 +173,13 @@ function selectLevel(n) {
 
 // Show/hide code mode + the starter buttons depending on the level.
 function renderModeUI() {
+  const L = LEVELS[level - 1];
+  const botOnly = !!(L && L.verifyWinRate);         // bot-only levels can't be played by hand
   const codeAllowed = level >= CODE_UNLOCK;
-  mode = codeAllowed ? userMode : 'manual';        // forced to manual on Level 1
-  modesRow.classList.toggle('hidden', !codeAllowed);
-  handOnly.classList.toggle('hidden', codeAllowed);
+  mode = botOnly ? 'code' : (codeAllowed ? userMode : 'manual');
+  modesRow.classList.toggle('hidden', botOnly || !codeAllowed);
+  handOnly.classList.toggle('hidden', botOnly || codeAllowed);
+  verifyNote.classList.toggle('hidden', !botOnly);
   modeManualBtn.classList.toggle('active', mode === 'manual');
   modeCodeBtn.classList.toggle('active', mode === 'code');
   codePanel.classList.toggle('hidden', mode !== 'code');
@@ -283,17 +287,63 @@ function matchWon() {
   playBtn.classList.remove('hidden'); stopBtn.classList.add('hidden');
   manualLosses = 0; nudge.classList.add('hidden');
 
-  const newlyBeaten = level > LS.beaten;
-  if (newlyBeaten) LS.beaten = level;
+  const L = LEVELS[level - 1];
+
+  // Bot-only levels (e.g. Apex): winning best-of-3 isn't enough — the bot must
+  // beat this level's bot in MORE than half of 100 headless games.
+  if (L.verifyWinRate) { runVerifyGate(L); return; }
+
+  if (level > LS.beaten) LS.beaten = level;
   buildLadder();
 
-  if (level === 8 || level === 10) {
-    showBanner('win', 'YOU BEAT ' + LEVELS[level - 1].name.toUpperCase() + '!', 'unlocking a secret…');
-    setTimeout(() => showSecret(level), 900);
+  if (level === 10) {
+    showBanner('win', 'YOU BEAT ' + L.name.toUpperCase() + '!', 'unlocking a secret…');
+    setTimeout(() => showSecret(10), 900);
   } else {
     showBanner('win', 'Level cleared! ★', level < MAX_LEVEL ? 'Level ' + (level + 1) + ' unlocked' : 'You beat them all! 🐍👑');
     if (level < MAX_LEVEL) setTimeout(() => selectLevel(level + 1), 1600);
   }
+}
+
+// The win-rate gate: run the kid's bot vs this level's bot over many headless
+// games (no rendering), in small batches so the UI stays responsive and the
+// win rate visibly converges. Pass = strictly more than half.
+const VERIFY_GAMES = 100;
+const VERIFY_THRESHOLD = 0.5;
+function runVerifyGate(L) {
+  const opp = L.fn;
+  if (!kidBot) { showBanner('lose', 'No working bot', 'Fix your code, then try again.'); return; }
+  let played = 0, won = 0;
+  showBanner('', 'You won best of 3! Now the real test…', `running ${VERIFY_GAMES} games vs ${L.name}`);
+  function batch() {
+    const end = Math.min(played + 5, VERIFY_GAMES);
+    for (; played < end; played++) {
+      const g = new DuelGame(1);
+      let t = 0;
+      while (!g.over && t++ < 2500) {
+        g.step([
+          safeDir(kidBot, g.viewFor(0), g.snakes[0].direction),
+          safeDir(opp,    g.viewFor(1), g.snakes[1].direction),
+        ]);
+      }
+      if (g.winner === 'you') won++;
+    }
+    const pct = Math.round(won / played * 100);
+    showBanner('', `Testing your bot vs ${L.name}…`, `${played}/${VERIFY_GAMES} — winning ${pct}%`);
+    if (played < VERIFY_GAMES) { setTimeout(batch, 0); return; }
+
+    const rate = won / VERIFY_GAMES;
+    if (rate > VERIFY_THRESHOLD) {
+      if (level > LS.beaten) LS.beaten = level;
+      buildLadder();
+      showBanner('win', `Your bot beats ${L.name} ${Math.round(rate * 100)}%!`, 'unlocking a secret…');
+      setTimeout(() => showSecret(level), 1100);
+    } else {
+      showBanner('lose', `Only ${Math.round(rate * 100)}% vs ${L.name}`,
+        `Need >${Math.round(VERIFY_THRESHOLD * 100)}% of ${VERIFY_GAMES}. Win best-of-3, then dominate. Keep tuning!`);
+    }
+  }
+  setTimeout(batch, 700);
 }
 
 function matchLost() {
