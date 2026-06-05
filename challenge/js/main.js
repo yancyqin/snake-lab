@@ -308,39 +308,43 @@ function matchWon() {
 // The win-rate gate: run the kid's bot vs this level's bot over many headless
 // games (no rendering), in small batches so the UI stays responsive and the
 // win rate visibly converges. Pass = strictly more than half.
-const VERIFY_GAMES = 100;
-const VERIFY_THRESHOLD = 0.5;
+const VERIFY_GAMES = 100;        // total games, split evenly across both spawn sides
+const VERIFY_MARGIN = 0.10;      // pass if (wins - losses) / games > this
 function runVerifyGate(L) {
   const opp = L.fn;
   if (!kidBot) { showBanner('lose', 'No working bot', 'Fix your code, then try again.'); return; }
-  let played = 0, won = 0;
-  showBanner('', 'You won best of 3! Now the real test…', `running ${VERIFY_GAMES} games vs ${L.name}`);
+  let played = 0, won = 0, lost = 0;
+  showBanner('', 'You won best of 3! Now the real test…', `${VERIFY_GAMES} games vs ${L.name}`);
   function batch() {
     const end = Math.min(played + 5, VERIFY_GAMES);
     for (; played < end; played++) {
+      const kidIsYou = (played % 2) === 0;     // alternate sides → cancel spawn bias
       const g = new DuelGame(1);
       let t = 0;
       while (!g.over && t++ < 2500) {
-        g.step([
-          safeDir(kidBot, g.viewFor(0), g.snakes[0].direction),
-          safeDir(opp,    g.viewFor(1), g.snakes[1].direction),
-        ]);
+        const a = kidIsYou ? kidBot : opp;
+        const b = kidIsYou ? opp : kidBot;
+        g.step([ safeDir(a, g.viewFor(0), g.snakes[0].direction),
+                 safeDir(b, g.viewFor(1), g.snakes[1].direction) ]);
       }
-      if (g.winner === 'you') won++;
+      if (g.winner === 'draw') { /* counts for neither */ }
+      else if ((g.winner === 'you') === kidIsYou) won++;   // the kid's bot won
+      else lost++;                                          // the kid's bot lost
     }
-    const pct = Math.round(won / played * 100);
-    showBanner('', `Testing your bot vs ${L.name}…`, `${played}/${VERIFY_GAMES} — winning ${pct}%`);
+    const margin = (won - lost) / played;
+    showBanner('', `Testing your bot vs ${L.name}…`,
+      `${played}/${VERIFY_GAMES} — win ${Math.round(won / played * 100)}%, net ${margin >= 0 ? '+' : ''}${Math.round(margin * 100)}%`);
     if (played < VERIFY_GAMES) { setTimeout(batch, 0); return; }
 
-    const rate = won / VERIFY_GAMES;
-    if (rate > VERIFY_THRESHOLD) {
+    const net = (won - lost) / VERIFY_GAMES;
+    if (net > VERIFY_MARGIN) {
       if (level > LS.beaten) LS.beaten = level;
       buildLadder();
-      showBanner('win', `Your bot beats ${L.name} ${Math.round(rate * 100)}%!`, 'unlocking a secret…');
+      showBanner('win', `You out-played ${L.name}! (net +${Math.round(net * 100)}%)`, 'unlocking a secret…');
       setTimeout(() => showSecret(level), 1100);
     } else {
-      showBanner('lose', `Only ${Math.round(rate * 100)}% vs ${L.name}`,
-        `Need >${Math.round(VERIFY_THRESHOLD * 100)}% of ${VERIFY_GAMES}. Win best-of-3, then dominate. Keep tuning!`);
+      showBanner('lose', `Net ${net >= 0 ? '+' : ''}${Math.round(net * 100)}% vs ${L.name}`,
+        `Need win−lose > ${Math.round(VERIFY_MARGIN * 100)}%. Copying ${L.name} only ties — you have to out-think it. Keep tuning!`);
     }
   }
   setTimeout(batch, 700);

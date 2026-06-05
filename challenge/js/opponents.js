@@ -268,7 +268,7 @@ export const LEVELS = [
 
   // --- Beyond the trophy: expert bots that go past pure survival (still 1v1). ---
   { n: 11, name: 'Apex', emoji: '🦅', fn: apex, verifyWinRate: true,
-    blurb: 'It hunts — survives first, then presses in and cuts off your escape. Bot-only: winning best-of-3 isn’t enough — your bot must beat Apex in MORE than half of 100 games to truly win.' },
+    blurb: 'It hunts — survives first, then presses in and cuts off your escape. Bot-only: win best-of-3, then over 100 games your bot must win at least 10% more than it loses. Copying Apex only ties — you have to out-think its aggression.' },
 
   // --- Slots for bots still being built. ---
   { n: 12, comingSoon: true },
