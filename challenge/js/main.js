@@ -175,12 +175,16 @@ function selectLevel(n) {
 // Show/hide code mode + the starter buttons depending on the level.
 function renderModeUI() {
   const L = LEVELS[level - 1];
-  const verifyLvl = !!(L && L.verifyWinRate);       // Apex: code = real gate, manual = practice
+  const verifyLvl = !!(L && L.verifyWinRate);       // Achilles: code = real gate, manual = practice
   const codeAllowed = level >= CODE_UNLOCK;
   mode = codeAllowed ? userMode : 'manual';          // manual-only on L1; both modes elsewhere
   modesRow.classList.toggle('hidden', !codeAllowed);
   handOnly.classList.toggle('hidden', codeAllowed);
   verifyNote.classList.toggle('hidden', !verifyLvl); // verify levels explain the reward path
+  if (verifyLvl) verifyNote.innerHTML =              // name the actual opponent (Achilles / Apex)
+    `🤖 <b>To claim the reward, run a bot:</b> win 1 game, then it must beat ${L.name} by ` +
+    `<b>&gt;10% (win−lose)</b> over 100 games. Copying ${L.name} only ties. &nbsp; ` +
+    `🎮 <b>Manual is practice only</b> — fight ${L.name} by hand for fun, but you can't claim the reward that way.`;
   modeManualBtn.classList.toggle('active', mode === 'manual');
   modeCodeBtn.classList.toggle('active', mode === 'code');
   codePanel.classList.toggle('hidden', mode !== 'code');
@@ -194,7 +198,7 @@ function renderModeUI() {
   updateTally();                                     // label tracks the current mode
 }
 
-// Wins needed to settle the match. Bot-only "verify" levels (Apex) need just
+// Wins needed to settle the match. Bot-only "verify" levels (Achilles) need just
 // ONE win to trigger the real test (the 100-game gate); everything else is best-of-3.
 function winTarget() { return LEVELS[level - 1] && LEVELS[level - 1].verifyWinRate ? 1 : 2; }
 
@@ -308,11 +312,11 @@ function matchWon() {
 
   const L = LEVELS[level - 1];
 
-  // Apex-style levels: the reward needs a BOT that wins the 100-game test.
+  // Achilles-style levels: the reward needs a BOT that wins the 100-game test.
   if (L.verifyWinRate) {
     if (mode === 'code') { runVerifyGate(L); return; }
     // Manual win = practice only — no reward, no unlock.
-    showBanner('win', 'You beat Apex by hand! 🎮', 'Practice only — write a bot to claim the reward.');
+    showBanner('win', `You beat ${L.name} by hand! 🎮`, 'Practice only — write a bot to claim the reward.');
     return;
   }
 
@@ -414,7 +418,7 @@ function showSecret(lv) {
       <div class="claim">
         Show this screen to <b>Mr. Yancy</b> to claim your award.<br>
         Beaten by: <b>${who}</b> · ${when}
-        ${lv === 10 ? '<br><br>🎓 <b>You\'ve unlocked the Secret Lesson!</b> Ask Mr. Yancy to teach you how to out-think Apex (Level 11).' : ''}
+        ${lv === 10 ? '<br><br>🎓 <b>You\'ve unlocked the Secret Lesson!</b> Ask Mr. Yancy to teach you how to out-think Achilles (Level 11).' : ''}
       </div>
       <button id="secretClose">Got it!</button>
     </div>`;

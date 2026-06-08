@@ -202,15 +202,13 @@ function hunter(state)     { return survivalMove(state, { cap: 300, foodW: 0.6, 
 //   match it. Winning here (best of 3) means you've truly mastered the bot.
 function grandmaster(state){ return survivalMove(state, { cap: 600, foodW: 0.3, dodge: true  }); }
 
-// LEVEL 11 — Apex (contributed, reverse-engineered with ChatGPT). It HUNTS:
+// LEVEL 11 — Achilles (contributed, reverse-engineered with ChatGPT). It HUNTS:
 //   survival first (space * 12), then it presses toward you and cuts off your
-//   escape. Beats the Grandmaster ~78%.
-//   *** KNOWN BLIND SPOT (this is how the L11 reward is won): like every bot
-//   here, Apex assumes each snake's TAIL vacates next tick — but a snake that
-//   EATS grows and its tail stays put. Bait Apex into tail-chasing you, eat at
-//   that moment, and it rams your grown body and dies. An ML tuner finds this
-//   automatically (reward hacking). Level 12 "Apex Prime" patches it. ***
-function apexCore(state, blockedFn) {
+//   escape. Beats the Grandmaster ~78%. You can't out-survive it and copying it
+//   only draws — the reward comes from spotting the one situation it misjudges.
+//   It has a heel (that's the name); Level 12 "Apex" patches it. The exact
+//   weakness + the answer bot live in the instructor's private guide, not here.
+function achillesCore(state, blockedFn) {
   const head = state.me.body[0];
   const myLen = state.me.body.length;
   const W = state.board.width, H = state.board.height;
@@ -243,12 +241,12 @@ function apexCore(state, blockedFn) {
   if (!best) for (const dir of DIRS) { const p = cellAfter(head, dir); if (!dead(p.x, p.y)) return dir; }
   return best || state.me.direction;
 }
-function apex(state) { return apexCore(state, blockedSet); }
+function achilles(state) { return achillesCore(state, blockedSet); }
 
-// LEVEL 12 — Apex Prime. Same hunter, blind spot PATCHED: if an opponent's head
-//   is next to food it might grow, so Prime keeps that opponent's tail blocked
-//   instead of assuming it slides away. The eat-and-ram trick that beats Apex
-//   fails here. Likely the true ceiling.
+// LEVEL 12 — Apex. The same hunter with Achilles' heel sealed: if an opponent's
+//   head is next to food it might grow, so Apex keeps that opponent's tail
+//   blocked instead of assuming it slides away. The trick that beats Achilles
+//   fails here. Likely the true ceiling — an open challenge.
 function blockedSetGrowthAware(state) {
   const W = state.board.width;
   const foods = state.foods;
@@ -261,7 +259,7 @@ function blockedSetGrowthAware(state) {
   }
   return blocked;
 }
-function apexPrime(state) { return apexCore(state, blockedSetGrowthAware); }
+function apex(state) { return achillesCore(state, blockedSetGrowthAware); }
 
 // ---------- the ladder ----------
 export const LEVELS = [
@@ -287,11 +285,11 @@ export const LEVELS = [
     blurb: 'Floods the whole board and never overreaches. The pure-survival ceiling.' },
 
   // --- Beyond the trophy: expert bots that go past pure survival (still 1v1). ---
-  { n: 11, name: 'Apex', emoji: '🦅', fn: apex, verifyWinRate: true,
-    blurb: 'It hunts — survives first, then presses in and cuts off your escape. Bot-only: win best-of-3, then over 100 games your bot must win at least 10% more than it loses. Copying Apex only ties — you have to out-think its aggression.' },
+  { n: 11, name: 'Achilles', emoji: '⚔️', fn: achilles, verifyWinRate: true,
+    blurb: 'It hunts — survives first, then presses in and cuts off your escape. Bot-only: win best-of-3, then over 100 games your bot must win at least 10% more than it loses. Copying Achilles only ties — you have to out-think its aggression.' },
 
   // --- Slots for bots still being built. ---
-  { n: 12, name: 'Apex Prime', emoji: '🦾', fn: apexPrime, verifyWinRate: true,
-    blurb: 'Apex, but it learned. It knows you grow when you eat, so the eat-and-ram trick that beats Apex fails here. Bot-only, same gate (net >10% over 100 games). This may be the true ceiling.' },
+  { n: 12, name: 'Apex', emoji: '🦅', fn: apex, verifyWinRate: true,
+    blurb: 'Achilles with its heel patched — the weakness that beats Achilles is sealed, so the same trick fails. Bot-only, same gate (net >10% over 100 games). This may be the true ceiling.' },
   { n: 13, comingSoon: true },
 ];

@@ -783,16 +783,17 @@ motivated kids going, self-paced, at home.
 A static single-player site (no server, loads instantly, progress saved on the
 device): **[yancyqin.github.io/snake-lab/challenge/](https://yancyqin.github.io/snake-lab/challenge/)**.
 
-- A ladder of **10 bots** (Random Randy → Grandmaster) plus an expert level
-  (**Apex**). Beat each level **best of 3** to unlock the next.
+- A ladder of **10 bots** (Random Randy → Grandmaster) plus two expert levels —
+  **Achilles** (has a weakness) and **Apex** (the patched, likely-unbeatable
+  version). Beat each level **best of 3** to unlock the next.
 - **Play by hand** (joystick/keyboard) on the early levels, or **write a bot**
   (same `nextMove(state)` API as v3). Coding unlocks at Level 2; the
   Greedy+Safe starter at Level 4; the Flood-fill starter at Level 7.
 - The arc on purpose: hand-play works early, but **Level 8 (The Boss)** is the
   wall where reflexes stop working and you have to code.
-- **Level 11 (Apex)** is bot-only with a copy-proof gate: win one game, then
-  your bot plays Apex 100 headless games and must win **at least 10% more than
-  it loses** — copying Apex only ties, so you have to genuinely out-think it.
+- **Level 11 (Achilles)** is bot-only with a copy-proof gate: win one game, then
+  your bot plays Achilles 100 headless games and must win **at least 10% more than
+  it loses** — copying Achilles only ties, so you have to genuinely out-think it.
 
 **Milestone rewards.** Clearing certain levels reveals a hidden **Bible-verse
 reward** on screen (the kid shows it to the instructor to claim a prize):
@@ -802,11 +803,13 @@ instructor's private reference, not in the public repo — see PREP.)
 ### 🎓 Secret Lesson — *earned, not scheduled*
 
 Clearing **Level 10** unlocks the **[Secret Lesson](SECRET_LESSON.md)** — an
-advanced, outside-the-camp session on how to beat **Apex (Level 11)**. It
-teaches the ideas (the draw-fortress ceiling, reading an aggressive opponent,
-**space control**) and the method (**machine-learning tuning** — random search
-+ hill climbing, i.e. "you are the gradient," automated). It teaches the *how*,
-not the answer bot — the kid still builds and tunes their own.
+advanced, outside-the-camp session on how to beat **Achilles (Level 11)**: you
+can't out-survive it, so you must **find the one mistake it always makes** and
+exploit it — and when you let a computer search for that win, it finds the
+mistake too (**reward hacking**). It teaches the *idea* + the ML method (random
+search + hill climbing, "you are the gradient," automated). The exact weakness,
+the walkthrough, and the answer bot live in the instructor's **private**
+`snake-lab-ml` repo — not here — so the lesson doesn't spoil itself.
 
 This is the real payoff of the whole AI thread: a kid who reaches it has gone
 from "playing snake" to "training an AI to beat another AI."

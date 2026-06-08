@@ -26,17 +26,13 @@ loaded. Progress saves in `localStorage` on the device.
   (L8)** is the wall where reflexes stop working and you have to write a bot.
   After two manual losses on a level where code is available, a nudge offers to
   switch you to code mode.
-- **L11 Apex is beaten by exploiting a blind spot, not by out-surviving it.**
-  Apex (like every bot) assumes your tail vacates each tick — but eating makes
-  you grow, so baiting it into tail-chasing then eating makes it ram you. An ML
-  tuner finds this automatically (*reward hacking*). **L12 Apex Prime** patches
-  the blind spot, so that exploit fails — likely the true ceiling. See
-  [SECRET_LESSON](../docs/SECRET_LESSON.md).
-- **L11 Apex is bot-only with a win-rate gate:** a single full-board survivor
-  is the 1v1 skill ceiling (L10), so Apex goes a step past it (pursuit + cutoff).
-  Winning best-of-3 isn't enough — after you win the match, your bot is run
-  against Apex **100 times headlessly**, and you only claim the reward if it
-  wins **more than half**. Statistical dominance, not a lucky three games.
+- **Achilles (L11) & Apex (L12) can't be beaten by out-surviving them** — two
+  good survivors just draw. They're **bot-only with a win-rate gate**: win one
+  game, then your bot plays the opponent **100 headless games** and you claim the
+  reward only if it wins **&gt;10% more than it loses** (copying the opponent only
+  ties — you must out-think it). **Achilles** has a weakness you can find;
+  **Apex** is the patched, likely-unbeatable version. *How* to find the weakness
+  is the earned [Secret Lesson](../docs/SECRET_LESSON.md) (unlocked at L10).
 
 ## The opponents
 
@@ -52,8 +48,8 @@ loaded. Progress saves in `localStorage` on the device.
 | 8 | 👑 The Boss | Deep flood fill. **The wall — code or lose.** |
 | 9 | 🎯 Hunter | Very deep look; barely misses a trap. |
 | 10 | 🏆 Grandmaster | Floods the whole board — the 1v1 survival ceiling. **(reward)** |
-| 11 | 🦅 Apex | Hunts: survives, then presses + cuts you off. Bot-only, win-rate gated. **(reward)** |
-| 12 | 🦾 Apex Prime | Apex with the tail-blind-spot patched — the L11 exploit fails. Bot-only, win-rate gated, no verse. The likely true ceiling. |
+| 11 | ⚔️ Achilles | Hunts: survives, then presses + cuts you off. Bot-only, win-rate gated. **(reward)** |
+| 12 | 🦅 Apex | Achilles with the tail-blind-spot patched — the L11 exploit fails. Bot-only, win-rate gated, no verse. The likely true ceiling. |
 | 13 | 🚧 | Coming soon. |
 
 The opponents live in [`js/opponents.js`](js/opponents.js) — all written with the
@@ -68,7 +64,7 @@ challenge/
   js/
     constants.js    board / cell / tick / colors
     game.js         DuelGame — local match (N snakes) + collision rules
-    opponents.js    the ladder bots (weak → strong) + the Apex hunter
+    opponents.js    the ladder bots (weak → strong) + the Achilles hunter
     render.js       full-board canvas drawing (no camera)
     secret.js       the two reward reveals (L10, L11; scrambled, not plaintext)
     main.js         ladder UI, best-of-3, manual + code input, localStorage
