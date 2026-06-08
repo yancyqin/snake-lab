@@ -1,124 +1,93 @@
 # 🎓 Secret Lesson — Beating the Hunter (Apex)
 
-> **Earned, not scheduled.** This lesson is *outside the 3-day camp*. A kid
-> unlocks it by clearing **Level 10** of the Homework Challenge. It's the
-> advanced track: how to out-think **Level 11 (Apex)** — the bot-only level
-> whose gate is "your bot must win at least 10% more than it loses over 100
-> games vs Apex."
+> **Earned, not scheduled.** Outside the 3-day camp. A kid unlocks it by
+> clearing **Level 10** of the Homework Challenge. It's the advanced track: how
+> to beat **Level 11 (Apex)** — the bot-only level whose gate is "your bot must
+> win at least 10% more than it loses over 100 games vs Apex."
 >
-> This teaches the **ideas and the method**. It does **not** hand over the
+> This teaches the real *idea* and the *method*. It does **not** hand over the
 > answer bot — the kid still builds and tunes their own. (The instructor's
-> private reference solution lives in the separate `snake-lab-ml` repo.)
+> private reference is in the separate `snake-lab-ml` repo.)
 
 ## Why this lesson exists
 
 By Level 10 the kid has written a real bot. Level 11 looks impossible:
-- You can't beat Apex by *surviving better* — two good survival bots just draw
-  forever (the "draw fortress").
-- You can't beat it by *copying* it — a mirror match nets ~0%.
+- You can't beat Apex by **surviving better** — two good survival bots just
+  draw forever (the "draw fortress").
+- You can't beat it by **copying** it — a mirror match nets ~0%.
 
-So Level 11 forces the one move left: **find your opponent's weakness and
-exploit it.** That's a genuinely new skill, and it's the bridge to how real AI
-research works.
+So Level 11 forces the one move left: **find the opponent's blind spot and
+exploit it.** That's a genuinely new skill — and it's exactly how real AI gets
+its surprises.
 
 ## Big idea
 
-> A strong general strategy isn't always the answer. Sometimes you win by
-> **studying one specific opponent and exploiting how it thinks.** And when you
-> can't find the exploit by hand, you let the **computer search for it** —
-> that's machine learning.
+> When you can't out-play an opponent head-on, **study it for a mistake it
+> always makes.** Apex has one. And when you let a *computer* search for a way
+> to win, it won't find the "noble" strategy — it'll find the mistake and abuse
+> it. That shortcut has a name in AI: **reward hacking.**
 
-## What the kid will learn
+## Apex's blind spot (the actual exploit)
 
-1. **The skill ceiling & the draw fortress** — why "just survive" tops out at a draw.
-2. **Read the opponent** — Apex is *aggressive*: it survives, then presses toward
-   you and cuts off your escape. Aggression is a weakness you can bait.
-3. **Relative space (space control)** — the counter idea: don't just keep your
-   own room, pick the move that maximizes *(my space − Apex's space)*. Apex
-   chases and gives up territory; you take it and wall Apex in.
-4. **Tuning by machine** — turn the strategy into a few numbers (weights), then
-   let a search loop find good values by playing thousands of games. This is L4
-   ("you are the gradient") handed entirely to the computer.
+Every snake bot here — Apex included — builds its danger map by treating each
+snake's body **minus the tail** as blocked, because normally the tail slides
+forward and frees that cell next tick. **But a snake that EATS doesn't shrink —
+its tail stays put.** Apex never checks "is my target about to eat?"
 
-## Part 1 — See the draw fortress (10 min)
+So:
+1. Apex is *aggressive* — it presses in and **tail-chases** you (follows right
+   behind your tail).
+2. Normally that's safe for it: your tail keeps moving out of the way.
+3. **Eat a food at the moment Apex is on your tail** → you grow, your tail
+   stays → Apex's head rams your body → **in classic rules the one that rams a
+   body dies.** Apex kills itself.
 
-Run the kid's best Level-10 bot against Apex a bunch of times (or use the L11
-"100-game test" readout). Point out: **mostly draws, almost no wins.** Ask:
-> "If you can't out-survive it, and you can't copy it… what's left?"
+You win by turning your own growth into a wall, exactly when the hunter is
+committed to chasing.
 
-Lead them to: **find what Apex does badly.**
+## The machine-learning twist (the best part)
 
-## Part 2 — Read the hunter (10 min)
+`tune.mjs` (instructor's `snake-lab-ml`) tunes a bot's weights by playing
+thousands of games vs Apex, keeping whatever wins (random search + hill
+climbing — L4's "you are the gradient," automated). When we ran it, it found a
+winner at +21%. But here's the lesson: **it didn't discover a clever strategy —
+it discovered Apex's tail blind spot and abused it.** Patch the blind spot and
+the "winning" bot immediately *loses*.
 
-Apex's code is open ([`challenge/js/opponents.js`](../challenge/js/opponents.js),
-the `apex` function). Read it together. The key lines:
-```js
-score += (20 - d) * 2;   // press toward you
-score += (-d) * 1.5;     // ...and cut off your escape
-```
-> "Apex always moves *toward* you. A bot that always chases can be **led**.
-> If you back away and leave it less room than you, where does it end up?"
+That's **reward hacking**: an optimizer told only "win more" exploits a flaw in
+its world instead of playing the intended way. It happens constantly in real
+RL — agents glitch through walls, abuse physics bugs, game the score. Your kid
+can watch it happen on a snake board.
 
-## Part 3 — The counter idea: relative space (15 min)
+## Lesson flow
 
-Introduce the one new term on top of everything they already know:
-```
-score = (my reachable space)  −  (the foe's reachable space)
-```
-They already compute flood-fill space (Level 6+). Now compute it **twice** —
-once for themselves, once for the opponent — and prefer moves that grow the
-*gap*. Survival still comes first (don't trap yourself), but among safe moves,
-**squeeze the hunter.**
+1. **See the draw fortress (5 min).** Run the kid's L10 bot vs Apex a few times
+   (or read the L11 "100-game" number). Mostly draws. "Surviving isn't enough."
+2. **Watch Apex hunt — slowly (10 min).** Set the tick speed to 3–5s and play
+   Apex by hand (L11 has a 🎮 practice mode). Notice it **follows your tail**.
+3. **Spring the trap (10 min).** Lead Apex onto your tail, then steer onto a
+   food. You grow; it rams you; it dies. Do it on purpose a few times.
+4. **Turn it into a bot (20 min).** The hard part: a bot must *set up* the
+   tail-chase and time the eat. Or — like the ML tuner — just let a search loop
+   find the weights that make it happen, and watch the win rate climb.
+5. **Beat the gate.** Win one game, then pass the 100-game test (>+10% net).
 
-Have them add this term to their bot and watch a few games. It should start
-*winning*, not just drawing.
+## Level 12 — Apex Prime (the next frontier)
 
-> Honest note worth telling them: this "space-denial" trick **loses** to a calm
-> survivor — it only works *because* Apex is aggressive. **The counter is built
-> for one specific opponent.** That's a real idea in games and AI.
-
-## Part 4 — Let the computer tune it (20 min)
-
-Now the ML payoff. Their bot has a handful of knobs (how much to weight space,
-relative space, food, staying off walls…). Instead of guessing:
-
-1. **Make the knobs variables** (e.g. `wSpace`, `wDeny`, `wFood`, …).
-2. **Score a setting** by playing N games vs Apex and counting (wins − losses).
-3. **Search:**
-   - **Random search** — try many random settings, keep the best. (Explore.)
-   - **Hill climbing** — nudge one knob a little; keep the change if it scored
-     better, otherwise undo it. Repeat. (Exploit.)
-
-> "Yesterday *you* were the gradient — you changed numbers and watched. Now the
-> computer does it thousands of times an hour. That's machine learning: a
-> score, and a search for the numbers that make the score go up."
-
-If a laptop is handy, run a real tuner (the instructor's `snake-lab-ml/tune.mjs`
-shows one) and **watch the win rate climb live** — e.g. 28% → 50% → 65% → past
-the gate. Then talk about the honest part: a lucky short run can look amazing,
-so we **re-test the best setting over many more games** to get the true number.
-
-## Part 5 — Beat the gate (remainder)
-
-Drop the tuned bot into Level 11, win one game, and watch the 100-game test
-run. Cross the **+10% net** line → the reward unlocks.
-
-## Where this points (for the kid who's hooked)
-
-- This is exactly how game-playing AI is built: a **policy** (your weights), a
-  **score** (win rate), and a **search/learning** loop that improves the policy.
-- Real systems use fancier searches (gradient descent, evolution strategies,
-  reinforcement learning) and millions of games — but the shape is identical.
-- Next stops: Battlesnake (real bot tournaments), and Python tools like
-  OpenAI Gym / stable-baselines3 when they want to go deeper.
+The exploit is so central that we made a **patched** version: **Apex Prime
+(Level 12)**. Prime checks whether you're next to food and, if so, stops
+assuming your tail vacates — so the eat-and-ram trick **fails**. The bot that
+beats Apex *loses* to Prime. Beating Prime may require something genuinely new
+(or it may be the true ceiling — an open challenge).
 
 ## Instructor notes
 
-- **Don't give the answer bot.** The whole value is the kid deriving the
-  space-denial idea and tuning it. Nudge with questions, not code.
-- It's fine if they don't pass on day one. "Tune overnight and try again" is the
-  authentic experience.
-- Keep it honest: name the ceiling, name that the counter is opponent-specific,
-  name that short runs are noisy. Those caveats *are* the AI literacy.
-- The private reference solution + tuner are in `snake-lab-ml` — for **your**
-  eyes, to understand the target. Resist showing it.
+- The exploit was found by the **instructor**, not a kid — your job is to lead
+  the kid to *rediscover* it by slowing the game down and watching Apex chase.
+  Ask "why did it run into you right after you ate?" Let them connect it.
+- **Don't hand over the answer bot.** Guide with questions.
+- Teach the honest framing: the ML didn't get "smart," it found a bug. That's a
+  real and important AI idea (reward hacking / specification gaming), not a
+  footnote.
+- The private reference (`snake-lab-ml`: `counter-bot.js`, `tune.mjs`, the
+  finding) is for **your** eyes. Apex Prime (L12) is the hardened rematch.

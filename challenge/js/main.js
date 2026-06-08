@@ -364,8 +364,14 @@ function runVerifyGate(L) {
     if (net > VERIFY_MARGIN) {
       if (level > LS.beaten) LS.beaten = level;
       buildLadder();
-      showBanner('win', `You out-played ${L.name}! (net +${Math.round(net * 100)}%)`, 'unlocking a secret…');
-      setTimeout(() => showSecret(level), 1100);
+      if (revealSecret(level)) {
+        showBanner('win', `You out-played ${L.name}! (net +${Math.round(net * 100)}%)`, 'unlocking a secret…');
+        setTimeout(() => showSecret(level), 1100);
+      } else {
+        showBanner('win', `You out-played ${L.name}! (net +${Math.round(net * 100)}%)`,
+          level < MAX_LEVEL ? 'Level ' + (level + 1) + ' unlocked' : 'You beat them all! 🐍👑');
+        if (level < MAX_LEVEL) setTimeout(() => selectLevel(level + 1), 1800);
+      }
     } else {
       showBanner('lose', `Net ${net >= 0 ? '+' : ''}${Math.round(net * 100)}% vs ${L.name}`,
         `Need win−lose > ${Math.round(VERIFY_MARGIN * 100)}%. Copying ${L.name} only ties — you have to out-think it. Keep tuning!`);

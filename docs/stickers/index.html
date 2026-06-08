@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Snake Lab — Prize Stickers</title>
+  <style>
+    :root {
+      --bg: #1a1f2e;
+      --panel: #232b3e;
+      --ink: #e8ecf3;
+      --muted: #98a3b8;
+    }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, system-ui, sans-serif; }
+    header { padding: 32px 24px 8px; text-align: center; }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 1px; }
+    header p { color: var(--muted); margin: 8px 0 0; font-size: 14px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      padding: 32px 24px 48px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--panel);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+    .card img { width: 100%; height: auto; max-width: 380px; }
+    .card .label { font-weight: 700; letter-spacing: 2px; font-size: 13px; color: var(--muted); }
+    .sizes { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 12px; }
+    .sizes a { color: #7cc0e0; text-decoration: none; padding: 4px 8px; border: 1px solid #3a4661; border-radius: 6px; }
+    .sizes a:hover { background: #2c3550; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 16px 24px 32px; }
+    footer code { background: #2c3550; padding: 2px 6px; border-radius: 4px; color: var(--ink); }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Snake Lab — Prize Stickers</h1>
+    <p>Silver / Gold / Diamond — awarded for milestone clears in the challenge ladder.</p>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <img src="silver.svg" alt="Silver sticker"/>
+      <div class="label">SILVER · 1 star</div>
+      <div class="sizes">
+        <a href="silver.svg" download>Download SVG</a>
+      </div>
+    </div>
+    <div class="card">
+      <img src="gold.svg" alt="Gold sticker"/>
+      <div class="label">GOLD · 2 stars + crown</div>
+      <div class="sizes">
+        <a href="gold.svg" download>Download SVG</a>
+      </div>
+    </div>
+    <div class="card">
+      <img src="diamond.svg" alt="Diamond sticker"/>
+      <div class="label">DIAMOND · 3 stars + gem</div>
+      <div class="sizes">
+        <a href="diamond.svg" download>Download SVG</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    To export PNG: open an SVG in Chrome, right-click → <em>Save Image As…</em>, or run <code>chrome --headless --screenshot=out.png --window-size=500,500 file://...silver.svg</code>.
+  </footer>
+</body>
+</html>

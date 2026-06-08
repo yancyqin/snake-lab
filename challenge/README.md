@@ -26,6 +26,12 @@ loaded. Progress saves in `localStorage` on the device.
   (L8)** is the wall where reflexes stop working and you have to write a bot.
   After two manual losses on a level where code is available, a nudge offers to
   switch you to code mode.
+- **L11 Apex is beaten by exploiting a blind spot, not by out-surviving it.**
+  Apex (like every bot) assumes your tail vacates each tick — but eating makes
+  you grow, so baiting it into tail-chasing then eating makes it ram you. An ML
+  tuner finds this automatically (*reward hacking*). **L12 Apex Prime** patches
+  the blind spot, so that exploit fails — likely the true ceiling. See
+  [SECRET_LESSON](../docs/SECRET_LESSON.md).
 - **L11 Apex is bot-only with a win-rate gate:** a single full-board survivor
   is the 1v1 skill ceiling (L10), so Apex goes a step past it (pursuit + cutoff).
   Winning best-of-3 isn't enough — after you win the match, your bot is run
@@ -47,7 +53,8 @@ loaded. Progress saves in `localStorage` on the device.
 | 9 | 🎯 Hunter | Very deep look; barely misses a trap. |
 | 10 | 🏆 Grandmaster | Floods the whole board — the 1v1 survival ceiling. **(reward)** |
 | 11 | 🦅 Apex | Hunts: survives, then presses + cuts you off. Bot-only, win-rate gated. **(reward)** |
-| 12–13 | 🚧 | Coming soon — bots still being built. |
+| 12 | 🦾 Apex Prime | Apex with the tail-blind-spot patched — the L11 exploit fails. Bot-only, win-rate gated, no verse. The likely true ceiling. |
+| 13 | 🚧 | Coming soon. |
 
 The opponents live in [`js/opponents.js`](js/opponents.js) — all written with the
 **same `nextMove(state)` API kids use**. Reading them to figure out how to beat
