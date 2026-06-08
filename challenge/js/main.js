@@ -113,7 +113,7 @@ const modeManualBtn = $('modeManual'), modeCodeBtn = $('modeCode');
 const codePanel = $('codePanel'), botCodeEl = $('botCode'), botStatus = $('botStatus');
 const playBtn = $('playBtn'), stopBtn = $('stopBtn');
 const nudge = $('nudge'), nudgeBtn = $('nudgeBtn');
-const tallyLab = $('tallyLab');
+const tallyLab = $('tallyLab'), speedSel = $('speedSel');
 const modesRow = $('modesRow'), handOnly = $('handOnly'), verifyNote = $('verifyNote');
 const samplesRow = $('samplesRow'), greedySample = $('greedySample'), floodSample = $('floodSample');
 const joystick = $('joystick'), stick = joystick.querySelector('.joystick-stick');
@@ -252,7 +252,14 @@ function startGame() {
   setTimeout(() => { if (running) hideBanner(); }, 700);
   scheduleTick();
 }
-function scheduleTick() { clearTimeout(tickTimer); tickTimer = setTimeout(tickOnce, TICK_MS); }
+// Live-game tick delay. Kids can slow this down (300ms…10s) to prove that
+// losing is about STRATEGY, not reaction speed — then flip back to Normal to
+// fast-forward. Only affects the watched game; the L11 verify test is headless
+// and ignores it. Bots compute instantly regardless, so slowing only buys the
+// human thinking time.
+let tickMs = TICK_MS;
+speedSel.addEventListener('change', () => { tickMs = parseInt(speedSel.value, 10) || TICK_MS; });
+function scheduleTick() { clearTimeout(tickTimer); tickTimer = setTimeout(tickOnce, tickMs); }
 
 function tickOnce() {
   if (!running) return;
