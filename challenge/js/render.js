@@ -1,7 +1,7 @@
 // Draws the whole 30×30 board at once — no camera, so you always see both
 // snakes. Your snake is green, the opponent is orange.
 
-import { BOARD, CELL, COLORS } from './constants.js';
+import { BOARD, CELL, COLORS } from './constants.js?v=20260607';  // keep ?v= in sync (see index.html)
 
 export class Renderer {
   constructor(canvas) {

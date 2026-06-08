@@ -14,7 +14,7 @@
 //   - reach TICK_CAP with >1 alive        → the strictly-longest alive wins
 //                                           (you tie for longest → draw)
 
-import { BOARD, FOODS, INIT_LEN, TICK_CAP, COLORS } from './constants.js';
+import { BOARD, FOODS, INIT_LEN, TICK_CAP, COLORS } from './constants.js?v=20260607';  // keep ?v= in sync (see index.html)
 
 const OPP  = { UP: 'DOWN', DOWN: 'UP', LEFT: 'RIGHT', RIGHT: 'LEFT' };
 const STEP = { UP: [0, -1], DOWN: [0, 1], LEFT: [-1, 0], RIGHT: [1, 0] };

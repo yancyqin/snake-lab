@@ -89,3 +89,22 @@ localStorage.removeItem('sl_ch_beaten');
 localStorage.removeItem('sl_ch_code');
 localStorage.removeItem('sl_ch_mode');
 ```
+
+## Deploying — bump the cache token (important!)
+
+GitHub Pages caches the `.js` files, and the `<meta>` no-cache tags **don't**
+cover ES-module imports — so after you push, browsers can serve **stale code**
+until you hard-refresh. The fix is the `?v=` version token on the module graph
+(the entry `<script>` in `index.html` + every `import` in `js/*.js`). A new
+token = a new URL = guaranteed-fresh fetch, no hard-refresh needed.
+
+**Before each deploy, bump the token everywhere it appears** (one command, from
+the repo root — set it to today's date, or any new value):
+
+```bash
+NEW=$(date +%Y%m%d)   # e.g. 20260607; bump again same-day by appending a letter
+grep -rl '?v=' challenge | xargs sed -i '' "s/?v=[0-9A-Za-z.-]*/?v=$NEW/g"
+```
+
+All tokens must stay **in sync** — if they drift, the browser loads two copies
+of a module and you get subtle bugs. The `grep | sed` above keeps them uniform.

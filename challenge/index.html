@@ -186,6 +186,11 @@
     <a href="https://github.com/yancyqin/snake-lab/tree/main/challenge/js">GitHub</a> — scouting is allowed. 🔎
   </footer>
 
-  <script type="module" src="./js/main.js"></script>
+  <!-- Cache-busting. The meta tags above DON'T cover ES-module imports, and
+       GitHub Pages caches .js files — so after a deploy browsers can serve stale
+       code until you hard-refresh. The fix: a ?v= version token on the whole
+       module graph. BUMP IT on every deploy (a new date works), and keep it in
+       sync with the ?v= on each import in js/*.js. New token = guaranteed fresh. -->
+  <script type="module" src="./js/main.js?v=20260607"></script>
 </body>
 </html>

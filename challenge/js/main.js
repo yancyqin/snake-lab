@@ -1,10 +1,12 @@
 // Homework Challenge — ladder of 10 bots, best-of-3, manual or coded play.
 
-import { DuelGame } from './game.js';
-import { Renderer } from './render.js';
-import { LEVELS } from './opponents.js';
-import { revealSecret } from './secret.js';
-import { TICK_MS } from './constants.js';
+// NOTE: the ?v= is a cache-bust token — keep it the SAME across every import
+// here and in the other js/*.js files, and bump it on each deploy (see index.html).
+import { DuelGame } from './game.js?v=20260607';
+import { Renderer } from './render.js?v=20260607';
+import { LEVELS } from './opponents.js?v=20260607';
+import { revealSecret } from './secret.js?v=20260607';
+import { TICK_MS } from './constants.js?v=20260607';
 
 // ---------- persistence ----------
 const LS = {
