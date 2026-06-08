@@ -175,12 +175,12 @@ function selectLevel(n) {
 // Show/hide code mode + the starter buttons depending on the level.
 function renderModeUI() {
   const L = LEVELS[level - 1];
-  const botOnly = !!(L && L.verifyWinRate);         // bot-only levels can't be played by hand
+  const verifyLvl = !!(L && L.verifyWinRate);       // Apex: code = real gate, manual = practice
   const codeAllowed = level >= CODE_UNLOCK;
-  mode = botOnly ? 'code' : (codeAllowed ? userMode : 'manual');
-  modesRow.classList.toggle('hidden', botOnly || !codeAllowed);
-  handOnly.classList.toggle('hidden', botOnly || codeAllowed);
-  verifyNote.classList.toggle('hidden', !botOnly);
+  mode = codeAllowed ? userMode : 'manual';          // manual-only on L1; both modes elsewhere
+  modesRow.classList.toggle('hidden', !codeAllowed);
+  handOnly.classList.toggle('hidden', codeAllowed);
+  verifyNote.classList.toggle('hidden', !verifyLvl); // verify levels explain the reward path
   modeManualBtn.classList.toggle('active', mode === 'manual');
   modeCodeBtn.classList.toggle('active', mode === 'code');
   codePanel.classList.toggle('hidden', mode !== 'code');
@@ -191,6 +191,7 @@ function renderModeUI() {
   floodSample.classList.toggle('hidden', !floodOK);
   samplesRow.classList.toggle('hidden', !(greedyOK || floodOK));
   if (mode !== 'manual') nudge.classList.add('hidden');
+  updateTally();                                     // label tracks the current mode
 }
 
 // Wins needed to settle the match. Bot-only "verify" levels (Apex) need just
@@ -198,10 +199,13 @@ function renderModeUI() {
 function winTarget() { return LEVELS[level - 1] && LEVELS[level - 1].verifyWinRate ? 1 : 2; }
 
 function updateTally() {
+  const L = LEVELS[level - 1];
   const T = winTarget();
   const hearts = (w) => '🟢'.repeat(w) + '⚪'.repeat(Math.max(0, T - w));
   const foeLabel = foeBots.length > 1 ? `${foeBots.length} Foes` : 'Foe';
-  tallyLab.textContent = T === 1 ? 'WIN 1 → 100-GAME TEST' : 'BEST OF 3';
+  tallyLab.textContent = (L && L.verifyWinRate)
+    ? (mode === 'code' ? 'WIN 1 → 100-GAME TEST' : '🎮 PRACTICE — NO REWARD')
+    : 'BEST OF 3';
   tallyEl.textContent = `You ${hearts(youWins)}  vs  ${hearts(foeWins)} ${foeLabel}`;
 }
 
@@ -304,9 +308,13 @@ function matchWon() {
 
   const L = LEVELS[level - 1];
 
-  // Bot-only levels (e.g. Apex): winning best-of-3 isn't enough — the bot must
-  // beat this level's bot in MORE than half of 100 headless games.
-  if (L.verifyWinRate) { runVerifyGate(L); return; }
+  // Apex-style levels: the reward needs a BOT that wins the 100-game test.
+  if (L.verifyWinRate) {
+    if (mode === 'code') { runVerifyGate(L); return; }
+    // Manual win = practice only — no reward, no unlock.
+    showBanner('win', 'You beat Apex by hand! 🎮', 'Practice only — write a bot to claim the reward.');
+    return;
+  }
 
   if (level > LS.beaten) LS.beaten = level;
   buildLadder();
