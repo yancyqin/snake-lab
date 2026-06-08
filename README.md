@@ -78,7 +78,7 @@ Each version lives in its own folder and runs standalone. A kid never needs to r
 - [x] **Tunable bot** (v3) — `tunable.js` sample. 4 weights kids set by hand. The "you are the gradient" bot for L4.
 - [x] **Learning bot** (v3) — `learning.js` sample. Q-learning, 144 states, ε-greedy. Persists across ticks via closure. The "the bot tunes itself" bot for L5.
 - [x] **Persistent bot harness** (v3) — code runs once in a factory, `nextMove` captured in closure. Module-level `let`/`const` survives between ticks (required for Q-learning).
-- [x] **🏆 Homework Challenge** ([challenge/](challenge/)) — after-camp static site: 10-bot ladder (Randy → Grandmaster) + the **Achilles** expert level. Play by hand or write a bot. Milestone **verse rewards** at levels 4/6/8/10/11. Achilles (L11) is bot-only with a copy-proof win-rate gate.
+- [x] **🏆 Homework Challenge** ([challenge/](challenge/)) — after-camp static site: 10-bot ladder (Randy → Grandmaster) + the **Achilles** expert level. Play by hand or write a bot. Milestone **verse rewards** at levels 4/6/8/10/12. Achilles (L11) + Apex (L12) are bot-only with a copy-proof win-rate gate; L11 is beatable by an exploit (no verse), so the reward sits on the patched L12.
 - [x] **🎓 Secret Lesson** ([docs/SECRET_LESSON.md](docs/SECRET_LESSON.md)) — earned by clearing Challenge L10; advanced lesson on beating Achilles (find its weakness + ML tuning).
 - [x] [docs/LESSONS.md](docs/LESSONS.md) — full 3-day camp curriculum (L1–L6) + the take-home challenge & secret lesson
 - [x] [docs/PREP.md](docs/PREP.md) — instructor pre-camp checklist

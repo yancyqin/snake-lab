@@ -1,4 +1,4 @@
-// Secret reveals for Level 10 and Level 11.
+// Secret reveals for Level 10 and Level 12.
 //
 // Heads up, code reader 👋 — yes, the secret is in here. It's NOT stored as
 // plain text: it's XOR-scrambled and base64'd, and only un-scrambled the
@@ -18,8 +18,10 @@ function unscramble(b64, key) {
 }
 
 // Milestone rewards. Each blob is one scrambled "verse|reference" string.
-// L4/L6/L8 are early walls (single-key scramble); L10/L11 are the hard gates
-// (L11 split into two halves with separate keys).
+// L4/L6/L8 are early walls (single-key scramble); L10/L12 are the hard gates
+// (L12 split into two halves with separate keys). NB: L11 (Achilles) gives no
+// verse — it's the level you beat with an exploit, so the scripture reward is
+// earned only by clearing the patched Apex (L12).
 const L4_BLOB = 'MQkNAAAAAAAADVUdCA0QGwcdDwBIWwYfA1MwHU8ACFkUEQkNEhIADgcDFhQXAw0dGwZPDAINUBofThwBAA4JAkkYUwpCAVQGBwtHYVsBCA0KGwcdTiBCUFMbRB8YUg0LR1pdBwQNChsHTxkPSEYWGkgBVAsAG0dKW10QZxwHGhoPRxwOSg==';
 const L6_BLOB = 'OkxOEhpSAQFHFQRBFgcERABUBg0cCAEPRRYbBUBTAxoKTgAdHkhFUwFIUwcGFwsJExxFGA88RRoYGxUeDhUGXhZHVhxA';
 const L8_BLOB = 'Jx5YBwZVGhoNTBsJDTgdBxdUWlEHBA0VHhlTDUJNAUxFERMHB1gNWR0IDRAdVR0bWRgXCV0RHBFTG0MYCgNYBlIaBBoNTR0ISAYBARIaSVEdCwMIIgccAkhKER8NR0hA';
@@ -34,7 +36,7 @@ export function revealSecret(level) {
   else if (level === 6)  raw = unscramble(L6_BLOB, 'sl-strength-6');
   else if (level === 8)  raw = unscramble(L8_BLOB, 'sl-trust-8');
   else if (level === 10) raw = unscramble(PROVERBS_BLOB, 'Lucas-Snake-Lab-2026');
-  else if (level === 11) raw = unscramble(PSALMS_A_BLOB, 'first-half-x7q') + unscramble(PSALMS_B_BLOB, 'second-half-m3z');
+  else if (level === 12) raw = unscramble(PSALMS_A_BLOB, 'first-half-x7q') + unscramble(PSALMS_B_BLOB, 'second-half-m3z');
   else return null;
   const [verse, ref] = raw.split('|');
   return { verse, ref };

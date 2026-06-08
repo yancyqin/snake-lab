@@ -48,8 +48,8 @@ loaded. Progress saves in `localStorage` on the device.
 | 8 | 👑 The Boss | Deep flood fill. **The wall — code or lose.** |
 | 9 | 🎯 Hunter | Very deep look; barely misses a trap. |
 | 10 | 🏆 Grandmaster | Floods the whole board — the 1v1 survival ceiling. **(reward)** |
-| 11 | ⚔️ Achilles | Hunts: survives, then presses + cuts you off. Bot-only, win-rate gated. **(reward)** |
-| 12 | 🦅 Apex | Achilles with the tail-blind-spot patched — the L11 exploit fails. Bot-only, win-rate gated, no verse. The likely true ceiling. |
+| 11 | ⚔️ Achilles | Hunts: survives, then presses + cuts you off. Bot-only, win-rate gated. Beatable by an exploit — *no verse* for that. |
+| 12 | 🦅 Apex | Achilles with the tail-blind-spot patched — the L11 exploit fails. Bot-only, win-rate gated. The likely true ceiling. **(reward)** |
 | 13 | 🚧 | Coming soon. |
 
 The opponents live in [`js/opponents.js`](js/opponents.js) — all written with the
@@ -66,7 +66,7 @@ challenge/
     game.js         DuelGame — local match (N snakes) + collision rules
     opponents.js    the ladder bots (weak → strong) + the Achilles hunter
     render.js       full-board canvas drawing (no camera)
-    secret.js       the two reward reveals (L10, L11; scrambled, not plaintext)
+    secret.js       the two reward reveals (L10, L12; scrambled, not plaintext)
     main.js         ladder UI, best-of-3, manual + code input, localStorage
 ```
 
