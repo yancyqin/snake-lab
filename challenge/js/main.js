@@ -2,11 +2,11 @@
 
 // NOTE: the ?v= is a cache-bust token — keep it the SAME across every import
 // here and in the other js/*.js files, and bump it on each deploy (see index.html).
-import { DuelGame } from './game.js?v=20260607';
-import { Renderer } from './render.js?v=20260607';
-import { LEVELS } from './opponents.js?v=20260607';
-import { revealSecret } from './secret.js?v=20260607';
-import { TICK_MS } from './constants.js?v=20260607';
+import { DuelGame } from './game.js?v=20260608';
+import { Renderer } from './render.js?v=20260608';
+import { LEVELS } from './opponents.js?v=20260608';
+import { revealSecret } from './secret.js?v=20260608';
+import { TICK_MS, TICK_CAP } from './constants.js?v=20260608';
 
 // ---------- persistence ----------
 const LS = {
@@ -115,7 +115,7 @@ const modeManualBtn = $('modeManual'), modeCodeBtn = $('modeCode');
 const codePanel = $('codePanel'), botCodeEl = $('botCode'), botStatus = $('botStatus');
 const playBtn = $('playBtn'), stopBtn = $('stopBtn');
 const nudge = $('nudge'), nudgeBtn = $('nudgeBtn');
-const tallyLab = $('tallyLab'), speedSel = $('speedSel');
+const tallyLab = $('tallyLab'), speedSel = $('speedSel'), lenReadout = $('lenReadout');
 const modesRow = $('modesRow'), handOnly = $('handOnly'), verifyNote = $('verifyNote');
 const samplesRow = $('samplesRow'), greedySample = $('greedySample'), floodSample = $('floodSample');
 const joystick = $('joystick'), stick = joystick.querySelector('.joystick-stick');
@@ -215,6 +215,27 @@ function updateTally() {
   tallyEl.textContent = `You ${hearts(youWins)}  vs  ${hearts(foeWins)} ${foeLabel}`;
 }
 
+// Live length race + clock. At TICK_CAP the LONGER snake wins — so show who's
+// ahead and how many ticks are left. This is the rule players couldn't see.
+function updateLengths() {
+  if (!game || !lenReadout) return;
+  const you = game.snakes[0], foes = game.snakes.slice(1);
+  const L = LEVELS[level - 1];
+  const left = Math.max(0, TICK_CAP - game.tick);
+  const clock = running ? ` <span class="clock">· ⏱ ${left} left</span>` : '';
+  if (foes.length === 1) {
+    const yl = you.body.length, fl = foes[0].body.length;
+    const name = (L && L.name) || 'Foe';
+    lenReadout.innerHTML =
+      `<span class="you${yl > fl ? ' lead' : ''}">You ${yl}</span> · ` +
+      `<span class="foe${fl > yl ? ' lead' : ''}">${name} ${fl}</span>${clock}`;
+  } else {
+    lenReadout.innerHTML = [`<span class="you">You ${you.body.length}</span>`]
+      .concat(foes.map((s, i) => `<span class="foe">Foe${i + 1} ${s.body.length}</span>`))
+      .join(' · ') + clock;
+  }
+}
+
 // ---------- banner ----------
 function showBanner(cls, big, small) {
   banner.className = cls || '';
@@ -260,6 +281,7 @@ function startGame() {
   stopBtn.classList.remove('hidden');
   showBanner('', `Game ${gameNo}`, mode === 'manual' ? 'swipe / arrow keys' : 'your bot is driving');
   setTimeout(() => { if (running) hideBanner(); }, 700);
+  updateLengths();                                   // fresh 3 · 3 + full clock
   scheduleTick();
 }
 // Live-game tick delay. Kids can slow this down (300ms…10s) to prove that
@@ -284,6 +306,7 @@ function tickOnce() {
     moves[i] = s.alive ? safeDir(foeBots[i - 1], game.viewFor(i), s.direction) : s.direction;
   }
   game.step(moves);
+  updateLengths();                                   // live length race + ticks-left clock
   if (game.over) return endGame();
   scheduleTick();
 }
@@ -291,20 +314,39 @@ function tickOnce() {
 function endGame() {
   running = false;
   const w = game.winner;
+  updateLengths();                                   // freeze the final lengths on screen
+
+  const L = LEVELS[level - 1];
+  const foeName = (L && L.name) || 'Foe';
+  const you = game.snakes[0], foe = game.snakes[1];
+  // Nobody died → the 1000-tick cap decided it by LENGTH. (Engine doesn't kill at
+  // the cap, so 2+ still alive means we reached the time limit.)
+  const byTime = game.snakes.filter(s => s.alive).length >= 2;
+  const lens = foe ? `You ${you.body.length} · ${foeName} ${foe.body.length}` : '';
+
   if (w === 'draw') {
-    showBanner('', 'Draw!', 'replaying…');
-    setTimeout(() => { if (!running) startGame(); }, 1100);
+    if (byTime) showBanner('', '⏱ Time! Equal length — Draw', `${lens} · replaying…`);
+    else        showBanner('', 'Draw — you both crashed', 'replaying…');
+    setTimeout(() => { if (!running) startGame(); }, 1300);
     return;
   }
+
   if (w === 'you') youWins++; else foeWins++;
   updateTally();
+
+  // Explain THIS game: a length win at the time limit, or a crash.
+  const cls = w === 'you' ? 'win' : 'lose';
+  const big = byTime
+    ? (w === 'you' ? '⏱ Time! You win by length!' : `⏱ Time! ${foeName} wins by length`)
+    : (w === 'you' ? 'You win the round!'          : `${foeName} takes it`);
+  const small = byTime ? lens : (w === 'you' ? `${foeName} crashed` : 'you crashed');
 
   const T = winTarget();
   if (youWins === T) return matchWon();
   if (foeWins === T) return matchLost();
 
-  showBanner(w === 'you' ? 'win' : 'lose', w === 'you' ? 'You win the round!' : 'Foe takes it', 'next game…');
-  setTimeout(() => { if (!running) startGame(); }, 1200);
+  showBanner(cls, big, small);
+  setTimeout(() => { if (!running) startGame(); }, 1300);
 }
 
 function matchWon() {

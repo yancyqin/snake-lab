@@ -67,6 +67,13 @@
     .blurb { color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 10px; }
     .tally { font-size: 26px; letter-spacing: 4px; margin-bottom: 10px; }
     .tally .lab { font-size: 11px; color: #64748b; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+    /* live length race + clock — at the time limit, the LONGER snake wins */
+    .lengths { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+    .lengths .lab { font-size: 11px; font-weight: 400; color: #64748b; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+    .lengths .you { color: #4ade80; }
+    .lengths .foe { color: #f97316; }
+    .lengths .clock { color: #94a3b8; font-weight: 400; }
+    .lengths .lead { text-decoration: underline; }
 
     .modes { display: flex; gap: 6px; margin-bottom: 10px; }
     .modes button {
@@ -136,6 +143,7 @@
       <h2 id="levelTitle">Level 1 — 🎲 Random Randy</h2>
       <div id="levelBlurb" class="blurb"></div>
       <div class="tally"><span class="lab" id="tallyLab">BEST OF 3</span><span id="tally">· vs ·</span></div>
+      <div class="lengths"><span class="lab">LENGTH · longest wins at the time limit ⏱</span><span id="lenReadout">—</span></div>
 
       <div id="modesRow" class="modes">
         <button id="modeManual" class="active">🎮 Play yourself</button>
@@ -191,6 +199,6 @@
        code until you hard-refresh. The fix: a ?v= version token on the whole
        module graph. BUMP IT on every deploy (a new date works), and keep it in
        sync with the ?v= on each import in js/*.js. New token = guaranteed fresh. -->
-  <script type="module" src="./js/main.js?v=20260607"></script>
+  <script type="module" src="./js/main.js?v=20260608"></script>
 </body>
 </html>
