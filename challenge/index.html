@@ -8,197 +8,325 @@
   <meta http-equiv="Expires" content="0">
   <title>Snake Lab — Homework Challenge 🐍</title>
   <style>
-    * { box-sizing: border-box; }
-    body {
-      background: #0f0f1a; color: #f1f5f9;
-      font-family: -apple-system, system-ui, sans-serif;
-      margin: 0; padding: 16px; display: flex; flex-direction: column; align-items: center;
+    /* homework challenge — arcade-dark, light(💡)-accent theme, ported from
+       lucasgame-academy. Big touch targets, ≥16px text (iPad: no zoom-on-focus). */
+    :root {
+      --bg: #131022;
+      --pane: #1d1932;
+      --pane-2: #251f40;
+      --ink: #efeaff;
+      --muted: #9c93c0;
+      --light: #ffd34d;        /* the 💡 accent */
+      --good: #6ee787;
+      --bad: #ff6b81;
+      --line: #3a2f6b;         /* borders */
+      --well: #0d0a1a;         /* code + input background */
+      --radius: 14px;
+      font-size: 16px;
     }
-    h1 { font-size: 22px; margin: 0 0 2px; }
-    .sub { color: #94a3b8; font-size: 13px; margin-bottom: 14px; text-align: center; }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     .hidden { display: none !important; }
 
-    /* Ladder */
-    .ladder { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 720px; margin-bottom: 14px; }
-    .chip {
-      border: 1px solid #334155; border-radius: 8px; background: #1a1a2e; color: #cbd5e1;
-      padding: 6px 9px; font-size: 13px; cursor: pointer; display: flex; gap: 5px; align-items: center;
-      transition: all 0.12s;
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    .chip .lv { color: #64748b; font-size: 11px; }
-    .chip.beaten { border-color: #15803d; }
-    .chip.beaten::after { content: '★'; color: #4ade80; }
-    .chip.current { border-color: #4ade80; box-shadow: 0 0 0 1px #4ade80; }
-    .chip.locked { opacity: 0.4; cursor: not-allowed; }
-    .chip:not(.locked):hover { border-color: #94a3b8; }
+    code, pre, textarea, .cm-editor { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+    code { background: var(--well); padding: 1px 6px; border-radius: 4px; }
 
-    .arena { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; align-items: flex-start; }
-    .canvas-wrap { position: relative; display: inline-block; line-height: 0; touch-action: none; }
-    canvas#game {
-      border: 2px solid #334155; border-radius: 6px; background: #14142a;
-      display: block; max-width: 100%; max-height: calc(100vh - 220px); height: auto; width: auto;
+    /* ---------- header ---------- */
+    header {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem;
+      padding: .7rem 1.1rem; border-bottom: 1px solid #2c2450;
     }
+    .brand { display: flex; align-items: center; gap: .6rem; }
+    .logo { font-size: 1.7rem; filter: drop-shadow(0 0 8px var(--light)); }
+    .wordmark { font-size: 1.15rem; letter-spacing: .02em; }
+    .wordmark b { color: var(--light); }
+    .tagline { font-size: .72rem; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; }
+    .world { color: var(--muted); font-size: .95rem; }
+
+    .sub { color: var(--muted); font-size: .9rem; margin: .7rem auto .1rem; text-align: center; padding: 0 1.1rem; }
+    .sub b { color: var(--ink); }
+
+    footer { padding: .7rem 1.1rem; color: var(--muted); font-size: .85rem; border-top: 1px solid #2c2450; margin-top: auto; text-align: center; line-height: 1.5; }
+    footer b { color: var(--light); }
+    footer a { color: var(--muted); }
+
+    /* ---------- the ladder (step rail) ---------- */
+    .ladder { display: flex; gap: .45rem; padding: .65rem 1.1rem; flex-wrap: wrap; justify-content: center; }
+    .chip {
+      border: 1px solid var(--line); background: var(--pane); color: var(--ink);
+      padding: .5rem .85rem; border-radius: 999px; font-size: .92rem; cursor: pointer;
+      display: flex; gap: .35rem; align-items: center; font-family: inherit;
+    }
+    .chip .lv { color: var(--muted); font-size: .72rem; }
+    .chip.beaten { border-color: #6ee78766; }
+    .chip.beaten::after { content: '★'; color: var(--light); }
+    .chip.current { border-color: var(--light); color: var(--light); box-shadow: 0 0 10px #ffd34d44; }
+    .chip.current .lv { color: var(--light); }
+    .chip.locked { opacity: .5; cursor: default; }
+    .chip.locked::after { content: '🔒'; font-size: .75rem; }
+    .chip:not(.locked):hover { border-color: var(--light); }
+
+    /* ---------- arena layout ----------
+       Academy pattern: game pane and work panel side by side, and the canvas
+       is sticky so the game stays in view while you scroll the code. On
+       narrow screens (iPad portrait) it stacks — and while CODING the canvas
+       shrinks to a compact monitor so the editor gets the room. */
+    .arena {
+      flex: 1; display: flex; gap: 1.1rem; padding: 0 1.1rem 1.1rem;
+      align-items: flex-start; justify-content: center;
+    }
+    .canvas-wrap { position: sticky; top: .5rem; display: inline-block; line-height: 0; touch-action: none; }
+    canvas#game {
+      border: 2px solid var(--line); border-radius: 10px; background: var(--well);
+      display: block; max-width: 100%; max-height: calc(100vh - 250px); height: auto; width: auto;
+    }
+
     /* result banner over the canvas */
     #banner {
       position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-      background: rgba(15, 15, 26, 0.92); border: 1px solid #334155; border-radius: 10px;
+      background: rgba(13, 10, 26, 0.92); border: 1px solid var(--line); border-radius: var(--radius);
       padding: 16px 22px; text-align: center; min-width: 220px; pointer-events: none;
       line-height: 1.3;
     }
     #banner .big { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-    #banner .small { font-size: 13px; color: #94a3b8; }
-    #banner.win .big { color: #4ade80; }
-    #banner.lose .big { color: #f97316; }
+    #banner .small { font-size: 13px; color: var(--muted); }
+    #banner.win .big { color: var(--good); }
+    #banner.lose .big { color: var(--bad); }
 
     /* Virtual joystick */
     .joystick {
       position: absolute; width: 110px; height: 110px; border-radius: 50%;
-      background: rgba(31,41,55,0.5); border: 2px solid rgba(74,222,128,0.75);
+      background: rgba(29, 25, 50, 0.55); border: 2px solid rgba(255, 211, 77, 0.75);
       pointer-events: none; transform: translate(-50%, -50%); transition: opacity 100ms;
     }
     .joystick.hidden { opacity: 0; }
     .joystick-stick {
       position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; border-radius: 50%;
-      background: rgba(74,222,128,0.95); transform: translate(-50%, -50%);
+      background: rgba(255, 211, 77, 0.95); transform: translate(-50%, -50%);
     }
 
-    .panel { background: #1a1a2e; border: 1px solid #334155; border-radius: 8px; padding: 14px; width: 320px; max-width: 100%; }
-    .panel h2 { margin: 0 0 4px; font-size: 17px; }
-    .blurb { color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 10px; }
-    .tally { font-size: 26px; letter-spacing: 4px; margin-bottom: 10px; }
-    .tally .lab { font-size: 11px; color: #64748b; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+    /* ---------- the panel card ---------- */
+    .panel { background: var(--pane); border-radius: var(--radius); padding: 1rem 1.1rem; flex: 1 1 460px; min-width: 300px; max-width: 780px; }
+    .panel h2 { margin: .1rem 0 .4rem; font-size: 1.12rem; color: var(--light); }
+    .blurb { color: var(--muted); font-size: .9rem; line-height: 1.5; margin-bottom: .7rem; }
+    .muted { color: var(--muted); }
+
+    .tally { font-size: 26px; letter-spacing: 4px; margin-bottom: .6rem; }
+    .tally .lab { font-size: .7rem; color: var(--muted); letter-spacing: .05em; display: block; margin-bottom: 2px; }
     /* live length race + clock — at the time limit, the LONGER snake wins */
-    .lengths { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
-    .lengths .lab { font-size: 11px; font-weight: 400; color: #64748b; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
-    .lengths .you { color: #4ade80; }
-    .lengths .foe { color: #f97316; }
-    .lengths .clock { color: #94a3b8; font-weight: 400; }
+    .lengths { font-size: .95rem; font-weight: 700; margin-bottom: .7rem; }
+    .lengths .lab { font-size: .7rem; font-weight: 400; color: var(--muted); letter-spacing: .05em; display: block; margin-bottom: 2px; }
+    .lengths .you { color: var(--good); }
+    .lengths .foe { color: var(--bad); }
+    .lengths .clock { color: var(--muted); font-weight: 400; }
     .lengths .lead { text-decoration: underline; }
 
-    .modes { display: flex; gap: 6px; margin-bottom: 10px; }
+    button { font-family: inherit; }
+    .modes { display: flex; gap: .45rem; margin-bottom: .7rem; }
     .modes button {
-      flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #0f0f1a;
-      color: #cbd5e1; cursor: pointer; font-size: 14px;
+      flex: 1; padding: .55rem; border-radius: 10px; border: 1px solid var(--line);
+      background: var(--pane-2); color: var(--ink); cursor: pointer; font-size: .95rem; min-height: 40px;
     }
-    .modes button.active { background: #4ade80; color: #0f0f1a; border-color: #4ade80; font-weight: 600; }
-    .hand-note { font-size: 13px; color: #94a3b8; background: #0f0f1a; border: 1px solid #334155; border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; text-align: center; }
-    .speed-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
-    .speed-row label { font-size: 13px; color: #cbd5e1; }
-    .speed-row select { flex: 1; padding: 7px 8px; border-radius: 6px; background: #0f0f1a; color: #f1f5f9; border: 1px solid #334155; font-size: 14px; }
-    .speed-note { font-size: 11px; color: #64748b; margin-top: 5px; line-height: 1.4; }
+    .modes button:hover { border-color: var(--light); }
+    .modes button.active { background: var(--light); color: #1a1505; border-color: var(--light); font-weight: 700; }
 
-    #codePanel textarea {
-      width: 100%; height: 220px; background: #0f0f1a; color: #e2e8f0; border: 1px solid #334155;
-      border-radius: 6px; padding: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 12px;
-      resize: vertical; white-space: pre; tab-size: 2;
+    .hand-note {
+      font-size: .85rem; color: var(--ink); background: var(--pane-2); border-left: 3px solid var(--light);
+      border-radius: 0 10px 10px 0; padding: .55rem .8rem; margin-bottom: .7rem; line-height: 1.45;
     }
-    .samples { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; align-items: center; }
-    .samples span { font-size: 11px; color: #64748b; }
+
+    /* ---------- function card (the contract) ---------- */
+    .fncard { background: var(--pane-2); border-radius: 10px; padding: .7rem .9rem; font-size: .85rem; margin-bottom: .6rem; }
+    .fncard .sig { color: var(--light); font-family: ui-monospace, Menlo, monospace; }
+    .fncard table { border-collapse: collapse; margin-top: .4rem; width: 100%; }
+    .fncard td { padding: .2rem .45rem .2rem 0; vertical-align: top; }
+    .fncard td.k { color: var(--good); font-family: ui-monospace, Menlo, monospace; white-space: nowrap; }
+    .fncard td.ex { color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+
+    /* ---------- the editor ---------- */
+    .samples { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .5rem; align-items: center; }
+    .samples span { font-size: .8rem; color: var(--muted); }
     .samples button, .mini {
-      font-size: 12px; padding: 4px 8px; border-radius: 5px; border: 1px solid #334155;
-      background: #1f2937; color: #cbd5e1; cursor: pointer;
+      font-size: .85rem; padding: .35rem .7rem; border-radius: 8px; border: 1px solid var(--line);
+      background: var(--pane-2); color: var(--ink); cursor: pointer; min-height: 34px;
     }
-    .bot-status { font-size: 12px; margin-top: 6px; min-height: 16px; }
-    .bot-status.ok { color: #4ade80; }
-    .bot-status.err { color: #f87171; }
+    .samples button:hover, .mini:hover { border-color: var(--light); }
 
-    .controls { display: flex; gap: 8px; margin-top: 12px; }
-    .controls button { flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: 600; font-size: 15px; cursor: pointer; }
-    .primary { background: #4ade80; color: #0f0f1a; }
-    .secondary { background: #334155; color: #f1f5f9; }
+    .editor-stack { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .editor-host { background: var(--well); }
+    .editor-host .cm-editor { font-size: 1rem; min-height: 280px; max-height: 58vh; }
+    .editor-host .cm-scroller { overflow: auto; }
+    .editor-host textarea {
+      width: 100%; min-height: 18rem; border: 0; outline: none; resize: vertical; tab-size: 2;
+      background: var(--well); color: var(--ink); font-size: 1rem; line-height: 1.5; padding: .6rem .8rem;
+      white-space: pre;
+    }
 
-    #nudge { margin-top: 10px; padding: 10px; border: 1px dashed #f97316; border-radius: 8px; background: rgba(249,115,22,0.08); }
-    #nudge p { margin: 0 0 8px; font-size: 13px; color: #fdba74; }
-    #nudgeBtn { width: 100%; padding: 8px; border: none; border-radius: 6px; background: #f97316; color: #0f0f1a; font-weight: 600; cursor: pointer; }
+    .editor-row { display: flex; gap: .45rem; flex-wrap: wrap; margin-top: .5rem; }
 
-    /* Secret modal */
-    .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
-    .modal { background: #16162c; border: 2px solid #4ade80; border-radius: 14px; padding: 28px; max-width: 480px; text-align: center; box-shadow: 0 0 40px rgba(74,222,128,0.25); }
+    .bot-status { font-size: .85rem; margin-top: .4rem; min-height: 1.1rem; line-height: 1.4; }
+    .bot-status.ok { color: var(--good); }
+    .bot-status.err { color: var(--light); }
+    .bot-status .raw { display: block; color: var(--muted); font-size: .72rem; }
+
+    /* ---------- hints ---------- */
+    .hintbox {
+      background: var(--pane-2); border-left: 3px solid var(--light);
+      border-radius: 0 10px 10px 0; padding: .3rem .9rem; margin: .5rem 0 0;
+    }
+    .hintbox p { margin: .5rem 0; line-height: 1.5; font-size: .9rem; }
+
+    /* ---------- speed + controls ---------- */
+    .speed-row { display: flex; align-items: center; gap: .5rem; margin-top: .8rem; }
+    .speed-row label { font-size: .85rem; color: var(--ink); }
+    .speed-row select {
+      flex: 1; padding: .5rem .55rem; border-radius: 10px; background: var(--well);
+      color: var(--ink); border: 1px solid var(--line); font-size: 1rem; font-family: inherit;
+    }
+    .speed-note { font-size: .75rem; color: var(--muted); margin-top: .35rem; line-height: 1.4; }
+    .speed-note b { color: var(--ink); }
+
+    .controls { display: flex; gap: .55rem; margin: 0 0 .8rem; }
+    .controls button { flex: 1; padding: .65rem; border-radius: 10px; border: none; font-weight: 700; font-size: 1rem; cursor: pointer; min-height: 44px; }
+    .primary { background: var(--light); color: #1a1505; }
+    .secondary { background: var(--pane-2); color: var(--ink); border: 1px solid var(--line); }
+
+    #nudge { margin-top: .7rem; padding: .7rem .8rem; border: 1px dashed var(--light); border-radius: 10px; background: #ffd34d14; }
+    #nudge p { margin: 0 0 .5rem; font-size: .85rem; color: var(--ink); line-height: 1.45; }
+    #nudgeBtn { width: 100%; padding: .55rem; border: none; border-radius: 10px; background: var(--light); color: #1a1505; font-weight: 700; cursor: pointer; min-height: 40px; }
+
+    /* ---------- secret modal ---------- */
+    .backdrop { position: fixed; inset: 0; background: rgba(13, 10, 26, 0.85); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+    .modal { background: var(--pane); border: 2px solid var(--light); border-radius: var(--radius); padding: 28px; max-width: 480px; text-align: center; box-shadow: 0 0 40px rgba(255, 211, 77, 0.25); }
     .modal .trophy { font-size: 44px; }
-    .modal h2 { margin: 8px 0 4px; }
-    .modal .verse { font-size: 18px; line-height: 1.55; color: #f1f5f9; margin: 16px 0 6px; font-style: italic; }
-    .modal .ref { color: #4ade80; font-weight: 600; margin-bottom: 16px; }
-    .modal .claim { background: #0f0f1a; border: 1px solid #334155; border-radius: 8px; padding: 12px; font-size: 13px; color: #cbd5e1; line-height: 1.5; }
-    .modal .claim b { color: #fbbf24; }
-    .modal button { margin-top: 16px; padding: 10px 18px; border: none; border-radius: 6px; background: #4ade80; color: #0f0f1a; font-weight: 600; cursor: pointer; }
+    .modal h2 { margin: 8px 0 4px; color: var(--light); }
+    .modal .verse { font-size: 18px; line-height: 1.55; color: var(--ink); margin: 16px 0 6px; font-style: italic; }
+    .modal .ref { color: var(--good); font-weight: 600; margin-bottom: 16px; }
+    .modal .claim { background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .modal .claim b { color: var(--light); }
+    .modal button { margin-top: 16px; padding: 10px 18px; border: none; border-radius: 10px; background: var(--light); color: #1a1505; font-weight: 700; cursor: pointer; min-height: 40px; }
 
-    footer { color: #64748b; font-size: 12px; margin-top: 18px; text-align: center; }
-    footer a { color: #94a3b8; }
+    /* stacked: iPad portrait & phones */
+    @media (max-width: 1000px) {
+      .arena { flex-direction: column; align-items: center; }
+      .canvas-wrap { top: .35rem; z-index: 5; align-self: center; }
+      canvas#game { max-height: 52vh; }                 /* playing: big stage */
+      body.mode-code canvas#game { max-height: 34vh; }  /* coding: compact monitor */
+      .panel { flex-basis: auto; width: 100%; max-width: 760px; }
+    }
   </style>
 </head>
 <body>
-  <h1>🐍 Homework Challenge</h1>
-  <div class="sub">Beat all 10 bots. Win each level <b>best&nbsp;of&nbsp;3</b>. Play by hand… or write a bot that does it for you.</div>
 
-  <div id="ladder" class="ladder"></div>
-
-  <div class="arena">
-    <div class="canvas-wrap">
-      <canvas id="game"></canvas>
-      <div id="joystick" class="joystick hidden"><div class="joystick-stick"></div></div>
-      <div id="banner" class="hidden"><div class="big"></div><div class="small"></div></div>
-    </div>
-
-    <div class="panel">
-      <h2 id="levelTitle">Level 1 — 🎲 Random Randy</h2>
-      <div id="levelBlurb" class="blurb"></div>
-      <div class="tally"><span class="lab" id="tallyLab">BEST OF 3</span><span id="tally">· vs ·</span></div>
-      <div class="lengths"><span class="lab">LENGTH · longest wins at the time limit ⏱</span><span id="lenReadout">—</span></div>
-
-      <div id="modesRow" class="modes">
-        <button id="modeManual" class="active">🎮 Play yourself</button>
-        <button id="modeCode">🤖 Run my bot</button>
-      </div>
-      <div id="handOnly" class="hand-note hidden">🎮 Level 1: play by hand. Coding unlocks at Level 2.</div>
-      <div id="verifyNote" class="hand-note hidden"><!-- text set per-level in main.js renderModeUI() (names Achilles / Apex) --></div>
-
-      <div id="codePanel" class="hidden">
-        <div class="samples" id="samplesRow">
-          <span>Start from:</span>
-          <button class="sample" data-sample="greedy" id="greedySample">Greedy+Safe</button>
-          <button class="sample" data-sample="flood" id="floodSample">Flood-fill starter</button>
-        </div>
-        <textarea id="botCode" spellcheck="false"></textarea>
-        <button class="mini" id="copyBtn">📋 Copy my bot</button>
-        <div id="botStatus" class="bot-status"></div>
-      </div>
-
-      <div class="speed-row">
-        <label for="speedSel">🐢 Tick speed</label>
-        <select id="speedSel">
-          <option value="130">Normal</option>
-          <option value="300">300 ms</option>
-          <option value="600">600 ms</option>
-          <option value="1000">1 second</option>
-          <option value="3000">3 seconds</option>
-          <option value="5000">5 seconds</option>
-          <option value="10000">10 seconds</option>
-        </select>
-      </div>
-      <div class="speed-note">Slow it down to prove it's <b>strategy, not speed</b>. Change anytime; flip back to Normal to fast-forward.</div>
-
-      <div class="controls">
-        <button id="playBtn" class="primary">▶ Play</button>
-        <button id="stopBtn" class="secondary hidden">■ Stop</button>
-      </div>
-
-      <div id="nudge" class="hidden">
-        <p>Losing by hand? Bots don't blink. Write one and let it play for you →</p>
-        <button id="nudgeBtn">Switch to 🤖 Run my bot</button>
-      </div>
+<header>
+  <div class="brand">
+    <span class="logo">🐍</span>
+    <div>
+      <div class="wordmark">snake <b>lab</b></div>
+      <div class="tagline">homework challenge</div>
     </div>
   </div>
+  <div class="world">🏆 beat all 10 — best of 3</div>
+</header>
 
-  <footer>
-    Part of <a href="../">Snake Lab</a>. Your progress saves on this device. Stuck? Read the opponents' code on
-    <a href="https://github.com/yancyqin/snake-lab/tree/main/challenge/js">GitHub</a> — scouting is allowed. 🔎
-  </footer>
+<div class="sub">Win each level <b>best of 3</b>. Play by hand… or write a bot that does it for you.</div>
 
-  <!-- Cache-busting. The meta tags above DON'T cover ES-module imports, and
-       GitHub Pages caches .js files — so after a deploy browsers can serve stale
-       code until you hard-refresh. The fix: a ?v= version token on the whole
-       module graph. BUMP IT on every deploy (a new date works), and keep it in
-       sync with the ?v= on each import in js/*.js. New token = guaranteed fresh. -->
-  <script type="module" src="./js/main.js?v=20260608"></script>
+<div id="ladder" class="ladder"></div>
+
+<div class="arena">
+  <div class="canvas-wrap">
+    <canvas id="game"></canvas>
+    <div id="joystick" class="joystick hidden"><div class="joystick-stick"></div></div>
+    <div id="banner" class="hidden"><div class="big"></div><div class="small"></div></div>
+  </div>
+
+  <div class="panel">
+    <h2 id="levelTitle">Level 1 — 🎲 Random Randy</h2>
+    <div id="levelBlurb" class="blurb"></div>
+    <div class="tally"><span class="lab" id="tallyLab">BEST OF 3</span><span id="tally">· vs ·</span></div>
+    <div class="lengths"><span class="lab">LENGTH · longest wins at the time limit ⏱</span><span id="lenReadout">—</span></div>
+
+    <div id="modesRow" class="modes">
+      <button id="modeManual" class="active">🎮 Play yourself</button>
+      <button id="modeCode">🤖 Run my bot</button>
+    </div>
+    <div id="handOnly" class="hand-note hidden">🎮 Level 1: play by hand. Coding unlocks at Level 2.</div>
+    <div id="verifyNote" class="hand-note hidden"><!-- text set per-level in main.js renderModeUI() (names Achilles / Apex) --></div>
+
+    <div class="controls">
+      <button id="playBtn" class="primary">▶ Play</button>
+      <button id="stopBtn" class="secondary hidden">■ Stop</button>
+    </div>
+
+    <div id="codePanel" class="hidden">
+      <div class="fncard">
+        <div class="sig">nextMove(state) → 'UP' · 'DOWN' · 'LEFT' · 'RIGHT'</div>
+        <table>
+          <tr><td class="k">state.me</td><td class="ex">{ body, direction, alive }</td><td class="muted">your snake — head is body[0]</td></tr>
+          <tr><td class="k">state.foods</td><td class="ex">[{x, y}, …]</td><td class="muted">apples on the board</td></tr>
+          <tr><td class="k">state.others</td><td class="ex">[{ body, … }, …]</td><td class="muted">the rival snake(s)</td></tr>
+          <tr><td class="k">state.board</td><td class="ex">{ width: 24, height: 24 }</td><td class="muted">walls at the edges</td></tr>
+          <tr><td class="k">returns</td><td class="ex">'UP'</td><td class="muted">where your head steps next</td></tr>
+        </table>
+      </div>
+      <div class="samples" id="samplesRow">
+        <span>Start from:</span>
+        <button class="sample" data-sample="greedy" id="greedySample">Greedy+Safe</button>
+        <button class="sample" data-sample="flood" id="floodSample">Flood-fill starter</button>
+      </div>
+      <div class="editor-stack">
+        <div class="editor-host" id="botCodeHost"></div>
+      </div>
+      <div class="editor-row">
+        <button class="mini" id="copyBtn">📋 Copy my bot</button>
+        <button class="mini" id="hintBtn">💡 Hint</button>
+      </div>
+      <div id="botStatus" class="bot-status"></div>
+      <div class="hintbox" id="hintBox" hidden></div>
+    </div>
+
+    <div class="speed-row">
+      <label for="speedSel">🐢 Tick speed</label>
+      <select id="speedSel">
+        <option value="130">Normal</option>
+        <option value="300">300 ms</option>
+        <option value="600">600 ms</option>
+        <option value="1000">1 second</option>
+        <option value="3000">3 seconds</option>
+        <option value="5000">5 seconds</option>
+        <option value="10000">10 seconds</option>
+      </select>
+    </div>
+    <div class="speed-note">Slow it down to prove it's <b>strategy, not speed</b>. Change anytime; flip back to Normal to fast-forward.</div>
+
+    <div id="nudge" class="hidden">
+      <p>Losing by hand? Bots don't blink. Write one and let it play for you →</p>
+      <button id="nudgeBtn">Switch to 🤖 Run my bot</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  a <b>snake lab</b> project · part of <a href="../">Snake Lab</a> · your progress saves on this device.<br>
+  Stuck? Read the opponents' code on
+  <a href="https://github.com/yancyqin/snake-lab/tree/main/challenge/js">GitHub</a> — scouting is allowed. 🔎
+</footer>
+
+<!-- Cache-busting. The meta tags above DON'T cover ES-module imports, and
+     GitHub Pages caches .js files — so after a deploy browsers can serve stale
+     code until you hard-refresh. The fix: a ?v= version token on the whole
+     module graph. BUMP IT on every deploy (a new date works), and keep it in
+     sync with the ?v= on each import in js/*.js. New token = guaranteed fresh. -->
+<script type="module" src="./js/main.js?v=20260612"></script>
 </body>
 </html>

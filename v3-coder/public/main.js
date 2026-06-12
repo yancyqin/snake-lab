@@ -1,5 +1,7 @@
 import { PLAYER_COLORS, POINTS_PER_FOOD, FUNNY_NAMES, WORLD_COLS, WORLD_ROWS } from './constants.js';
 import { Renderer } from './render.js';
+import { createEditor } from './editor.js';
+import { translate } from './errors.js';
 
 const DEFAULT_BOT_CODE = `// Your bot. Edit me!
 // state.me     = { body: [{x,y}, ...], direction: 'UP', alive: true }
@@ -14,6 +16,47 @@ function nextMove(state) {
 }
 `;
 
+// 💡 hint ladder (academy pattern): one tier per click, never auto-shown.
+const HINTS = [
+  'Start from a sample and read it line by line. <b>Random</b> flails, <b>Greedy</b> chases food, <b>Safe</b> looks before it steps, <b>Tunable</b> mixes those ideas with weights you can tune.',
+  'Survival first: before you return a direction, check the square it leads to. Off the board (<code>state.board</code>)? Inside YOUR body or someone else\'s? Then don\'t go there.',
+  'Don\'t take the first safe move — score all four: closer to the nearest food = points up, danger or tight space = points down. Return the winner.',
+];
+
+function wireHints(btn, box) {
+  let tier = 0;
+  btn.addEventListener('click', () => {
+    if (tier >= HINTS.length) return;
+    box.hidden = false;
+    const p = document.createElement('p');
+    p.innerHTML = `💡 <b>Hint ${tier + 1}:</b> ${HINTS[tier]}`;
+    box.appendChild(p);
+    tier++;
+    btn.textContent = tier >= HINTS.length ? '💡 That\'s every hint' : `💡 Hint (${tier}/${HINTS.length} used)`;
+    if (tier >= HINTS.length) btn.disabled = true;
+  });
+}
+
+// Syntax-only check — compiles the code but never runs it, so a half-typed
+// line can't hang the page. "Is nextMove defined?" is checked at deploy time.
+function checkSyntax(code) {
+  try { new Function(code); return null; }
+  catch (e) { return translate(e); }
+}
+
+// Friendly error first, raw truth in small print (academy style).
+function showLint(el, err) {
+  el.textContent = '';
+  if (!err) return;
+  const f = document.createElement('span');
+  f.className = 'friendly';
+  f.textContent = err.friendly;
+  const r = document.createElement('span');
+  r.className = 'raw';
+  r.textContent = err.raw;
+  el.append(f, r);
+}
+
 const params = new URLSearchParams(location.search);
 const roomFromUrl = params.get('room');
 
@@ -25,7 +68,7 @@ if (roomFromUrl) {
 
 // ============ LOBBY ============
 
-function startLobby() {
+async function startLobby() {
   document.getElementById('lobby').classList.remove('hidden');
   document.getElementById('gameScreen').classList.add('hidden');
 
@@ -39,7 +82,6 @@ function startLobby() {
 
   const nameInput     = document.getElementById('nameInput');
   const colorPicker   = document.getElementById('colorPicker');
-  const botCode       = document.getElementById('botCode');
   const roomList      = document.getElementById('roomList');
   const createBtn     = document.getElementById('createRoomBtn');
   const teacherToggle = document.getElementById('teacherToggle');
@@ -77,29 +119,28 @@ function startLobby() {
     sessionStorage.setItem('snakeName', nameInput.value);
   });
 
-  botCode.value = savedCode;
-  botCode.addEventListener('input', () => {
-    sessionStorage.setItem('botCode', botCode.value);
+  // The academy editor: CodeMirror when the CDN answers, a textarea offline.
+  // Every keystroke saves; after a pause we compile-check and show a kid-
+  // friendly message under the editor.
+  const lintEl = document.getElementById('lobbyLint');
+  let lintTimer = null;
+  const editor = await createEditor(document.getElementById('botCodeHost'), savedCode, () => {
+    sessionStorage.setItem('botCode', editor.get());
+    clearTimeout(lintTimer);
+    lintTimer = setTimeout(() => showLint(lintEl, checkSyntax(editor.get())), 600);
   });
-  // Make Tab insert two spaces, like a code editor
-  botCode.addEventListener('keydown', (e) => {
-    if (e.key !== 'Tab') return;
-    e.preventDefault();
-    const s = botCode.selectionStart, t = botCode.selectionEnd;
-    botCode.value = botCode.value.substring(0, s) + '  ' + botCode.value.substring(t);
-    botCode.selectionStart = botCode.selectionEnd = s + 2;
-    sessionStorage.setItem('botCode', botCode.value);
-  });
+  wireHints(document.getElementById('lobbyHintBtn'), document.getElementById('lobbyHintBox'));
 
   // Sample bot buttons — fetch the .js file and paste it in
-  document.querySelectorAll('.sample').forEach(btn => {
+  document.querySelectorAll('#botCodePanel .sample').forEach(btn => {
     btn.addEventListener('click', async () => {
       const name = btn.dataset.sample;
       try {
         const res = await fetch(`/bots/${name}.js`);
         const code = await res.text();
-        botCode.value = code;
+        editor.set(code);
         sessionStorage.setItem('botCode', code);
+        showLint(lintEl, null);
       } catch (e) {
         alert('Could not load sample bot: ' + e.message);
       }
@@ -229,10 +270,16 @@ function startGame(room) {
   // code defines nextMove(state); we evaluate it once at startup so syntax
   // errors show before the game starts.
   let userBotFn = null;
-  function setBotStatus(kind, label, detail) {
+  function setBotStatus(kind, label, detail, raw) {
     botStatusEl.className = 'bot-status ' + kind;
     botStatusLabel.textContent = label;
     botStatusDetail.textContent = detail || '';
+    if (raw) {
+      const r = document.createElement('span');
+      r.className = 'raw';
+      r.textContent = raw;
+      botStatusDetail.appendChild(r);
+    }
   }
   function deployBot() {
     try {
@@ -249,7 +296,8 @@ function startGame(room) {
       setBotStatus('ok', 'Bot ready', '');
     } catch (e) {
       userBotFn = null;
-      setBotStatus('err', 'Syntax error', e.message);
+      const t = translate(e);
+      setBotStatus('err', 'Syntax error', t.friendly, t.raw);
     }
   }
   deployBot();
@@ -276,7 +324,8 @@ function startGame(room) {
     try {
       dir = userBotFn(botState);
     } catch (e) {
-      setBotStatus('err', 'Crashed', e.message);
+      const t = translate(e);
+      setBotStatus('err', 'Crashed', t.friendly, t.raw);
       return;
     }
     if (!['UP', 'DOWN', 'LEFT', 'RIGHT'].includes(dir)) {
@@ -446,24 +495,36 @@ function startGame(room) {
   });
 
   const editModal      = document.getElementById('editModal');
-  const editBotCode    = document.getElementById('editBotCode');
   const editError      = document.getElementById('editError');
 
-  function showEditor() {
-    editBotCode.value = sessionStorage.getItem('botCode') || code;
-    editError.textContent = '';
+  // The modal editor is created on first open (the academy editor: CodeMirror
+  // when the CDN answers, a textarea offline). After that it's reused.
+  let editEditor = null;
+  let editLintTimer = null;
+
+  async function showEditor() {
+    const saved = sessionStorage.getItem('botCode') || code;
+    showLint(editError, null);
     editModal.classList.remove('hidden');
-    // Focus textarea so the kid can start typing right away
-    setTimeout(() => editBotCode.focus(), 50);
+    if (!editEditor) {
+      editEditor = await createEditor(document.getElementById('editBotCodeHost'), saved, () => {
+        clearTimeout(editLintTimer);
+        editLintTimer = setTimeout(() => showLint(editError, checkSyntax(editEditor.get())), 600);
+      });
+    } else {
+      editEditor.set(saved);
+    }
   }
   function hideEditor() {
     editModal.classList.add('hidden');
   }
+  wireHints(document.getElementById('modalHintBtn'), document.getElementById('modalHintBox'));
 
   document.getElementById('editBotBtn').addEventListener('click', showEditor);
   document.getElementById('modalCancelBtn').addEventListener('click', hideEditor);
   document.getElementById('modalApplyBtn').addEventListener('click', () => {
-    const newCode = editBotCode.value;
+    if (!editEditor) return;   // editor still loading — nothing to apply yet
+    const newCode = editEditor.get();
     try {
       // Same factory pattern as deployBot — run user code once, capture
       // nextMove. Closure preserves any module-level state the bot keeps.
@@ -478,27 +539,19 @@ function startGame(room) {
       setBotStatus('ok', 'Bot updated', '');
       hideEditor();
     } catch (e) {
-      editError.textContent = 'Syntax error: ' + e.message;
+      showLint(editError, translate(e));
     }
   });
 
   // Sample bot buttons inside the modal — load the same .js as the lobby
   editModal.querySelectorAll('.sample').forEach(btn => {
     btn.addEventListener('click', async () => {
+      if (!editEditor) return;
       try {
         const res = await fetch(`/bots/${btn.dataset.sample}.js`);
-        editBotCode.value = await res.text();
+        editEditor.set(await res.text());
       } catch (_) {}
     });
-  });
-
-  // Tab key inserts two spaces in the modal textarea
-  editBotCode.addEventListener('keydown', (e) => {
-    if (e.key !== 'Tab') return;
-    e.preventDefault();
-    const s = editBotCode.selectionStart, t = editBotCode.selectionEnd;
-    editBotCode.value = editBotCode.value.substring(0, s) + '  ' + editBotCode.value.substring(t);
-    editBotCode.selectionStart = editBotCode.selectionEnd = s + 2;
   });
 
 

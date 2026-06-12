@@ -2,11 +2,13 @@
 
 // NOTE: the ?v= is a cache-bust token — keep it the SAME across every import
 // here and in the other js/*.js files, and bump it on each deploy (see index.html).
-import { DuelGame } from './game.js?v=20260608';
-import { Renderer } from './render.js?v=20260608';
-import { LEVELS } from './opponents.js?v=20260608';
-import { revealSecret } from './secret.js?v=20260608';
-import { TICK_MS, TICK_CAP } from './constants.js?v=20260608';
+import { DuelGame } from './game.js?v=20260612';
+import { Renderer } from './render.js?v=20260612';
+import { LEVELS } from './opponents.js?v=20260612';
+import { revealSecret } from './secret.js?v=20260612';
+import { TICK_MS, TICK_CAP } from './constants.js?v=20260612';
+import { createEditor } from './editor.js?v=20260612';
+import { translate } from './errors.js?v=20260612';
 
 // ---------- persistence ----------
 const LS = {
@@ -112,7 +114,7 @@ const $ = (id) => document.getElementById(id);
 const ladderEl = $('ladder'), canvas = $('game'), banner = $('banner');
 const levelTitle = $('levelTitle'), levelBlurb = $('levelBlurb'), tallyEl = $('tally');
 const modeManualBtn = $('modeManual'), modeCodeBtn = $('modeCode');
-const codePanel = $('codePanel'), botCodeEl = $('botCode'), botStatus = $('botStatus');
+const codePanel = $('codePanel'), botStatus = $('botStatus');
 const playBtn = $('playBtn'), stopBtn = $('stopBtn');
 const nudge = $('nudge'), nudgeBtn = $('nudgeBtn');
 const tallyLab = $('tallyLab'), speedSel = $('speedSel'), lenReadout = $('lenReadout');
@@ -190,6 +192,9 @@ function renderModeUI() {
   modeManualBtn.classList.toggle('active', mode === 'manual');
   modeCodeBtn.classList.toggle('active', mode === 'code');
   codePanel.classList.toggle('hidden', mode !== 'code');
+  // Layout hook: on stacked screens (iPad portrait) the canvas shrinks to a
+  // compact monitor while coding, so the editor gets the room.
+  document.body.classList.toggle('mode-code', mode === 'code');
   // starter buttons unlock progressively; the "Start from:" row hides if neither is available
   const greedyOK = level >= GREEDY_SAMPLE_UNLOCK;
   const floodOK  = level >= FLOOD_SAMPLE_UNLOCK;
@@ -252,10 +257,20 @@ function compile(code) {
   if (typeof fn !== 'function') throw new Error('No function nextMove(state) defined');
   return fn;
 }
-function setStatus(kind, msg) { botStatus.className = 'bot-status ' + kind; botStatus.textContent = msg; }
+// Friendly message first, raw truth in small print (academy style).
+function setStatus(kind, msg, raw) {
+  botStatus.className = 'bot-status ' + kind;
+  botStatus.textContent = msg;
+  if (raw) {
+    const r = document.createElement('span');
+    r.className = 'raw';
+    r.textContent = raw;
+    botStatus.appendChild(r);
+  }
+}
 function deployKidBot() {
-  try { kidBot = compile(botCodeEl.value); setStatus('ok', 'Bot ready ✓'); }
-  catch (e) { kidBot = null; setStatus('err', 'Error: ' + e.message); }
+  try { kidBot = compile(getCode()); setStatus('ok', 'Bot ready ✓'); }
+  catch (e) { kidBot = null; const t = translate(e); setStatus('err', t.friendly, t.raw); }
 }
 function safeDir(fn, view, fallback) {
   try {
@@ -483,21 +498,57 @@ modeCodeBtn.addEventListener('click', () => chooseMode('code'));
 nudgeBtn.addEventListener('click', () => { chooseMode('code'); codePanel.scrollIntoView({ behavior: 'smooth' }); });
 
 // ---------- code panel wiring ----------
-botCodeEl.value = LS.code;
-botCodeEl.addEventListener('input', () => { LS.code = botCodeEl.value; });
-botCodeEl.addEventListener('keydown', (e) => {
-  if (e.key !== 'Tab') return;
-  e.preventDefault();
-  const s = botCodeEl.selectionStart, t = botCodeEl.selectionEnd;
-  botCodeEl.value = botCodeEl.value.slice(0, s) + '  ' + botCodeEl.value.slice(t);
-  botCodeEl.selectionStart = botCodeEl.selectionEnd = s + 2;
-  LS.code = botCodeEl.value;
-});
+// The academy editor: CodeMirror when the CDN answers, a textarea offline.
+// It loads async — getCode()/setCode() fall back to localStorage until it's
+// up, so ▶ Play works even before (or without) the fancy editor.
+let editor = null;
+let lintTimer = null;
+function getCode() { return editor ? editor.get() : LS.code; }
+function setCode(v) { LS.code = v; if (editor) editor.set(v); }
+
+// Syntax-only check — compiles the code but never runs it, so a half-typed
+// line can't hang the page. "Is nextMove defined?" is checked at ▶ Play.
+function checkSyntax(code) {
+  try { new Function(code); return null; }
+  catch (e) { return translate(e); }
+}
+
+(async () => {
+  editor = await createEditor($('botCodeHost'), LS.code, () => {
+    LS.code = editor.get();
+    clearTimeout(lintTimer);
+    lintTimer = setTimeout(() => {
+      const err = checkSyntax(editor.get());
+      if (err) setStatus('err', err.friendly, err.raw);
+      else if (botStatus.classList.contains('err')) setStatus('', '');
+    }, 600);
+  });
+})();
+
 document.querySelectorAll('.sample').forEach(b =>
-  b.addEventListener('click', () => { botCodeEl.value = SAMPLES[b.dataset.sample]; LS.code = botCodeEl.value; deployKidBot(); }));
+  b.addEventListener('click', () => { setCode(SAMPLES[b.dataset.sample]); deployKidBot(); }));
 $('copyBtn').addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText(botCodeEl.value); setStatus('ok', 'Copied to clipboard ✓'); }
+  try { await navigator.clipboard.writeText(getCode()); setStatus('ok', 'Copied to clipboard ✓'); }
   catch { setStatus('err', 'Copy failed — select all + copy by hand'); }
+});
+
+// 💡 hint ladder (academy pattern): one tier per click, never auto-shown.
+const HINTS = [
+  'Scouting is allowed 🔎 — every opponent is written with the same <code>nextMove(state)</code> you use. Read <code>js/opponents.js</code> (GitHub link below) and beat the idea behind it.',
+  'Survival first: write a <code>deadly(x, y)</code> helper that says true for walls and every body square — yours AND the foe\'s — and never return a move into one.',
+  'From Level 6 the foes think in SPACE. Flood-fill: count how much open room each move leads into, and never enter a pocket smaller than your body. The Flood-fill starter shows how.',
+];
+const hintBtn = $('hintBtn'), hintBox = $('hintBox');
+let hintTier = 0;
+hintBtn.addEventListener('click', () => {
+  if (hintTier >= HINTS.length) return;
+  hintBox.hidden = false;
+  const p = document.createElement('p');
+  p.innerHTML = `💡 <b>Hint ${hintTier + 1}:</b> ${HINTS[hintTier]}`;
+  hintBox.appendChild(p);
+  hintTier++;
+  hintBtn.textContent = hintTier >= HINTS.length ? '💡 That\'s every hint' : `💡 Hint (${hintTier}/${HINTS.length})`;
+  if (hintTier >= HINTS.length) hintBtn.disabled = true;
 });
 
 // ---------- controls ----------
